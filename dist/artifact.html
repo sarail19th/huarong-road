@@ -407,17 +407,21 @@ if(typeof module!=="undefined")module.exports=LEVELS;
 
   /* ---------- rendering ---------- */
   function layout() {
-    var availW = Math.min(window.innerWidth - 60, 440);
+    // Fit the board inside the device frame: its content width, not the window width (the frame has its own
+    // margins/padding). BORDER is the board's 2px border each side; pieces are positioned inside it.
+    var BORDER = 4, dev = document.querySelector('.device'), cs = dev && getComputedStyle(dev);
+    var frameW = dev && dev.clientWidth ? dev.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) : window.innerWidth - 62;
+    var availW = Math.min(frameW, 440);
     var availH = window.innerHeight - 340;
-    cell = Math.floor(Math.min((availW - 2 * PAD) / W, (availH - 2 * PAD) / H));
+    cell = Math.floor(Math.min((availW - 2 * PAD - BORDER) / W, (availH - 2 * PAD - BORDER) / H));
     cell = Math.max(cell, 58);
     var b = $('board');
-    b.style.width = (W * cell + 2 * PAD) + 'px';
-    b.style.height = (H * cell + 2 * PAD) + 'px';
+    b.style.width = (W * cell + 2 * PAD + BORDER) + 'px';
+    b.style.height = (H * cell + 2 * PAD + BORDER) + 'px';
     var z = $('exitzone'); z.style.left = (PAD + cell) + 'px'; z.style.top = (PAD + 3 * cell) + 'px';
     z.style.width = (2 * cell) + 'px'; z.style.height = (2 * cell) + 'px';
     var g = $('gate'); g.style.left = (PAD + cell + 8) + 'px'; g.style.width = (2 * cell - 16) + 'px';
-    g.style.top = (H * cell + 2 * PAD - 6) + 'px';
+    g.style.top = (H * cell + 2 * PAD - 2) + 'px';
     if (G) renderPieces();
   }
 
