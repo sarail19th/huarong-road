@@ -1,6 +1,6 @@
 # Huarong Road
 
-Giiker-style sliding-block puzzle (4x5 board, slide the big red 2x2 to the bottom-centre exit). Plain HTML/CSS/JS, no framework, no runtime dependencies. Ships as one self-contained `dist/index.html` that works as an installable Android PWA (Chrome -> Add to Home screen).
+Klotski-style sliding-block puzzle (4x5 board, slide the big red 2x2 to the bottom-centre exit). Plain HTML/CSS/JS, no framework, no runtime dependencies. Ships as one self-contained `dist/index.html` that works as an installable Android PWA (Chrome -> Add to Home screen).
 
 ## Layout
 - `src/solver.js` - board model + BFS solver. Grid is 20 cells, row-major. Codes: 0 empty, 1-4 red 2x2 (TL,TR,BL,BR), 5-6 vertical 1x2, 7-8 horizontal 2x1, 9 single. One "move" = one block slid any distance in a straight line. Goal: red top-left at row 3, col 1.
@@ -28,4 +28,4 @@ Serve `dist/` over https (or localhost) for the service worker to register; open
 - Piece animations must not scale (pieces are positioned with `transform: translate`, scaling shifts them).
 
 ## Ideas not built yet
-Triple Town clone (see `docs/TRIPLE_TOWN_BRIEF.md`), daily puzzle, level editor, Capacitor/TWA wrapper for a real APK.
+Daily puzzle, level editor, Capacitor/TWA wrapper for a real APK.
