@@ -12,6 +12,7 @@
   };
   var progress = store.get('hr_progress', {});
   var muted = store.get('hr_muted', false);
+  var haptics = store.get('hr_haptics', true);
 
   var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null;
   var els = new Map();
@@ -30,7 +31,7 @@
       o.stop(window._ac.currentTime + (d || 0.06));
     } catch (e) {}
   }
-  function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
+  function buzz(ms) { if (haptics) try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
   function fmt(ms) { var s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
   function stars(n) { return '★★★'.slice(0, n) + '☆☆☆'.slice(0, 3 - n); }
   function gradeOf(par) {
@@ -290,7 +291,7 @@
     G.hist.push(snap());
     p.r += dr * k; p.c += dc * k; G.moves++;
     $('moves').textContent = G.moves;
-    renderPieces(); renderLED(); renderStatus(); beep(500, 0.04); buzz(8);
+    renderPieces(); renderLED(); renderStatus(); beep(500, 0.04); buzz(15);
     if (Sol.isGoal(gridOf())) win();
   }
 
@@ -349,6 +350,15 @@
   $('backBtn').onclick = showMenu;
   $('muteBtn').onclick = function () { muted = !muted; store.set('hr_muted', muted); $('muteBtn').textContent = muted ? '🔇' : '🔊'; };
   $('muteBtn').textContent = muted ? '🔇' : '🔊';
+
+  // Vibration toggle (Android Chrome only: iOS Safari has no Vibration API, so the button is hidden there)
+  function renderHaptics() {
+    var b = $('hapBtn'); b.textContent = haptics ? '📳' : '📴';
+    b.setAttribute('aria-pressed', haptics); b.setAttribute('aria-label', haptics ? 'Vibration on' : 'Vibration off');
+  }
+  if (!navigator.vibrate) $('hapBtn').style.display = 'none';
+  $('hapBtn').onclick = function () { haptics = !haptics; store.set('hr_haptics', haptics); renderHaptics(); buzz(30); };
+  renderHaptics();
 
   /* ---------- init ---------- */
   (function init() {

@@ -6,15 +6,21 @@ SHOTS = '/tmp/claude-0/-home-claude/00debd21-7fd6-5cb6-b361-efccb73703af/scratch
 os.makedirs(SHOTS, exist_ok=True)
 URL = 'file://' + os.path.join(ROOT, 'dist', 'index.html')
 
-def run(level_idx, p, shots=False):
+def run(level_idx, p, shots=False, haptics_off=False):
     ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
     page = ctx.new_page()
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.add_init_script("window.__vib = []; navigator.vibrate = function (ms) { window.__vib.push(ms); return true; };")
     page.goto(URL)
     if shots: page.screenshot(path=f'{SHOTS}/1_menu.png')
     page.locator('.lv').nth(level_idx).click()
+    if haptics_off:
+        assert page.locator('#hapBtn').is_visible()
+        page.click('#hapBtn')
+        assert page.evaluate("() => localStorage.getItem('hr_haptics')") == 'false', 'haptics setting persisted'
+        assert page.locator('#hapBtn').get_attribute('aria-pressed') == 'false'
 
     # --- setup phase: place every target piece by tapping tray + board
     target = page.evaluate("() => { var lv = LEVELS[%d]; return Solver.piecesOf(lv.g.split('').map(Number)); }" % level_idx)
@@ -81,6 +87,11 @@ def run(level_idx, p, shots=False):
     info = page.locator('#winInfo').inner_text(); st = page.locator('#winStars').inner_text()
     if shots: page.screenshot(path=f'{SHOTS}/5_win.png')
     stored = page.evaluate("() => JSON.parse(localStorage.getItem('hr_progress') || '{}')")
+    vib = page.evaluate('() => window.__vib.length')
+    if haptics_off:
+        assert vib == 0, f'haptics off but vibrate called {vib}x'
+    else:
+        assert vib >= len(solution), f'haptics on: expected >= {len(solution)} vibrations, got {vib}'
     ctx.close()
     assert not errors, errors
     return len(solution), moves, st, info, stored
@@ -91,4 +102,7 @@ with sync_playwright() as p:
         n, moves, st, info, stored = run(idx, p, shots)
         assert int(moves) == n, f'moves counter {moves} != {n}'
         print(f'level {idx + 1}: solved in {n} drags | stars {st} | {info} | saved={bool(stored)}')
+    # same level with the haptics toggle switched off: no vibration at all
+    run(0, p, False, haptics_off=True)
+    print('haptics toggle: on vibrates every move, off is silent')
 print('UI TEST PASSED')
