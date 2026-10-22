@@ -172,6 +172,8 @@
 
   function renderTray() {
     if (G.phase !== 'setup') return;
+    // nothing left to place (always the case with auto-place) -> hide the tray so Start stays on screen
+    $('tray').classList.toggle('hidden', !firstAvailable());
     var html = '';
     TYPES.forEach(function (t) {
       var n = remaining(t), d = DIM[t];
@@ -190,12 +192,13 @@
       var ready = ok === total && G.pieces.length === total;
       $('startBtn').disabled = !ready;
       $('startBtn').classList.toggle('ready', ready);
+      s.classList.toggle('hidden', ready && !G.msg); // the lit-up Start button already says it
       if (G.msg) { s.textContent = G.msg; s.classList.add('warn'); }
       else if (ready) { s.textContent = 'All ' + total + ' chips confirmed ✓ — ready to play'; s.classList.add('good'); }
       else if (G.pieces.some(function (p) { return !verified(p); })) { s.textContent = 'Chip mismatch (amber) — tap that block to lift it. Verified ' + ok + '/' + total; s.classList.add('warn'); }
       else { s.textContent = 'Copy the LED layout: pick a block below, then tap the board. Verified ' + ok + '/' + total; }
     } else if (G.phase === 'play') {
-      s.textContent = G.msg || 'Drag blocks to free the red square — slide it to the green exit.';
+      s.textContent = G.msg || 'Drag blocks to free the red square — slide it to the exit.';
       if (G.msg) s.classList.add('warn');
     }
   }

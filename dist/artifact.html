@@ -3,7 +3,7 @@
   --bg:#0d1117;--panel:#161b22;--panel2:#1f2630;--line:#2a313c;
   --text:#e8edf3;--muted:#8b97a7;
   --red:#e63946;--blue:#2f80ed;--yellow:#f5b82e;--green:#3ddc84;--amber:#ffb020;
-  --exit-rgb:61,220,132;--bg-a:47,128,237;--bg-b:230,57,70;
+  --ok:var(--green);--exit-rgb:61,220,132;--bg-a:47,128,237;--bg-b:230,57,70;
   --pR:linear-gradient(145deg,#ff6a6f,#d42234);--pV:linear-gradient(145deg,#4a98ff,#1f62d4);--pS:linear-gradient(145deg,#ffd75a,#ee9f00);
   --ricon:rgba(255,255,255,.5);--ringR:rgba(255,255,255,.42);--ringV:rgba(255,255,255,.42);--ringS:rgba(255,255,255,.42);
   --led-r:#ff3b3b;--led-b:#2f8cff;--led-y:#ffd23a;
@@ -12,18 +12,18 @@
 /* Skins: set via <html data-skin>. --yellow is the accent colour (stars, brand, selection), --green the "confirmed/exit" colour. */
 :root[data-skin=blossom]{
   --bg:#0b0709;--panel:#17101a;--panel2:#21161f;--line:#3a2633;--text:#fbeef4;--muted:#b496a6;
-  --yellow:#ffb3d1;--green:#8ff0c0;--amber:#ffd08a;--exit-rgb:143,240,192;--bg-a:255,158,196;--bg-b:255,255,255;
-  --pR:linear-gradient(145deg,#ffc2da,#ff80b0);--pV:linear-gradient(145deg,#ffe8f1,#f5b9d1);--pS:linear-gradient(145deg,#3a2a36,#18101a);
+  --yellow:#ffb3d1;--green:#ff8fc0;--ok:#fff;--amber:#ffd08a;--exit-rgb:255,222,236;--edge:#6b3d55;--board:#22141d;--device:#140c11;--bg-a:255,158,196;--bg-b:200,90,140;
+  --pR:linear-gradient(145deg,#ffc2da,#ff80b0);--pV:linear-gradient(145deg,#ffe8f1,#f5b9d1);--pS:linear-gradient(145deg,#85567a,#5e3a55);
   --bdS:2px solid #ffb3d1;--ricon:rgba(90,20,55,.6);--ringR:rgba(255,255,255,.7);--ringV:rgba(160,60,110,.4);--ringS:rgba(255,179,209,.8);
-  --led-r:#ff80b0;--led-b:#ffe8f1;--led-y:#b0527f;
+  --led-r:#ff80b0;--led-b:#ffe8f1;--led-y:#c4659a;
 }
 :root[data-skin=neon]{
   --bg:#020503;--panel:#07110a;--panel2:#0b1a10;--line:#16402a;--text:#e6ffec;--muted:#6fae82;
   --yellow:#39ff14;--green:#39ff14;--amber:#ffe600;--exit-rgb:0,229,255;--bg-a:57,255,20;--bg-b:0,229,255;
-  --pR:linear-gradient(145deg,#8bff6a,#2ee000);--pV:linear-gradient(145deg,#0a1f10,#06120a);--pS:linear-gradient(145deg,#f4ffe0,#c3f59a);
-  --bdV:2px solid #39ff14;--shR:0 0 14px rgba(57,255,20,.65),inset 0 -5px 0 rgba(0,0,0,.22);--shV:0 0 10px rgba(57,255,20,.45),inset 0 0 8px rgba(57,255,20,.25);
-  --ricon:rgba(2,26,6,.7);--ringR:rgba(2,26,6,.45);--ringV:rgba(57,255,20,.7);--ringS:rgba(2,26,6,.4);
-  --led-r:#39ff14;--led-b:#168f3a;--led-y:#eaffd9;
+  --pR:linear-gradient(145deg,#8bff6a,#2ee000);--pV:linear-gradient(145deg,#1f7a3a,#145a29);--pS:linear-gradient(145deg,#f4ffe0,#c3f59a);
+  --edge:#1f7a3a;--board:#07170d;--device:#030b06;--bdV:2px solid #39ff14;--shR:0 0 14px rgba(57,255,20,.65),inset 0 -5px 0 rgba(0,0,0,.22);--shV:0 0 10px rgba(57,255,20,.45),inset 0 0 8px rgba(57,255,20,.25);
+  --ricon:rgba(2,26,6,.7);--ringR:rgba(2,26,6,.45);--ringV:rgba(190,255,170,.75);--ringS:rgba(2,26,6,.4);
+  --led-r:#39ff14;--led-b:#1fa84a;--led-y:#eaffd9;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{min-height:100%;background:var(--bg)}
@@ -64,7 +64,7 @@ h3.grade small{color:var(--muted);font-weight:400;font-size:12px}
 .stat{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 8px;text-align:center}
 .stat small{display:block;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px}
 .stat b{font-size:18px;font-variant-numeric:tabular-nums}
-.device{background:#0b0c0f;border:1px solid #262b33;border-radius:26px;padding:14px 14px 18px;box-shadow:0 14px 40px rgba(0,0,0,.5)}
+.device{background:var(--device,#0b0c0f);border:1px solid var(--edge,#262b33);border-radius:26px;padding:14px 14px 18px;box-shadow:0 14px 40px rgba(0,0,0,.5)}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .led{display:grid;grid-template-columns:repeat(4,13px);grid-template-rows:repeat(5,13px);gap:2px;background:#000;border:2px solid #23272e;border-radius:8px;padding:5px}
 .led i{border-radius:3px;background:#17191d;transition:background .15s}
@@ -80,7 +80,7 @@ h3.grade small{color:var(--muted);font-weight:400;font-size:12px}
 .key.toggle.on::before{background:var(--green);box-shadow:0 0 6px var(--green)}
 .key:active{transform:translateY(2px);border-bottom-width:1px}
 
-.board{position:relative;margin:0 auto;background:#07080a;border:2px solid #23272e;border-radius:16px;touch-action:none}
+.board{position:relative;margin:0 auto;background:var(--board,#07080a);border:2px solid var(--edge,#23272e);border-radius:16px;touch-action:none}
 .exitzone{position:absolute;border:2px dashed rgba(var(--exit-rgb),.5);border-radius:12px;background:rgba(var(--exit-rgb),.08)}
 .gate{position:absolute;height:9px;background:rgb(var(--exit-rgb));border-radius:6px;box-shadow:0 0 14px rgba(var(--exit-rgb),.8);display:flex;align-items:center;justify-content:center}
 .gate span{font-size:8px;font-weight:800;color:#06210f;letter-spacing:1.5px}
@@ -101,7 +101,7 @@ h3.grade small{color:var(--muted);font-weight:400;font-size:12px}
 .piece.tS i{inset:28%}
 .piece.pop{transition:none;animation:pop .22s ease-out}
 @keyframes pop{from{opacity:0}to{opacity:1}}
-.piece.ok{box-shadow:inset 0 -5px 0 rgba(0,0,0,.22),0 0 0 3px var(--green),0 0 14px rgba(61,220,132,.6)}
+.piece.ok{box-shadow:inset 0 -5px 0 rgba(0,0,0,.22),0 0 0 3px var(--ok),0 0 14px rgba(var(--exit-rgb),.6)}
 .piece.bad{box-shadow:inset 0 -5px 0 rgba(0,0,0,.22),0 0 0 3px var(--amber);animation:pulse 1s infinite}
 @keyframes pulse{50%{filter:brightness(.7)}}
 .piece[data-hint]{z-index:4;animation:hint .9s infinite}
@@ -122,7 +122,7 @@ h3.grade small{color:var(--muted);font-weight:400;font-size:12px}
 .status.good{color:var(--green)}
 .status.warn{color:var(--amber)}
 .tray{display:flex;gap:8px;justify-content:center;margin-bottom:10px}
-.tray button{flex:1;background:#161a20;border:2px solid #262b33;border-radius:14px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.tray button{flex:1;background:var(--panel);border:2px solid var(--edge,#262b33);border-radius:14px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:6px}
 .tray button.sel{border-color:var(--yellow);background:var(--panel2)}
 .tray button:disabled{opacity:.3}
 .tray .mini{display:block;border-radius:5px}
@@ -131,6 +131,7 @@ h3.grade small{color:var(--muted);font-weight:400;font-size:12px}
 .tray .mS{background:var(--pS);border:var(--bdS,0)}
 .tray small{font-size:12px;color:#c9d2de;font-weight:600}
 .row{display:flex;gap:8px}
+.row.only-setup{position:sticky;bottom:0;z-index:6;padding:14px 0 max(8px,env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 35%)}
 .btn{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px;font-weight:600}
 .btn.go{background:var(--green);color:#06210f;border-color:var(--green);font-size:16px}
 .btn.go:disabled{background:#26332b;color:#5b6e61;border-color:#26332b}
@@ -158,9 +159,9 @@ body[data-phase=play] .only-setup,body[data-phase=won] .only-setup{display:none!
   <div class="howto">
     <b>How it works</b>
     <ol>
-      <li><b>Set up</b> — copy the layout shown on the LED. Place each block; its “chip” turns green when it sits in the right spot.</li>
+      <li><b>Set up</b> — copy the layout shown on the LED. Place each block; its “chip” lights up when it sits in the right spot.</li>
       <li><b>Slide</b> — drag blocks into the empty space.</li>
-      <li><b>Escape</b> — guide the big <b style="color:#ff6a6f">red square</b> out through the green exit at the bottom.</li>
+      <li><b>Escape</b> — guide the big <b style="color:#ff6a6f">red square</b> out through the exit at the bottom.</li>
     </ol>
   </div>
   <div class="total"><span>Stars collected</span><b id="totalStars">0 / 0</b></div>
@@ -517,6 +518,8 @@ if(typeof module!=="undefined")module.exports=LEVELS;
 
   function renderTray() {
     if (G.phase !== 'setup') return;
+    // nothing left to place (always the case with auto-place) -> hide the tray so Start stays on screen
+    $('tray').classList.toggle('hidden', !firstAvailable());
     var html = '';
     TYPES.forEach(function (t) {
       var n = remaining(t), d = DIM[t];
@@ -535,12 +538,13 @@ if(typeof module!=="undefined")module.exports=LEVELS;
       var ready = ok === total && G.pieces.length === total;
       $('startBtn').disabled = !ready;
       $('startBtn').classList.toggle('ready', ready);
+      s.classList.toggle('hidden', ready && !G.msg); // the lit-up Start button already says it
       if (G.msg) { s.textContent = G.msg; s.classList.add('warn'); }
       else if (ready) { s.textContent = 'All ' + total + ' chips confirmed ✓ — ready to play'; s.classList.add('good'); }
       else if (G.pieces.some(function (p) { return !verified(p); })) { s.textContent = 'Chip mismatch (amber) — tap that block to lift it. Verified ' + ok + '/' + total; s.classList.add('warn'); }
       else { s.textContent = 'Copy the LED layout: pick a block below, then tap the board. Verified ' + ok + '/' + total; }
     } else if (G.phase === 'play') {
-      s.textContent = G.msg || 'Drag blocks to free the red square — slide it to the green exit.';
+      s.textContent = G.msg || 'Drag blocks to free the red square — slide it to the exit.';
       if (G.msg) s.classList.add('warn');
     }
   }
