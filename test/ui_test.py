@@ -2,7 +2,7 @@ import json, sys, os
 from playwright.sync_api import sync_playwright
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-SHOTS = '/tmp/claude-0/-home-claude/00debd21-7fd6-5cb6-b361-efccb73703af/scratchpad'
+SHOTS = os.environ.get('HR_SHOTS', '/tmp/hr-shots')
 os.makedirs(SHOTS, exist_ok=True)
 URL = 'file://' + os.path.join(ROOT, 'dist', 'index.html')
 
@@ -13,6 +13,8 @@ def run(level_idx, p, shots=False, haptics_off=False):
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
     page.add_init_script("window.__vib = []; navigator.vibrate = function (ms) { window.__vib.push(ms); return true; };")
+    # the manual chip-check flow below needs an empty board, so switch the (default-on) auto-place off
+    page.add_init_script("localStorage.setItem('hr_auto', 'false')")
     page.goto(URL)
     if shots: page.screenshot(path=f'{SHOTS}/1_menu.png')
     page.locator('.lv').nth(level_idx).click()
@@ -96,7 +98,65 @@ def run(level_idx, p, shots=False, haptics_off=False):
     assert not errors, errors
     return len(solution), moves, st, info, stored
 
+def features(p):
+    ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.goto(URL)
+    # skins: classic -> blossom -> neon -> classic, persisted
+    assert page.evaluate("() => document.documentElement.dataset.skin") == 'classic'
+    for want in ['blossom', 'neon', 'classic']:
+        page.locator('#menu .skin-btn').click()
+        assert page.evaluate("() => document.documentElement.dataset.skin") == want
+        assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_skin'))") == want
+    page.locator('#menu .skin-btn').click()  # blossom, remembered across levels
+    page.locator('.lv').nth(5).click()
+    # auto-place defaults to on: layout is already copied and verified
+    n = page.evaluate("() => Solver.piecesOf(LEVELS[5].g.split('').map(Number)).length")
+    assert page.locator('#autoBtn').get_attribute('aria-pressed') == 'true'
+    assert page.locator('.piece.ok').count() == n and page.locator('#startBtn').is_enabled(), 'auto-place default'
+    page.screenshot(path=f'{SHOTS}/blossom_setup.png')
+    page.click('#autoBtn')  # off: board cleared, preference saved
+    assert page.locator('.piece').count() == 0 and page.evaluate("() => localStorage.getItem('hr_auto')") == 'false'
+    page.click('#autoBtn')  # on again: refilled
+    assert page.locator('.piece.ok').count() == n
+    page.click('#backBtn'); page.locator('.lv').nth(5).click()
+    assert page.locator('.piece.ok').count() == n, 'next level opens auto-placed'
+    page.click('#startBtn')
+    # hints: tap 1 = explanation + outline, tap 2 = arrow on the move
+    page.click('#hintBtn')
+    assert page.locator('#tip').is_visible()
+    head1, body1 = page.locator('#tipHead').inner_text(), page.locator('#tipBody').inner_text()
+    assert page.locator('.piece[data-focus]').count() >= 1 and page.locator('.piece[data-hint]').count() == 0
+    page.screenshot(path=f'{SHOTS}/blossom_hint1.png')
+    page.click('#hintBtn')
+    assert page.locator('.piece[data-hint]').count() == 1 and 'Try this' in page.locator('#tipHead').inner_text()
+    body2 = page.locator('#tipBody').inner_text()
+    page.screenshot(path=f'{SHOTS}/blossom_hint2.png')
+    # follow the hinted move for real: the tip must clear after any move
+    page.click('#undoBtn')  # nothing to undo yet, tip stays
+    assert page.locator('#tip').is_visible()
+    m = page.evaluate("() => { var s = Solver.solve(LEVELS[5].g.split('').map(Number)); return s[0]; }")
+    box = page.locator('#board').bounding_box(); cs = (box['width'] - 4 - 16) / 4
+    d = {'R': (2, 2), 'V': (1, 2), 'H': (2, 1), 'S': (1, 1)}[m['t']]
+    sx = box['x'] + 2 + 8 + (m['c'] + d[0] / 2) * cs; sy = box['y'] + 2 + 8 + (m['r'] + d[1] / 2) * cs
+    page.mouse.move(sx, sy); page.mouse.down()
+    for i in range(1, 7): page.mouse.move(sx + m['dc'] * m['k'] * cs * i / 6, sy + m['dr'] * m['k'] * cs * i / 6)
+    page.mouse.up(); page.wait_for_timeout(100)
+    assert page.locator('#tip').is_hidden(), 'tip clears after a move'
+    page.screenshot(path=f'{SHOTS}/blossom_play.png')
+    page.locator('#game .skin-btn').click()
+    assert page.evaluate("() => document.documentElement.dataset.skin") == 'neon'
+    page.click('#hintBtn'); page.wait_for_timeout(100)
+    page.screenshot(path=f'{SHOTS}/neon_hint1.png')
+    ctx.close()
+    assert not errors, errors
+    print('hint 1:', head1, '|', body1); print('hint 2:', body2)
+
 with sync_playwright() as p:
+    features(p)
+    print('features: auto-place default, skins, two-step hints OK')
     # level 1 (with screenshots), a mid level, and a hard level
     for idx, shots in [(0, True), (30, False), (60, False)]:
         n, moves, st, info, stored = run(idx, p, shots)

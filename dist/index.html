@@ -12,20 +12,41 @@
   --bg:#0d1117;--panel:#161b22;--panel2:#1f2630;--line:#2a313c;
   --text:#e8edf3;--muted:#8b97a7;
   --red:#e63946;--blue:#2f80ed;--yellow:#f5b82e;--green:#3ddc84;--amber:#ffb020;
+  --exit-rgb:61,220,132;--bg-a:47,128,237;--bg-b:230,57,70;
+  --pR:linear-gradient(145deg,#ff6a6f,#d42234);--pV:linear-gradient(145deg,#4a98ff,#1f62d4);--pS:linear-gradient(145deg,#ffd75a,#ee9f00);
+  --ricon:rgba(255,255,255,.5);--ringR:rgba(255,255,255,.42);--ringV:rgba(255,255,255,.42);--ringS:rgba(255,255,255,.42);
+  --led-r:#ff3b3b;--led-b:#2f8cff;--led-y:#ffd23a;
   color-scheme:dark;
+}
+/* Skins: set via <html data-skin>. --yellow is the accent colour (stars, brand, selection), --green the "confirmed/exit" colour. */
+:root[data-skin=blossom]{
+  --bg:#0b0709;--panel:#17101a;--panel2:#21161f;--line:#3a2633;--text:#fbeef4;--muted:#b496a6;
+  --yellow:#ffb3d1;--green:#8ff0c0;--amber:#ffd08a;--exit-rgb:143,240,192;--bg-a:255,158,196;--bg-b:255,255,255;
+  --pR:linear-gradient(145deg,#ffc2da,#ff80b0);--pV:linear-gradient(145deg,#ffe8f1,#f5b9d1);--pS:linear-gradient(145deg,#3a2a36,#18101a);
+  --bdS:2px solid #ffb3d1;--ricon:rgba(90,20,55,.6);--ringR:rgba(255,255,255,.7);--ringV:rgba(160,60,110,.4);--ringS:rgba(255,179,209,.8);
+  --led-r:#ff80b0;--led-b:#ffe8f1;--led-y:#b0527f;
+}
+:root[data-skin=neon]{
+  --bg:#020503;--panel:#07110a;--panel2:#0b1a10;--line:#16402a;--text:#e6ffec;--muted:#6fae82;
+  --yellow:#39ff14;--green:#39ff14;--amber:#ffe600;--exit-rgb:0,229,255;--bg-a:57,255,20;--bg-b:0,229,255;
+  --pR:linear-gradient(145deg,#8bff6a,#2ee000);--pV:linear-gradient(145deg,#0a1f10,#06120a);--pS:linear-gradient(145deg,#f4ffe0,#c3f59a);
+  --bdV:2px solid #39ff14;--shR:0 0 14px rgba(57,255,20,.65),inset 0 -5px 0 rgba(0,0,0,.22);--shV:0 0 10px rgba(57,255,20,.45),inset 0 0 8px rgba(57,255,20,.25);
+  --ricon:rgba(2,26,6,.7);--ringR:rgba(2,26,6,.45);--ringV:rgba(57,255,20,.7);--ringS:rgba(2,26,6,.4);
+  --led-r:#39ff14;--led-b:#168f3a;--led-y:#eaffd9;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{min-height:100%;background:var(--bg)}
 html,body{margin:0;color:var(--text);
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none;
   -webkit-user-select:none;user-select:none}
-body{min-height:100vh;background:linear-gradient(135deg,rgba(47,128,237,.18) 0 50%,rgba(230,57,70,.16) 50% 100%),var(--bg);background-attachment:fixed}
+body{min-height:100vh;background:linear-gradient(135deg,rgba(var(--bg-a),.18) 0 50%,rgba(var(--bg-b),.16) 50% 100%),var(--bg);background-attachment:fixed}
 button{font:inherit;color:inherit;border:0;cursor:pointer}
 .hidden{display:none!important}
 .screen{max-width:520px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
 
 /* ---------- menu ---------- */
-.brand{text-align:center;margin:8px 0 14px}
+.brand{position:relative;text-align:center;margin:8px 0 14px}
+.brand .skin-btn{position:absolute;right:0;top:0}
 .brand h1{margin:0;font-size:26px;letter-spacing:.5px}
 .brand h1 span{color:var(--yellow)}
 .brand p{margin:4px 0 0;color:var(--muted);font-size:13px}
@@ -39,9 +60,9 @@ h3.grade small{color:var(--muted);font-weight:400;font-size:12px}
 .lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .lv{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 0 6px;display:flex;flex-direction:column;align-items:center;gap:1px}
 .lv b{font-size:17px}
-.lv .stars{font-size:11px;color:#56606e;letter-spacing:1px}
-.lv.done{border-color:#3b4b3f}
-.lv.done .stars{color:var(--yellow)}
+.lv .stars{font-size:11px;color:var(--muted);opacity:.7;letter-spacing:1px}
+.lv.done{border-color:var(--green)}
+.lv.done .stars{color:var(--yellow);opacity:1}
 .lv:active{transform:scale(.95)}
 
 /* ---------- game ---------- */
@@ -56,27 +77,34 @@ h3.grade small{color:var(--muted);font-weight:400;font-size:12px}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .led{display:grid;grid-template-columns:repeat(4,13px);grid-template-rows:repeat(5,13px);gap:2px;background:#000;border:2px solid #23272e;border-radius:8px;padding:5px}
 .led i{border-radius:3px;background:#17191d;transition:background .15s}
-.led i.R{background:#ff3b3b;box-shadow:0 0 5px #ff3b3b88}
-.led i.B{background:#2f8cff;box-shadow:0 0 5px #2f8cff88}
-.led i.Y{background:#ffd23a;box-shadow:0 0 5px #ffd23a88}
+.led i.R{background:var(--led-r);box-shadow:0 0 5px var(--led-r)}
+.led i.B{background:var(--led-b);box-shadow:0 0 5px var(--led-b)}
+.led i.Y{background:var(--led-y);box-shadow:0 0 5px var(--led-y)}
 .keys{display:flex;gap:8px}
 .key{background:#23272e;border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:600;border-bottom:3px solid #12141a}
 .key.red{background:#c0303a;border-bottom-color:#7d1d25}
+.key.toggle{display:flex;align-items:center;gap:6px}
+.key.toggle::before{content:"";width:8px;height:8px;border-radius:50%;background:#555d69}
+.key.toggle.on{color:var(--green)}
+.key.toggle.on::before{background:var(--green);box-shadow:0 0 6px var(--green)}
 .key:active{transform:translateY(2px);border-bottom-width:1px}
 
 .board{position:relative;margin:0 auto;background:#07080a;border:2px solid #23272e;border-radius:16px;touch-action:none}
-.exitzone{position:absolute;border:2px dashed rgba(61,220,132,.45);border-radius:12px;background:rgba(61,220,132,.07)}
-.gate{position:absolute;height:9px;background:var(--green);border-radius:6px;box-shadow:0 0 14px rgba(61,220,132,.8);display:flex;align-items:center;justify-content:center}
+.exitzone{position:absolute;border:2px dashed rgba(var(--exit-rgb),.5);border-radius:12px;background:rgba(var(--exit-rgb),.08)}
+.gate{position:absolute;height:9px;background:rgb(var(--exit-rgb));border-radius:6px;box-shadow:0 0 14px rgba(var(--exit-rgb),.8);display:flex;align-items:center;justify-content:center}
 .gate span{font-size:8px;font-weight:800;color:#06210f;letter-spacing:1.5px}
 
 .piece{position:absolute;left:0;top:0;border-radius:12px;transition:transform .13s ease-out,opacity .5s,box-shadow .2s;
   box-shadow:inset 0 -5px 0 rgba(0,0,0,.22),inset 0 2px 0 rgba(255,255,255,.28),0 2px 6px rgba(0,0,0,.5);touch-action:none}
 .piece.drag{transition:none;z-index:5}
-.piece i{position:absolute;border:3px solid rgba(255,255,255,.42);border-radius:999px;pointer-events:none}
+.piece i{position:absolute;border:3px solid var(--ringV);border-radius:999px;pointer-events:none}
 .piece svg{position:absolute;inset:14%;width:72%;height:72%;pointer-events:none}
-.piece.tR{background:linear-gradient(145deg,#ff6a6f,#d42234)}
-.piece.tV,.piece.tH{background:linear-gradient(145deg,#4a98ff,#1f62d4)}
-.piece.tS{background:linear-gradient(145deg,#ffd75a,#ee9f00)}
+.piece svg polygon{stroke:var(--ricon)}
+.piece.tR{background:var(--pR);border:var(--bdR,0);box-shadow:var(--shR,inset 0 -5px 0 rgba(0,0,0,.22),inset 0 2px 0 rgba(255,255,255,.28),0 2px 6px rgba(0,0,0,.5))}
+.piece.tV,.piece.tH{background:var(--pV);border:var(--bdV,0);box-shadow:var(--shV,inset 0 -5px 0 rgba(0,0,0,.22),inset 0 2px 0 rgba(255,255,255,.28),0 2px 6px rgba(0,0,0,.5))}
+.piece.tS{background:var(--pS);border:var(--bdS,0)}
+.piece.tR i{border-color:var(--ringR)}
+.piece.tS i{border-color:var(--ringS)}
 .piece.tV i{inset:12% 34%}
 .piece.tH i{inset:34% 12%}
 .piece.tS i{inset:28%}
@@ -89,15 +117,27 @@ h3.grade small{color:var(--muted);font-weight:400;font-size:12px}
 .piece[data-hint]::after{content:attr(data-hint);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   font-size:26px;font-weight:800;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.7);pointer-events:none}
 @keyframes hint{50%{filter:brightness(1.45)}}
+.piece[data-focus]{z-index:3;outline:3px dashed #fff;outline-offset:-5px;animation:hint 1.1s infinite}
+.piece[data-focus][data-hint]{animation:hint .9s infinite}
+
+.tip{margin:0 2px 10px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--yellow);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.45;color:#c9d2de}
+.tip b{display:block;color:var(--text);margin-bottom:2px}
+.tip em{display:block;margin-top:6px;font-style:normal;color:var(--muted);font-size:12.5px}
+.tip .step{float:right;color:var(--muted);font-size:11.5px;font-weight:400}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--panel2);border:1px solid var(--yellow);color:var(--text);
+  border-radius:999px;padding:8px 18px;font-size:13px;z-index:30;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.5)}
 
 .status{min-height:22px;text-align:center;font-size:13.5px;color:var(--muted);margin:12px 4px 8px}
 .status.good{color:var(--green)}
 .status.warn{color:var(--amber)}
 .tray{display:flex;gap:8px;justify-content:center;margin-bottom:10px}
 .tray button{flex:1;background:#161a20;border:2px solid #262b33;border-radius:14px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:6px}
-.tray button.sel{border-color:var(--yellow);background:#201d12}
+.tray button.sel{border-color:var(--yellow);background:var(--panel2)}
 .tray button:disabled{opacity:.3}
-.tray .mini{border-radius:5px}
+.tray .mini{display:block;border-radius:5px}
+.tray .mR{background:var(--pR);border:var(--bdR,0)}
+.tray .mV,.tray .mH{background:var(--pV);border:var(--bdV,0)}
+.tray .mS{background:var(--pS);border:var(--bdS,0)}
 .tray small{font-size:12px;color:#c9d2de;font-weight:600}
 .row{display:flex;gap:8px}
 .btn{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px;font-weight:600}
@@ -121,6 +161,7 @@ body[data-phase=play] .only-setup,body[data-phase=won] .only-setup{display:none!
 
 <section id="menu" class="screen">
   <div class="brand">
+    <button class="icon-btn skin-btn" aria-label="Change skin" title="Change skin">🎨</button>
     <h1>Huarong <span>Road</span></h1>
     <p>Sliding-block puzzle · 100 graded levels · exact par for every level</p>
   </div>
@@ -140,6 +181,7 @@ body[data-phase=play] .only-setup,body[data-phase=won] .only-setup{display:none!
   <div class="hud">
     <button class="icon-btn" id="backBtn" aria-label="Back">‹</button>
     <div class="title" id="lvTitle"></div>
+    <button class="icon-btn skin-btn" aria-label="Change skin" title="Change skin">🎨</button>
     <button class="icon-btn" id="hapBtn" aria-label="Vibration" aria-pressed="true">📳</button>
     <button class="icon-btn" id="muteBtn" aria-label="Sound">🔊</button>
   </div>
@@ -153,7 +195,7 @@ body[data-phase=play] .only-setup,body[data-phase=won] .only-setup{display:none!
     <div class="topbar">
       <div class="led" id="led" aria-label="Target layout"></div>
       <div class="keys">
-        <button class="key only-setup" id="autoBtn">Auto-place</button>
+        <button class="key toggle only-setup" id="autoBtn" aria-pressed="true">Auto-place</button>
         <button class="key only-setup" id="clearBtn">Clear</button>
         <button class="key only-play" id="hintBtn">Hint</button>
         <button class="key only-play" id="undoBtn">Undo</button>
@@ -164,9 +206,12 @@ body[data-phase=play] .only-setup,body[data-phase=won] .only-setup{display:none!
   </div>
 
   <div class="status" id="status"></div>
+  <div class="tip hidden" id="tip"><b id="tipHead"></b><span id="tipBody"></span><em id="tipWhy"></em></div>
   <div class="tray only-setup" id="tray"></div>
   <div class="row only-setup"><button class="btn go" id="startBtn" disabled>Start puzzle</button></div>
 </section>
+
+<div class="toast hidden" id="toast"></div>
 
 <div class="overlay hidden" id="win">
   <div class="card">
@@ -323,6 +368,13 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   var progress = store.get('hr_progress', {});
   var muted = store.get('hr_muted', false);
   var haptics = store.get('hr_haptics', true);
+  var autoPlace = store.get('hr_auto', true);
+  var SKINS = [
+    { id: 'classic', name: 'Classic', theme: '#0d1117' },
+    { id: 'blossom', name: 'Blossom · pastel pink & black', theme: '#0b0709' },
+    { id: 'neon', name: 'Neon · green & black', theme: '#020503' }
+  ];
+  var skin = store.get('hr_skin', 'classic');
 
   var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null;
   var els = new Map();
@@ -380,7 +432,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   }
 
   function showMenu() {
-    clearTimer(); G = null;
+    clearTimer(); G = null; hideTip();
     $('game').classList.add('hidden'); $('win').classList.add('hidden');
     $('menu').classList.remove('hidden');
     renderMenu(); window.scrollTo(0, 0);
@@ -401,6 +453,8 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     $('lvTitle').textContent = 'Level ' + (i + 1) + ' · ' + gradeOf(lv.par).name;
     $('par').textContent = lv.par; $('moves').textContent = '0'; $('time').textContent = '0:00';
     G.sel = firstAvailable();
+    hideTip(); renderAuto();
+    if (autoPlace) placeAll();
     layout(); renderAll(); window.scrollTo(0, 0);
   }
 
@@ -466,7 +520,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
       var v = verified(p), setup = G.phase === 'setup';
       el.classList.toggle('ok', setup && v);
       el.classList.toggle('bad', setup && !v);
-      el.removeAttribute('data-hint');
+      el.removeAttribute('data-hint'); el.removeAttribute('data-focus');
     });
     els.forEach(function (el, id) { if (!ids.has(id)) { el.remove(); els.delete(id); } });
   }
@@ -476,9 +530,8 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     var html = '';
     TYPES.forEach(function (t) {
       var n = remaining(t), d = DIM[t];
-      var col = t === 'R' ? '#e63946' : t === 'S' ? '#f5b82e' : '#2f80ed';
       html += '<button data-t="' + t + '" class="' + (G.sel === t ? 'sel' : '') + '"' + (n <= 0 ? ' disabled' : '') + '>' +
-        '<span class="mini" style="display:block;width:' + d.w * 15 + 'px;height:' + d.h * 15 + 'px;background:' + col + '"></span>' +
+        '<span class="mini m' + t + '" style="width:' + d.w * 15 + 'px;height:' + d.h * 15 + 'px"></span>' +
         '<small>×' + Math.max(n, 0) + '</small></button>';
     });
     $('tray').innerHTML = html;
@@ -539,16 +592,26 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     G.sel = b.dataset.t; renderTray();
   });
 
-  $('autoBtn').onclick = function () {
+  function placeAll() {
     G.pieces = G.tpieces.map(function (p) { return { id: ++uid, t: p.t, r: p.r, c: p.c }; });
-    G.sel = null; renderAll();
+    G.sel = null;
+  }
+  function renderAuto() {
+    var b = $('autoBtn'); b.classList.toggle('on', autoPlace); b.setAttribute('aria-pressed', autoPlace);
+  }
+  // Toggle: on = every level opens with the layout already copied; turning it on also fills this board, off clears it for manual placement
+  $('autoBtn').onclick = function () {
+    if (!G || G.phase !== 'setup') return;
+    autoPlace = !autoPlace; store.set('hr_auto', autoPlace); renderAuto();
+    if (autoPlace) placeAll(); else { G.pieces = []; G.sel = firstAvailable(); }
+    renderAll();
   };
   $('clearBtn').onclick = function () { G.pieces = []; G.sel = firstAvailable(); renderAll(); };
   $('startBtn').onclick = function () { if (!$('startBtn').disabled) startPlay(); };
 
   function startPlay() {
     G.phase = 'play'; document.body.dataset.phase = 'play';
-    G.initial = snap(); G.moves = 0; G.hints = 0; G.hist = []; G.msg = '';
+    G.initial = snap(); G.moves = 0; G.hints = 0; G.hist = []; G.msg = ''; hideTip();
     G.t0 = Date.now(); $('moves').textContent = '0'; $('time').textContent = '0:00';
     clearTimer(); timerId = setInterval(tick, 250);
     renderAll(); beep(740, 0.1);
@@ -598,7 +661,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   board.addEventListener('pointercancel', endDrag);
 
   function commitMove(p, dr, dc, k) {
-    G.hist.push(snap());
+    G.hist.push(snap()); hideTip();
     p.r += dr * k; p.c += dc * k; G.moves++;
     $('moves').textContent = G.moves;
     renderPieces(); renderLED(); renderStatus(); beep(500, 0.04); buzz(15);
@@ -607,25 +670,104 @@ if(typeof module!=="undefined")module.exports=LEVELS;
 
   $('undoBtn').onclick = function () {
     if (!G || G.phase !== 'play' || !G.hist.length) return;
-    G.pieces = G.hist.pop(); G.moves = Math.max(0, G.moves - 1);
+    hideTip(); G.pieces = G.hist.pop(); G.moves = Math.max(0, G.moves - 1);
     $('moves').textContent = G.moves; renderPieces(); renderLED();
   };
   $('restartBtn').onclick = function () {
     if (!G || !G.initial) return;
     G.pieces = G.initial.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; });
-    G.moves = 0; G.hist = []; G.phase = 'play'; document.body.dataset.phase = 'play';
+    hideTip(); G.moves = 0; G.hist = []; G.phase = 'play'; document.body.dataset.phase = 'play';
     G.t0 = Date.now(); $('moves').textContent = '0'; $('time').textContent = '0:00';
     clearTimer(); timerId = setInterval(tick, 250);
     clearBoard(); renderAll();
   };
+  /* ---------- hints: explain what to focus on, where and why ---------- */
+  var KIND = { R: 'big red square', V: 'tall block', H: 'wide block', S: 'small square' };
+  function cellsOf(t, r, c) {
+    var d = DIM[t], out = [];
+    for (var y = 0; y < d.h; y++) for (var x = 0; x < d.w; x++) out.push((r + y) * W + c + x);
+    return out;
+  }
+  function dirWord(m) { return m.dr < 0 ? 'up' : m.dr > 0 ? 'down' : m.dc < 0 ? 'left' : 'right'; }
+  function nameOf(p) { return 'the ' + KIND[p.t] + ' at row ' + (p.r + 1) + ', col ' + (p.c + 1); }
+  function listOf(ps) {
+    var n = ps.map(nameOf);
+    return n.length < 2 ? n.join('') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1];
+  }
+  function pieceAt(m) { return G.pieces.filter(function (x) { return x.t === m.t && x.r === m.r && x.c === m.c; })[0]; }
+
+  // Study the optimal line: when does red first move, and which blocks stand on the squares it needs for that slide?
+  function analyze(g, sol) {
+    var j = -1, i;
+    for (i = 0; i < sol.length; i++) if (sol[i].t === 'R') { j = i; break; }
+    var info = { j: j, first: sol[0], mover: pieceAt(sol[0]), red: j >= 0 ? sol[j] : null, blockers: [] };
+    if (j > 0) {
+      var rm = sol[j], path = {};
+      for (var s = 1; s <= rm.k; s++) cellsOf('R', rm.r + rm.dr * s, rm.c + rm.dc * s).forEach(function (c) { path[c] = 1; });
+      G.pieces.forEach(function (p) {
+        if (p.t !== 'R' && cellsOf(p.t, p.r, p.c).some(function (c) { return path[c]; })) info.blockers.push(p);
+      });
+    }
+    var empty = [];
+    for (i = 0; i < Sol.N; i++) if (g[i] === 0) empty.push(i);
+    var apart = empty.length === 2 && Math.abs(empty[0] - empty[1]) !== 1 && Math.abs(empty[0] - empty[1]) !== W;
+    var red = G.pieces.filter(function (p) { return p.t === 'R'; })[0];
+    info.why = apart ? 'Rule of thumb: keep the two empty cells side by side — wide blocks and the red square can only move into a matching gap.'
+      : red.c !== 1 && red.r < 3 ? 'Rule of thumb: the exit is under columns 2–3, so red has to line up there before it can drop out.'
+      : 'Rule of thumb: every move should either clear red’s path or make room for a blocker to leave it.';
+    info.left = sol.length;
+    return info;
+  }
+
+  function hintText(h) {
+    var i = h.info, m = i.first, mv = i.mover, step = ' ' + dirWord(m) + (m.k > 1 ? ' ' + m.k + ' cells' : '');
+    if (h.tier === 1) {
+      if (i.j === 0) {
+        var rd = dirWord(i.red);
+        return { head: 'Red is free to move', body: 'Nothing is in the way of the red square right now. ' +
+          (rd === 'down' ? 'Slide it down toward the exit.' : rd === 'up' ? 'Back it up — red sometimes has to retreat so other blocks can swing around.' :
+          'Shift it sideways — the exit is under columns 2–3, so red has to line up there before it drops.'), why: i.why };
+      }
+      return { head: i.blockers.length ? 'Focus on the outlined block' + (i.blockers.length > 1 ? 's' : '') : 'Make room first',
+        body: i.blockers.length
+          ? 'Red’s next slide ' + dirWord(i.red) + ' is blocked by ' + listOf(i.blockers) + '. Get ' + (i.blockers.length > 1 ? 'them' : 'it') +
+            ' out of the way — red can move after ' + i.j + ' prep move' + (i.j > 1 ? 's' : '') + '.'
+          : 'Red can’t move yet, but ' + i.j + ' prep move' + (i.j > 1 ? 's' : '') + ' will open its path.',
+        why: i.why };
+    }
+    var reason = i.j === 0 ? 'This is red’s own move.'
+      : i.blockers.indexOf(mv) >= 0 ? 'It is sitting in red’s way.'
+      : 'It is not in red’s way itself, but it opens the gap the blocking pieces need to slide out.';
+    return { head: 'Try this', body: 'Move ' + nameOf(m) + step + '. ' + reason, why: i.why };
+  }
+
+  function showHint(h) {
+    var t = hintText(h), i = h.info;
+    els.forEach(function (el) { el.removeAttribute('data-focus'); el.removeAttribute('data-hint'); });
+    var focus = i.j === 0 ? [i.mover] : i.blockers;
+    focus.forEach(function (p) { if (p && els.get(p.id)) els.get(p.id).setAttribute('data-focus', ''); });
+    if (h.tier === 2 && i.mover && els.get(i.mover.id)) {
+      var m = i.first, arrow = m.dr < 0 ? '↑' : m.dr > 0 ? '↓' : m.dc < 0 ? '←' : '→';
+      els.get(i.mover.id).setAttribute('data-hint', arrow + (m.k > 1 ? m.k : ''));
+    }
+    $('tipHead').innerHTML = t.head + '<span class="step">' + i.left + ' move' + (i.left > 1 ? 's' : '') + ' to go · hint ' + h.tier + '/2' + '</span>';
+    $('tipBody').textContent = t.body; $('tipWhy').textContent = t.why;
+    $('tip').classList.remove('hidden');
+    try { $('tip').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
+  }
+  function hideTip() { if (G) G.hint = null; $('tip').classList.add('hidden'); }
+
+  // Tap 1 explains the situation and outlines the block(s) to focus on; tap 2 shows the exact move.
   $('hintBtn').onclick = function () {
     if (!G || G.phase !== 'play') return;
-    var sol = Sol.solve(gridOf());
-    if (!sol || !sol.length) { G.msg = 'No solution from here — try Undo'; renderStatus(); return; }
-    var m = sol[0], arrow = m.dr < 0 ? '↑' : m.dr > 0 ? '↓' : m.dc < 0 ? '←' : '→';
-    var p = G.pieces.filter(function (x) { return x.t === m.t && x.r === m.r && x.c === m.c; })[0];
-    if (p && els.get(p.id)) els.get(p.id).setAttribute('data-hint', arrow + (m.k > 1 ? m.k : ''));
-    G.hints++; G.msg = 'Hint: ' + sol.length + ' move' + (sol.length > 1 ? 's' : '') + ' to go from here'; renderStatus();
+    var g = gridOf(), k = Sol.key(g);
+    if (!G.hint || G.hint.key !== k) {
+      var sol = Sol.solve(g);
+      if (!sol || !sol.length) { G.msg = 'No solution from here — try Undo'; renderStatus(); return; }
+      G.hint = { key: k, info: analyze(g, sol), tier: 0 };
+    }
+    G.hint.tier = Math.min(2, G.hint.tier + 1); G.hints++;
+    showHint(G.hint);
   };
 
   /* ---------- win ---------- */
@@ -669,6 +811,26 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   if (!navigator.vibrate) $('hapBtn').style.display = 'none';
   $('hapBtn').onclick = function () { haptics = !haptics; store.set('hr_haptics', haptics); renderHaptics(); buzz(30); };
   renderHaptics();
+
+  /* ---------- skins ---------- */
+  var toastTimer = null;
+  function toast(m) {
+    var t = $('toast'); t.textContent = m; t.classList.remove('hidden');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.add('hidden'); }, 1400);
+  }
+  function applySkin() {
+    var sk = SKINS.filter(function (x) { return x.id === skin; })[0] || SKINS[0];
+    skin = sk.id; document.documentElement.dataset.skin = sk.id;
+    var meta = document.querySelector('meta[name=theme-color]'); if (meta) meta.setAttribute('content', sk.theme);
+    return sk;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.skin-btn'), function (b) {
+    b.onclick = function () {
+      var i = SKINS.map(function (x) { return x.id; }).indexOf(skin);
+      skin = SKINS[(i + 1) % SKINS.length].id; store.set('hr_skin', skin); toast('Skin: ' + applySkin().name);
+    };
+  });
+  applySkin();
 
   /* ---------- init ---------- */
   (function init() {

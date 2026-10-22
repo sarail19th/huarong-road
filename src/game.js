@@ -13,6 +13,13 @@
   var progress = store.get('hr_progress', {});
   var muted = store.get('hr_muted', false);
   var haptics = store.get('hr_haptics', true);
+  var autoPlace = store.get('hr_auto', true);
+  var SKINS = [
+    { id: 'classic', name: 'Classic', theme: '#0d1117' },
+    { id: 'blossom', name: 'Blossom · pastel pink & black', theme: '#0b0709' },
+    { id: 'neon', name: 'Neon · green & black', theme: '#020503' }
+  ];
+  var skin = store.get('hr_skin', 'classic');
 
   var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null;
   var els = new Map();
@@ -70,7 +77,7 @@
   }
 
   function showMenu() {
-    clearTimer(); G = null;
+    clearTimer(); G = null; hideTip();
     $('game').classList.add('hidden'); $('win').classList.add('hidden');
     $('menu').classList.remove('hidden');
     renderMenu(); window.scrollTo(0, 0);
@@ -91,6 +98,8 @@
     $('lvTitle').textContent = 'Level ' + (i + 1) + ' · ' + gradeOf(lv.par).name;
     $('par').textContent = lv.par; $('moves').textContent = '0'; $('time').textContent = '0:00';
     G.sel = firstAvailable();
+    hideTip(); renderAuto();
+    if (autoPlace) placeAll();
     layout(); renderAll(); window.scrollTo(0, 0);
   }
 
@@ -156,7 +165,7 @@
       var v = verified(p), setup = G.phase === 'setup';
       el.classList.toggle('ok', setup && v);
       el.classList.toggle('bad', setup && !v);
-      el.removeAttribute('data-hint');
+      el.removeAttribute('data-hint'); el.removeAttribute('data-focus');
     });
     els.forEach(function (el, id) { if (!ids.has(id)) { el.remove(); els.delete(id); } });
   }
@@ -166,9 +175,8 @@
     var html = '';
     TYPES.forEach(function (t) {
       var n = remaining(t), d = DIM[t];
-      var col = t === 'R' ? '#e63946' : t === 'S' ? '#f5b82e' : '#2f80ed';
       html += '<button data-t="' + t + '" class="' + (G.sel === t ? 'sel' : '') + '"' + (n <= 0 ? ' disabled' : '') + '>' +
-        '<span class="mini" style="display:block;width:' + d.w * 15 + 'px;height:' + d.h * 15 + 'px;background:' + col + '"></span>' +
+        '<span class="mini m' + t + '" style="width:' + d.w * 15 + 'px;height:' + d.h * 15 + 'px"></span>' +
         '<small>×' + Math.max(n, 0) + '</small></button>';
     });
     $('tray').innerHTML = html;
@@ -229,16 +237,26 @@
     G.sel = b.dataset.t; renderTray();
   });
 
-  $('autoBtn').onclick = function () {
+  function placeAll() {
     G.pieces = G.tpieces.map(function (p) { return { id: ++uid, t: p.t, r: p.r, c: p.c }; });
-    G.sel = null; renderAll();
+    G.sel = null;
+  }
+  function renderAuto() {
+    var b = $('autoBtn'); b.classList.toggle('on', autoPlace); b.setAttribute('aria-pressed', autoPlace);
+  }
+  // Toggle: on = every level opens with the layout already copied; turning it on also fills this board, off clears it for manual placement
+  $('autoBtn').onclick = function () {
+    if (!G || G.phase !== 'setup') return;
+    autoPlace = !autoPlace; store.set('hr_auto', autoPlace); renderAuto();
+    if (autoPlace) placeAll(); else { G.pieces = []; G.sel = firstAvailable(); }
+    renderAll();
   };
   $('clearBtn').onclick = function () { G.pieces = []; G.sel = firstAvailable(); renderAll(); };
   $('startBtn').onclick = function () { if (!$('startBtn').disabled) startPlay(); };
 
   function startPlay() {
     G.phase = 'play'; document.body.dataset.phase = 'play';
-    G.initial = snap(); G.moves = 0; G.hints = 0; G.hist = []; G.msg = '';
+    G.initial = snap(); G.moves = 0; G.hints = 0; G.hist = []; G.msg = ''; hideTip();
     G.t0 = Date.now(); $('moves').textContent = '0'; $('time').textContent = '0:00';
     clearTimer(); timerId = setInterval(tick, 250);
     renderAll(); beep(740, 0.1);
@@ -288,7 +306,7 @@
   board.addEventListener('pointercancel', endDrag);
 
   function commitMove(p, dr, dc, k) {
-    G.hist.push(snap());
+    G.hist.push(snap()); hideTip();
     p.r += dr * k; p.c += dc * k; G.moves++;
     $('moves').textContent = G.moves;
     renderPieces(); renderLED(); renderStatus(); beep(500, 0.04); buzz(15);
@@ -297,25 +315,104 @@
 
   $('undoBtn').onclick = function () {
     if (!G || G.phase !== 'play' || !G.hist.length) return;
-    G.pieces = G.hist.pop(); G.moves = Math.max(0, G.moves - 1);
+    hideTip(); G.pieces = G.hist.pop(); G.moves = Math.max(0, G.moves - 1);
     $('moves').textContent = G.moves; renderPieces(); renderLED();
   };
   $('restartBtn').onclick = function () {
     if (!G || !G.initial) return;
     G.pieces = G.initial.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; });
-    G.moves = 0; G.hist = []; G.phase = 'play'; document.body.dataset.phase = 'play';
+    hideTip(); G.moves = 0; G.hist = []; G.phase = 'play'; document.body.dataset.phase = 'play';
     G.t0 = Date.now(); $('moves').textContent = '0'; $('time').textContent = '0:00';
     clearTimer(); timerId = setInterval(tick, 250);
     clearBoard(); renderAll();
   };
+  /* ---------- hints: explain what to focus on, where and why ---------- */
+  var KIND = { R: 'big red square', V: 'tall block', H: 'wide block', S: 'small square' };
+  function cellsOf(t, r, c) {
+    var d = DIM[t], out = [];
+    for (var y = 0; y < d.h; y++) for (var x = 0; x < d.w; x++) out.push((r + y) * W + c + x);
+    return out;
+  }
+  function dirWord(m) { return m.dr < 0 ? 'up' : m.dr > 0 ? 'down' : m.dc < 0 ? 'left' : 'right'; }
+  function nameOf(p) { return 'the ' + KIND[p.t] + ' at row ' + (p.r + 1) + ', col ' + (p.c + 1); }
+  function listOf(ps) {
+    var n = ps.map(nameOf);
+    return n.length < 2 ? n.join('') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1];
+  }
+  function pieceAt(m) { return G.pieces.filter(function (x) { return x.t === m.t && x.r === m.r && x.c === m.c; })[0]; }
+
+  // Study the optimal line: when does red first move, and which blocks stand on the squares it needs for that slide?
+  function analyze(g, sol) {
+    var j = -1, i;
+    for (i = 0; i < sol.length; i++) if (sol[i].t === 'R') { j = i; break; }
+    var info = { j: j, first: sol[0], mover: pieceAt(sol[0]), red: j >= 0 ? sol[j] : null, blockers: [] };
+    if (j > 0) {
+      var rm = sol[j], path = {};
+      for (var s = 1; s <= rm.k; s++) cellsOf('R', rm.r + rm.dr * s, rm.c + rm.dc * s).forEach(function (c) { path[c] = 1; });
+      G.pieces.forEach(function (p) {
+        if (p.t !== 'R' && cellsOf(p.t, p.r, p.c).some(function (c) { return path[c]; })) info.blockers.push(p);
+      });
+    }
+    var empty = [];
+    for (i = 0; i < Sol.N; i++) if (g[i] === 0) empty.push(i);
+    var apart = empty.length === 2 && Math.abs(empty[0] - empty[1]) !== 1 && Math.abs(empty[0] - empty[1]) !== W;
+    var red = G.pieces.filter(function (p) { return p.t === 'R'; })[0];
+    info.why = apart ? 'Rule of thumb: keep the two empty cells side by side — wide blocks and the red square can only move into a matching gap.'
+      : red.c !== 1 && red.r < 3 ? 'Rule of thumb: the exit is under columns 2–3, so red has to line up there before it can drop out.'
+      : 'Rule of thumb: every move should either clear red’s path or make room for a blocker to leave it.';
+    info.left = sol.length;
+    return info;
+  }
+
+  function hintText(h) {
+    var i = h.info, m = i.first, mv = i.mover, step = ' ' + dirWord(m) + (m.k > 1 ? ' ' + m.k + ' cells' : '');
+    if (h.tier === 1) {
+      if (i.j === 0) {
+        var rd = dirWord(i.red);
+        return { head: 'Red is free to move', body: 'Nothing is in the way of the red square right now. ' +
+          (rd === 'down' ? 'Slide it down toward the exit.' : rd === 'up' ? 'Back it up — red sometimes has to retreat so other blocks can swing around.' :
+          'Shift it sideways — the exit is under columns 2–3, so red has to line up there before it drops.'), why: i.why };
+      }
+      return { head: i.blockers.length ? 'Focus on the outlined block' + (i.blockers.length > 1 ? 's' : '') : 'Make room first',
+        body: i.blockers.length
+          ? 'Red’s next slide ' + dirWord(i.red) + ' is blocked by ' + listOf(i.blockers) + '. Get ' + (i.blockers.length > 1 ? 'them' : 'it') +
+            ' out of the way — red can move after ' + i.j + ' prep move' + (i.j > 1 ? 's' : '') + '.'
+          : 'Red can’t move yet, but ' + i.j + ' prep move' + (i.j > 1 ? 's' : '') + ' will open its path.',
+        why: i.why };
+    }
+    var reason = i.j === 0 ? 'This is red’s own move.'
+      : i.blockers.indexOf(mv) >= 0 ? 'It is sitting in red’s way.'
+      : 'It is not in red’s way itself, but it opens the gap the blocking pieces need to slide out.';
+    return { head: 'Try this', body: 'Move ' + nameOf(m) + step + '. ' + reason, why: i.why };
+  }
+
+  function showHint(h) {
+    var t = hintText(h), i = h.info;
+    els.forEach(function (el) { el.removeAttribute('data-focus'); el.removeAttribute('data-hint'); });
+    var focus = i.j === 0 ? [i.mover] : i.blockers;
+    focus.forEach(function (p) { if (p && els.get(p.id)) els.get(p.id).setAttribute('data-focus', ''); });
+    if (h.tier === 2 && i.mover && els.get(i.mover.id)) {
+      var m = i.first, arrow = m.dr < 0 ? '↑' : m.dr > 0 ? '↓' : m.dc < 0 ? '←' : '→';
+      els.get(i.mover.id).setAttribute('data-hint', arrow + (m.k > 1 ? m.k : ''));
+    }
+    $('tipHead').innerHTML = t.head + '<span class="step">' + i.left + ' move' + (i.left > 1 ? 's' : '') + ' to go · hint ' + h.tier + '/2' + '</span>';
+    $('tipBody').textContent = t.body; $('tipWhy').textContent = t.why;
+    $('tip').classList.remove('hidden');
+    try { $('tip').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
+  }
+  function hideTip() { if (G) G.hint = null; $('tip').classList.add('hidden'); }
+
+  // Tap 1 explains the situation and outlines the block(s) to focus on; tap 2 shows the exact move.
   $('hintBtn').onclick = function () {
     if (!G || G.phase !== 'play') return;
-    var sol = Sol.solve(gridOf());
-    if (!sol || !sol.length) { G.msg = 'No solution from here — try Undo'; renderStatus(); return; }
-    var m = sol[0], arrow = m.dr < 0 ? '↑' : m.dr > 0 ? '↓' : m.dc < 0 ? '←' : '→';
-    var p = G.pieces.filter(function (x) { return x.t === m.t && x.r === m.r && x.c === m.c; })[0];
-    if (p && els.get(p.id)) els.get(p.id).setAttribute('data-hint', arrow + (m.k > 1 ? m.k : ''));
-    G.hints++; G.msg = 'Hint: ' + sol.length + ' move' + (sol.length > 1 ? 's' : '') + ' to go from here'; renderStatus();
+    var g = gridOf(), k = Sol.key(g);
+    if (!G.hint || G.hint.key !== k) {
+      var sol = Sol.solve(g);
+      if (!sol || !sol.length) { G.msg = 'No solution from here — try Undo'; renderStatus(); return; }
+      G.hint = { key: k, info: analyze(g, sol), tier: 0 };
+    }
+    G.hint.tier = Math.min(2, G.hint.tier + 1); G.hints++;
+    showHint(G.hint);
   };
 
   /* ---------- win ---------- */
@@ -359,6 +456,26 @@
   if (!navigator.vibrate) $('hapBtn').style.display = 'none';
   $('hapBtn').onclick = function () { haptics = !haptics; store.set('hr_haptics', haptics); renderHaptics(); buzz(30); };
   renderHaptics();
+
+  /* ---------- skins ---------- */
+  var toastTimer = null;
+  function toast(m) {
+    var t = $('toast'); t.textContent = m; t.classList.remove('hidden');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.add('hidden'); }, 1400);
+  }
+  function applySkin() {
+    var sk = SKINS.filter(function (x) { return x.id === skin; })[0] || SKINS[0];
+    skin = sk.id; document.documentElement.dataset.skin = sk.id;
+    var meta = document.querySelector('meta[name=theme-color]'); if (meta) meta.setAttribute('content', sk.theme);
+    return sk;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.skin-btn'), function (b) {
+    b.onclick = function () {
+      var i = SKINS.map(function (x) { return x.id; }).indexOf(skin);
+      skin = SKINS[(i + 1) % SKINS.length].id; store.set('hr_skin', skin); toast('Skin: ' + applySkin().name);
+    };
+  });
+  applySkin();
 
   /* ---------- init ---------- */
   (function init() {

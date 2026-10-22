@@ -14,6 +14,7 @@
 
 <section id="menu" class="screen">
   <div class="brand">
+    <button class="icon-btn skin-btn" aria-label="Change skin" title="Change skin">🎨</button>
     <h1>Huarong <span>Road</span></h1>
     <p>Sliding-block puzzle · 100 graded levels · exact par for every level</p>
   </div>
@@ -33,6 +34,7 @@
   <div class="hud">
     <button class="icon-btn" id="backBtn" aria-label="Back">‹</button>
     <div class="title" id="lvTitle"></div>
+    <button class="icon-btn skin-btn" aria-label="Change skin" title="Change skin">🎨</button>
     <button class="icon-btn" id="hapBtn" aria-label="Vibration" aria-pressed="true">📳</button>
     <button class="icon-btn" id="muteBtn" aria-label="Sound">🔊</button>
   </div>
@@ -46,7 +48,7 @@
     <div class="topbar">
       <div class="led" id="led" aria-label="Target layout"></div>
       <div class="keys">
-        <button class="key only-setup" id="autoBtn">Auto-place</button>
+        <button class="key toggle only-setup" id="autoBtn" aria-pressed="true">Auto-place</button>
         <button class="key only-setup" id="clearBtn">Clear</button>
         <button class="key only-play" id="hintBtn">Hint</button>
         <button class="key only-play" id="undoBtn">Undo</button>
@@ -57,9 +59,12 @@
   </div>
 
   <div class="status" id="status"></div>
+  <div class="tip hidden" id="tip"><b id="tipHead"></b><span id="tipBody"></span><em id="tipWhy"></em></div>
   <div class="tray only-setup" id="tray"></div>
   <div class="row only-setup"><button class="btn go" id="startBtn" disabled>Start puzzle</button></div>
 </section>
+
+<div class="toast hidden" id="toast"></div>
 
 <div class="overlay hidden" id="win">
   <div class="card">
