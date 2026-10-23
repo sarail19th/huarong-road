@@ -11,6 +11,7 @@
     set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   };
   var progress = store.get('hr_progress', {});
+  var seen = store.get('hr_seen', {}); // level ids whose solution was viewed: wins there earn no stars
   var muted = store.get('hr_muted', false);
   var haptics = store.get('hr_haptics', true);
   var autoPlace = store.get('hr_auto', true);
@@ -21,7 +22,7 @@
   ];
   var skin = store.get('hr_skin', 'classic');
 
-  var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null;
+  var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null, autoTimer = null;
   var els = new Map();
   var ledCells = [];
   var RSVG = '<svg viewBox="0 0 100 100"><polygon points="50,12 90,84 10,84" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="6" stroke-linejoin="round"/><polygon points="50,38 68,70 32,70" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="5" stroke-linejoin="round"/></svg>';
@@ -68,7 +69,7 @@
       var pr = progress[lv.id];
       var b = document.createElement('button');
       b.className = 'lv' + (pr ? ' done' : '');
-      b.innerHTML = '<b>' + (i + 1) + '</b><span class="stars">' + stars(pr ? pr.stars : 0) + '</span>';
+      b.innerHTML = '<b>' + (i + 1) + '</b><span class="stars">' + (seen[lv.id] ? '👁 ' : '') + stars(pr ? pr.stars : 0) + '</span>';
       b.onclick = function () { openLevel(i); };
       row.appendChild(b);
       if (pr) total += pr.stars;
@@ -85,13 +86,13 @@
 
   /* ---------- level lifecycle ---------- */
   function clearBoard() { els.forEach(function (el) { el.remove(); }); els.clear(); }
-  function clearTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
+  function clearTimer() { if (timerId) { clearInterval(timerId); timerId = null; } stopAuto(); }
 
   function openLevel(i) {
     clearTimer();
     var lv = LV[i], target = lv.g.split('').map(Number);
     G = { idx: i, lv: lv, target: target, tpieces: Sol.piecesOf(target), pieces: [], initial: null,
-          phase: 'setup', sel: null, moves: 0, hints: 0, hist: [], t0: 0, elapsed: 0, msg: '' };
+          phase: 'setup', sel: null, moves: 0, hints: 0, hist: [], t0: 0, elapsed: 0, msg: '', sol: null };
     clearBoard();
     $('menu').classList.add('hidden'); $('win').classList.add('hidden'); $('game').classList.remove('hidden');
     document.body.dataset.phase = 'setup';
@@ -200,6 +201,8 @@
     } else if (G.phase === 'play') {
       s.textContent = G.msg || 'Drag blocks to free the red square — slide it to the exit.';
       if (G.msg) s.classList.add('warn');
+    } else if (G.phase === 'solution') {
+      s.textContent = '';
     }
   }
 
@@ -418,11 +421,94 @@
     showHint(G.hint);
   };
 
+
+  /* ---------- solution viewer: step through the optimal line from the start position ---------- */
+  function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } }
+
+  function askSolution() {
+    if (!G || G.phase !== 'play') return;
+    if (seen[G.lv.id]) openSolution(); else $('solAsk').classList.remove('hidden');
+  }
+  $('solBtn').onclick = askSolution;
+  $('solNo').onclick = function () { $('solAsk').classList.add('hidden'); };
+  $('solYes').onclick = function () { $('solAsk').classList.add('hidden'); openSolution(); };
+
+  function openSolution() {
+    if (!G || G.phase !== 'play') return;
+    var steps = Sol.solve(Sol.fromPieces(G.initial));
+    if (!steps) { say('No solution found for this layout'); return; }
+    seen[G.lv.id] = 1; store.set('hr_seen', seen);
+    // freeze the player's attempt, show the start position again and walk it from there
+    G.sol = { steps: steps, i: 0, stash: { pieces: snap(), hist: G.hist, moves: G.moves }, pausedAt: Date.now() };
+    clearTimer(); hideTip();
+    G.pieces = G.initial.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; });
+    G.phase = 'solution'; document.body.dataset.phase = 'solution';
+    clearBoard(); renderAll(); renderSol();
+    try { $('solHead').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
+  }
+
+  function renderSol() {
+    var S = G.sol, n = S.steps.length, i = S.i;
+    els.forEach(function (el) { el.removeAttribute('data-hint'); });
+    var next = i < n ? S.steps[i] : null;
+    if (next) {
+      var mv = pieceAt(next), arrow = next.dr < 0 ? '↑' : next.dr > 0 ? '↓' : next.dc < 0 ? '←' : '→';
+      if (mv && els.get(mv.id)) els.get(mv.id).setAttribute('data-hint', arrow + (next.k > 1 ? next.k : ''));
+      $('solHead').textContent = 'Step ' + (i + 1) + ' of ' + n;
+      $('solBody').textContent = 'Move ' + nameOf(next) + ' ' + dirWord(next) + (next.k > 1 ? ' ' + next.k + ' cells' : '') + '.';
+    } else {
+      $('solHead').textContent = 'Solved in ' + n + ' move' + (n > 1 ? 's' : '');
+      $('solBody').textContent = 'The red square is out. Go back and solve it yourself — this level earns no stars now.';
+    }
+    $('solPrev').disabled = i === 0;
+    $('solNext').disabled = i >= n;
+    $('solPlay').disabled = i >= n && !autoTimer;
+    $('solPlay').textContent = autoTimer ? '❚❚ Pause' : '▶ Play';
+    renderLED();
+  }
+
+  function solStep(dir) {
+    var S = G.sol; if (!S) return;
+    if (dir > 0) {
+      if (S.i >= S.steps.length) return;
+      var m = S.steps[S.i], p = pieceAt(m); if (!p) return;
+      p.r += m.dr * m.k; p.c += m.dc * m.k; S.i++;
+    } else {
+      if (S.i <= 0) return;
+      var b = S.steps[S.i - 1];
+      var q = G.pieces.filter(function (x) { return x.t === b.t && x.r === b.r + b.dr * b.k && x.c === b.c + b.dc * b.k; })[0]; if (!q) return;
+      q.r = b.r; q.c = b.c; S.i--;
+    }
+    renderPieces(); beep(500, 0.04); buzz(10);
+    if (S.i >= S.steps.length) stopAuto();
+    renderSol();
+  }
+  $('solNext').onclick = function () { stopAuto(); solStep(1); };
+  $('solPrev').onclick = function () { stopAuto(); solStep(-1); };
+  $('solPlay').onclick = function () {
+    if (!G || !G.sol) return;
+    if (autoTimer) { stopAuto(); renderSol(); return; }
+    if (G.sol.i >= G.sol.steps.length) return;
+    autoTimer = setInterval(function () { solStep(1); }, 750);
+    solStep(1);
+  };
+
+  $('solBack').onclick = function () {
+    if (!G || !G.sol) return;
+    stopAuto();
+    var S = G.sol; G.sol = null;
+    G.pieces = S.stash.pieces; G.hist = S.stash.hist; G.moves = S.stash.moves;
+    G.t0 += Date.now() - S.pausedAt; // the clock did not run while the solution was open
+    G.phase = 'play'; document.body.dataset.phase = 'play';
+    clearTimer(); timerId = setInterval(tick, 250);
+    clearBoard(); renderAll();
+  };
+
   /* ---------- win ---------- */
   function win() {
     G.phase = 'won'; document.body.dataset.phase = 'won'; clearTimer();
     G.elapsed = Date.now() - G.t0;
-    var par = G.lv.par, st = G.moves <= par ? 3 : G.moves <= Math.ceil(par * 1.4) ? 2 : 1;
+    var par = G.lv.par, st = seen[G.lv.id] ? 0 : G.moves <= par ? 3 : G.moves <= Math.ceil(par * 1.4) ? 2 : 1;
     var prev = progress[G.lv.id];
     progress[G.lv.id] = {
       stars: Math.max(st, prev ? prev.stars : 0),
@@ -439,7 +525,7 @@
     setTimeout(function () {
       $('winStars').textContent = stars(st);
       $('winInfo').innerHTML = 'Moves <b>' + G.moves + '</b> (par ' + par + ') · Time <b>' + fmt(G.elapsed) + '</b>' +
-        (G.hints ? ' · Hints ' + G.hints : '');
+        (G.hints ? ' · Hints ' + G.hints : '') + (seen[G.lv.id] ? '<br>Solution viewed — no stars for this level' : '');
       $('nextBtn').classList.toggle('hidden', G.idx + 1 >= LV.length);
       $('win').classList.remove('hidden');
     }, 950);

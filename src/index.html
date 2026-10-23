@@ -60,11 +60,32 @@
 
   <div class="status" id="status"></div>
   <div class="tip hidden" id="tip"><b id="tipHead"></b><span id="tipBody"></span><em id="tipWhy"></em></div>
+  <div class="row only-play"><button class="btn sm" id="solBtn">Show solution</button></div>
+  <div class="solbar only-sol">
+    <div class="solinfo"><b id="solHead"></b><span id="solBody"></span></div>
+    <div class="row">
+      <button class="btn" id="solPrev" aria-label="Previous step">‹ Prev</button>
+      <button class="btn go" id="solPlay">▶ Play</button>
+      <button class="btn" id="solNext" aria-label="Next step">Next ›</button>
+    </div>
+    <div class="row"><button class="btn sm" id="solBack">Back to puzzle</button></div>
+  </div>
   <div class="tray only-setup" id="tray"></div>
   <div class="row only-setup"><button class="btn go" id="startBtn" disabled>Start puzzle</button></div>
 </section>
 
 <div class="toast hidden" id="toast"></div>
+
+<div class="overlay hidden" id="solAsk">
+  <div class="card">
+    <h2>Show the solution?</h2>
+    <p>Once you have seen the solution, this level will <b>not earn any stars</b>.</p>
+    <div class="row">
+      <button class="btn" id="solNo">Keep trying</button>
+      <button class="btn go" id="solYes">Show it</button>
+    </div>
+  </div>
+</div>
 
 <div class="overlay hidden" id="win">
   <div class="card">

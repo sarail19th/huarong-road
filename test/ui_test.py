@@ -154,9 +154,70 @@ def features(p):
     assert not errors, errors
     print('hint 1:', head1, '|', body1); print('hint 2:', body2)
 
+def solution_view(p, idx):
+    """Show-solution flow: confirm dialog, step viewer, no stars afterwards (even when solved optimally)."""
+    ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.goto(URL)
+    page.locator('.lv').nth(idx).click()
+    page.click('#startBtn')                       # auto-place is on by default
+    assert page.locator('#solBtn').is_visible()
+    page.click('#solBtn')
+    assert page.locator('#solAsk').is_visible()
+    page.click('#solNo')
+    assert page.locator('#solAsk').is_hidden() and page.evaluate("() => localStorage.getItem('hr_seen')") is None, 'cancel must not count as viewing'
+    page.click('#solBtn'); page.click('#solYes')
+    assert page.locator('.solbar').is_visible() and page.locator('#solBtn').is_hidden()
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_seen'))") == {str(page.evaluate("() => LEVELS[%d].id" % idx)): 1}
+    n = page.evaluate("() => Solver.solve(LEVELS[%d].g.split('').map(Number)).length" % idx)
+    assert f'of {n}' in page.locator('#solHead').inner_text()
+    assert page.locator('#solPrev').is_disabled()
+    page.screenshot(path=f'{SHOTS}/solution_step1.png')
+    for i in range(n):
+        assert page.locator('.piece[data-hint]').count() == 1, 'next move is marked'
+        page.click('#solNext'); page.wait_for_timeout(30)
+    assert page.locator('#solNext').is_disabled()
+    assert 'Solved in %d' % n in page.locator('#solHead').inner_text()
+    page.screenshot(path=f'{SHOTS}/solution_end.png')
+    page.click('#solPrev'); page.click('#solNext')            # step back and forth
+    for i in range(n): page.click('#solPrev')
+    assert page.locator('#solPrev').is_disabled() and 'Step 1 of' in page.locator('#solHead').inner_text()
+    page.click('#solPlay'); page.wait_for_timeout(100)        # autoplay advances, pause stops it
+    assert 'Pause' in page.locator('#solPlay').inner_text()
+    page.click('#solPlay'); i1 = page.locator('#solHead').inner_text(); page.wait_for_timeout(1000)
+    assert page.locator('#solHead').inner_text() == i1, 'pause stops autoplay'
+    page.click('#solBack')
+    assert page.locator('.solbar').is_hidden() and page.locator('#solBtn').is_visible() and page.locator('#moves').inner_text() == '0'
+    # solve it by hand with the optimal line: still 0 stars
+    sol = page.evaluate("() => Solver.solve(LEVELS[%d].g.split('').map(Number))" % idx)
+    box = page.locator('#board').bounding_box(); cs = (box['width'] - 4 - 16) / 4
+    state = [dict(t) for t in page.evaluate("() => Solver.piecesOf(LEVELS[%d].g.split('').map(Number))" % idx)]
+    for m in sol:
+        pc = next(q for q in state if q['t'] == m['t'] and q['r'] == m['r'] and q['c'] == m['c'])
+        d = {'R': (2, 2), 'V': (1, 2), 'H': (2, 1), 'S': (1, 1)}[pc['t']]
+        sx = box['x'] + 10 + (pc['c'] + d[0] / 2) * cs; sy = box['y'] + 10 + (pc['r'] + d[1] / 2) * cs
+        page.mouse.move(sx, sy); page.mouse.down()
+        for i in range(1, 7): page.mouse.move(sx + m['dc'] * m['k'] * cs * i / 6, sy + m['dr'] * m['k'] * cs * i / 6)
+        page.mouse.up(); pc['r'] += m['dr'] * m['k']; pc['c'] += m['dc'] * m['k']; page.wait_for_timeout(40)
+    page.wait_for_selector('#win:not(.hidden)', timeout=4000)
+    assert page.locator('#winStars').inner_text() == '☆☆☆', 'no stars after viewing the solution'
+    assert 'no stars' in page.locator('#winInfo').inner_text()
+    page.screenshot(path=f'{SHOTS}/solution_win.png')
+    page.click('#menuBtn')
+    assert '👁' in page.locator('.lv').nth(idx).inner_text() and page.locator('#totalStars').inner_text().startswith('0 /')
+    # persists: reopening the level and solving again still earns nothing; viewing again skips the confirm
+    page.locator('.lv').nth(idx).click(); page.click('#startBtn'); page.click('#solBtn')
+    assert page.locator('#solAsk').is_hidden() and page.locator('.solbar').is_visible()
+    ctx.close()
+    assert not errors, errors
+
 with sync_playwright() as p:
     features(p)
     print('features: auto-place default, skins, two-step hints OK')
+    for idx in (0, 45, 99): solution_view(p, idx)
+    print('solution viewer: confirm, step/play/pause, back, no stars after viewing OK')
     # level 1 (with screenshots), a mid level, and a hard level
     for idx, shots in [(0, True), (30, False), (60, False)]:
         n, moves, st, info, stored = run(idx, p, shots)
