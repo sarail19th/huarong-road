@@ -383,6 +383,68 @@ def trend(p):
     page.click('#restartBtn'); assert 'Drag blocks' in page.locator('#status').inner_text(), 'restart clears the line'
     ctx.close(); assert not errors, errors
 
+def updates(p):
+    """Update flow against a real local server: banner on a new deploy, ↻ beats stale browser caches, offline is safe,
+    and progress survives."""
+    import re, shutil, tempfile, threading, http.server, functools
+    tmp = tempfile.mkdtemp(); site = os.path.join(tmp, 'site'); shutil.copytree(os.path.join(ROOT, 'dist'), site)
+    class Quiet(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *a): pass
+    srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Quiet, directory=site))
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = f'http://127.0.0.1:{srv.server_address[1]}/index.html'
+    rd = lambda f: open(os.path.join(site, f), encoding='utf8').read()
+    def wr(f, t): open(os.path.join(site, f), 'w', encoding='utf8').write(t)
+    h1 = re.search(r'huarong-([0-9a-f]{7})', rd('sw.js')).group(1)
+    def deploy(newhash, marker, with_sw=True):
+        old = re.search(r'huarong-([0-9a-f]{7})', rd('sw.js')).group(1)
+        wr('index.html', rd('index.html').replace(old, newhash).replace('</body>', f'<!--{marker}--></body>'))
+        if with_sw: wr('sw.js', rd('sw.js').replace(old, newhash))
+    ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' and 'Failed to load resource' not in m.text else None)
+    ver = lambda: page.locator('#verId').inner_text()
+    controlled = lambda: page.wait_for_function("() => navigator.serviceWorker.controller", timeout=10000)
+    page.goto(base); controlled()
+    assert ver() == h1 and 'Version' in page.locator('.ver').inner_text()
+    page.evaluate("() => localStorage.setItem('hr_progress', JSON.stringify({1: {stars: 3, moves: 2, time: 1}}))")
+    page.reload(); controlled()
+    assert page.locator('#updbar').is_hidden(), 'no banner without an update'
+    # 1) a new version is deployed: the open page notices and offers Update (never reloads by itself)
+    deploy('aaaaaa1', 'v2')
+    page.evaluate("() => document.dispatchEvent(new Event('visibilitychange'))")
+    page.wait_for_selector('#updbar:not(.hidden)', timeout=10000)
+    assert ver() == h1, 'running page is untouched until the player taps Update'
+    page.screenshot(path=f'{SHOTS}/update_banner.png')
+    page.click('#updBtn'); page.wait_for_function("() => ((document.getElementById('verId') || {}).textContent) === 'aaaaaa1'", timeout=10000)
+    assert '<!--v2-->' in page.evaluate("() => document.documentElement.outerHTML")
+    # 2) deployed again but the worker file is unchanged (worst case: stale caches). The ↻ button still gets the newest page
+    controlled()
+    deploy('bbbbbb2', 'v3', with_sw=False)
+    page.click('#refreshBtn')
+    page.wait_for_function("() => ((document.getElementById('verId') || {}).textContent) === 'bbbbbb2'", timeout=10000)
+    assert '<!--v3-->' in page.evaluate("() => document.documentElement.outerHTML")
+    page.wait_for_selector('#toast:not(.hidden)', timeout=3000)
+    assert 'Updated' in page.locator('#toast').inner_text(), page.locator('#toast').inner_text()
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_progress'))['1'].stars") == 3, 'progress survives a refresh'
+    # 3) nothing new: ↻ says so
+    controlled(); page.wait_for_timeout(1800)
+    page.click('#refreshBtn')
+    page.wait_for_function("() => { var t = document.getElementById('toast'); return !!t && !t.classList.contains('hidden') && /latest/.test(t.textContent); }", timeout=10000)
+    # 4) offline: ↻ fails politely and the installed copy keeps working
+    controlled(); page.wait_for_timeout(1800)
+    ctx.set_offline(True)
+    page.click('#refreshBtn')
+    page.wait_for_function("() => { var t = document.getElementById('toast'); return !!t && /server|เซิร์ฟเวอร์/.test(t.textContent); }", timeout=10000)
+    assert page.evaluate("() => caches.keys().then(k => k.length)") >= 1 and page.locator('.lv').count() == 20
+    assert page.locator('#refreshBtn').get_attribute('class') is None or 'spin' not in page.locator('#refreshBtn').get_attribute('class')
+    page.reload(); page.wait_for_selector('.lv', timeout=10000)      # still launches offline from the cache
+    assert ver() == 'bbbbbb2'
+    ctx.set_offline(False)
+    ctx.close(); srv.shutdown(); shutil.rmtree(tmp, ignore_errors=True)
+    assert not errors, errors
+
 def menu_pages(p):
     """Level list is paged (20 per page), remembers where you were, and header buttons do not cover the title."""
     for w in (412, 320):
@@ -460,6 +522,8 @@ def about(p):
     assert not errors, errors
 
 with sync_playwright() as p:
+    if os.environ.get('HR_ONLY'):
+        globals()[os.environ['HR_ONLY']](p); print('ONLY', os.environ['HR_ONLY'], 'OK'); sys.exit(0)
     features(p)
     print('features: auto-place default, skins, two-step hints OK')
     lang_switch(p)
@@ -467,6 +531,8 @@ with sync_playwright() as p:
     all_hints(p)
     trend(p)
     print('on-track feedback: closer / further / undo, hidden until a hint is used')
+    updates(p)
+    print('updates: banner on new deploy, refresh beats stale caches, offline safe, progress kept')
     menu_pages(p)
     print('menu pages: 20 per page, remembered, header does not cover the title')
     thai(p)

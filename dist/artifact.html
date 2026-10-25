@@ -191,15 +191,28 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 .pgchip.on{color:var(--yellow);border-color:var(--yellow)}
 .pgnav{margin-top:18px;gap:10px}
 .pgnav .btn{font-size:13px;color:var(--muted)}
+
+/* ---------- app updates ---------- */
+.updbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:8px 8px 8px 14px;background:var(--panel);border:1px solid var(--yellow);border-radius:14px;font-size:13.5px;font-weight:600}
+.updbar .btn.go{flex:none;margin:0;padding:8px 16px;font-size:13px;color:#06210f}
+#refreshBtn.spin{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ver{margin:22px 0 0;text-align:center;color:var(--muted);font-size:11.5px}
+.ver b{font-weight:600;letter-spacing:.5px}
 </style>
 
 
 <section id="menu" class="screen">
+  <div class="updbar hidden" id="updbar" role="status">
+    <span data-th="มีเวอร์ชันใหม่พร้อมแล้ว">A new version is ready</span>
+    <button class="btn go sm" id="updBtn" data-th="อัปเดต">Update</button>
+  </div>
   <div class="brand">
     <div class="brandbar">
       <div class="left">
       <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Language: English (tap for Thai)" title="English / ไทย"><span class="en">EN</span><span class="th">ไทย</span></button>
       <button class="icon-btn about-btn" id="aboutBtn" aria-label="About this game" title="About this game">?</button>
+      <button class="icon-btn" id="refreshBtn" aria-label="Refresh app to get the latest version" title="Refresh / get latest version">↻</button>
       </div>
       <button class="icon-btn skin-btn" aria-label="Change skin" title="Change skin">🎨</button>
     </div>
@@ -223,6 +236,7 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
   <div class="pgchips" id="pgchips" role="tablist" aria-label="Level pages"></div>
   <div id="levels"></div>
   <div class="row pgnav"><button class="btn" id="pgPrev"></button><button class="btn" id="pgNext"></button></div>
+  <p class="ver"><span data-th="เวอร์ชัน">Version</span> <b id="verId"></b></p>
 </section>
 
 <section id="game" class="screen hidden">
@@ -482,6 +496,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   var muted = store.get('hr_muted', false);
   var haptics = store.get('hr_haptics', true);
   var autoPlace = store.get('hr_auto', true);
+  var BUILD = 'dd73b68'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
@@ -1207,6 +1222,56 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   applySkin();
   applyLang();
 
+  /* ---------- app updates: refresh button + "new version ready" banner ---------- */
+  var hasSW = 'serviceWorker' in navigator && /^https?:/.test(location.protocol);
+  var hadController = hasSW && !!navigator.serviceWorker.controller;
+
+  // Refresh = prove the server is reachable first (a cache-busting URL, so neither the old worker nor the browser cache can
+  // answer for it; offline we stop here and change nothing), then drop the cached copies and the old worker, pull the
+  // page fresh into the browser cache and reload. Progress and settings live in localStorage and are not touched.
+  function refreshApp() {
+    var btn = $('refreshBtn'), url = location.href.split('#')[0].split('?')[0];
+    if (btn.classList.contains('spin')) return;
+    if (!hasSW) { location.reload(); return; }
+    btn.classList.add('spin'); toast(L('Refreshing…', 'กำลังรีเฟรช…'));
+    fetch(url + '?r=' + Date.now(), { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('http ' + r.status);
+      var jobs = [];
+      if (window.caches) jobs.push(caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }));
+      jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (x) { return x.unregister(); })); }));
+      return Promise.all(jobs);
+    }).then(function () {
+      return fetch(url, { cache: 'reload' }).catch(function () {}); // refresh the browser's own copy of the page too
+    }).then(function () {
+      try { sessionStorage.setItem('hr_refreshed', BUILD); } catch (e) {}
+      location.reload();
+    }, function () {
+      btn.classList.remove('spin');
+      toast(L('Can’t reach the server — check your connection', 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ — ตรวจสอบอินเทอร์เน็ต'));
+    });
+  }
+  $('refreshBtn').onclick = refreshApp;
+  $('updBtn').onclick = function () { location.reload(); }; // the new worker already holds the new files
+
+  function initUpdates() {
+    $('verId').textContent = BUILD;
+    var prev = null; try { prev = sessionStorage.getItem('hr_refreshed'); sessionStorage.removeItem('hr_refreshed'); } catch (e) {}
+    var last = store.get('hr_build', null); store.set('hr_build', BUILD);
+    if (prev !== null) setTimeout(function () {
+      toast(last && last !== BUILD ? L('Updated ✓ version ' + BUILD, 'อัปเดตแล้ว ✓ เวอร์ชัน ' + BUILD) : L('Already the latest version (' + BUILD + ')', 'เป็นเวอร์ชันล่าสุดแล้ว (' + BUILD + ')'));
+    }, 300);
+    if (!hasSW) return;
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (reg) {
+      var check = function () { reg.update().catch(function () {}); };
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+      check();
+    }).catch(function () {});
+    // a new worker took over from an old one: tell the player (never reload by itself, a level may be in progress)
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (hadController) $('updbar').classList.remove('hidden');
+    });
+  }
+
   /* ---------- init ---------- */
   (function init() {
     var led = $('led');
@@ -1215,7 +1280,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     window.addEventListener('resize', function () { if (G) layout(); });
     document.body.dataset.phase = 'setup';
     renderMenu();
-    if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(function () {});
+    initUpdates();
   })();
 })();
 </script>

@@ -13,11 +13,16 @@
 <body data-phase="setup">
 
 <section id="menu" class="screen">
+  <div class="updbar hidden" id="updbar" role="status">
+    <span data-th="มีเวอร์ชันใหม่พร้อมแล้ว">A new version is ready</span>
+    <button class="btn go sm" id="updBtn" data-th="อัปเดต">Update</button>
+  </div>
   <div class="brand">
     <div class="brandbar">
       <div class="left">
       <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Language: English (tap for Thai)" title="English / ไทย"><span class="en">EN</span><span class="th">ไทย</span></button>
       <button class="icon-btn about-btn" id="aboutBtn" aria-label="About this game" title="About this game">?</button>
+      <button class="icon-btn" id="refreshBtn" aria-label="Refresh app to get the latest version" title="Refresh / get latest version">↻</button>
       </div>
       <button class="icon-btn skin-btn" aria-label="Change skin" title="Change skin">🎨</button>
     </div>
@@ -41,6 +46,7 @@
   <div class="pgchips" id="pgchips" role="tablist" aria-label="Level pages"></div>
   <div id="levels"></div>
   <div class="row pgnav"><button class="btn" id="pgPrev"></button><button class="btn" id="pgNext"></button></div>
+  <p class="ver"><span data-th="เวอร์ชัน">Version</span> <b id="verId"></b></p>
 </section>
 
 <section id="game" class="screen hidden">

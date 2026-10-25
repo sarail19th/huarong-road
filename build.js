@@ -3,11 +3,15 @@ const fs = require('fs');
 const path = require('path');
 const read = (f) => fs.readFileSync(path.join(__dirname, f), 'utf8');
 // function replacers so "$&"-style sequences in the source are never interpreted
-const html = read('src/index.html')
+const draft = read('src/index.html')
   .replace('/*INLINE_CSS*/', () => read('src/style.css'))
   .replace('/*INLINE_SOLVER*/', () => read('src/solver.js'))
   .replace('/*INLINE_LEVELS*/', () => read('src/levels.js'))
   .replace('/*INLINE_GAME*/', () => read('src/game.js'));
+// Version id = short hash of the app itself: it only changes when the app does, and the page, the service worker's
+// cache name and the "Version" label in the menu all agree on it.
+const v = require('crypto').createHash('sha1').update(draft).digest('hex').slice(0, 7);
+const html = draft.split('__BUILD__').join(v);
 fs.mkdirSync(path.join(__dirname, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(__dirname, 'dist/index.html'), html);
 
@@ -21,10 +25,10 @@ fs.writeFileSync(path.join(__dirname, 'dist/manifest.webmanifest'), JSON.stringi
   ]
 }, null, 2));
 
-const v = Date.now().toString(36);
 fs.writeFileSync(path.join(__dirname, 'dist/sw.js'), `const C='huarong-${v}';
 const FILES=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
-self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
+// cache:'reload' goes to the server, never the browser's HTTP cache, so a new version can't be filled with stale files
+self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>Promise.all(FILES.map(f=>fetch(f,{cache:'reload'}).then(r=>{if(!r.ok)throw new Error(f);return c.put(f,r)})))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))});
 `);
