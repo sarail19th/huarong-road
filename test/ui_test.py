@@ -277,6 +277,112 @@ def thai(p):
     assert not errors, errors
     print('thai hint 2:', thai_body2)
 
+def lang_switch(p):
+    """EN | ไทย switch: the active side is visibly highlighted, and tapping flips it both ways on every screen."""
+    ctx = p.chromium.launch().new_context(viewport={'width': 360, 'height': 780}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.goto(URL)
+    bg = lambda sel: page.evaluate("(s) => getComputedStyle(document.querySelector(s)).backgroundColor", sel)
+    lit = lambda side, scope: bg(f'{scope} .lang-btn .{side}') != 'rgba(0, 0, 0, 0)'
+    for scope in ('#menu',):
+        assert lit('en', scope) and not lit('th', scope), 'English side lit at start'
+    assert page.locator('#menu .lang-btn').inner_text().replace('\n', ' ').split() == ['EN', 'ไทย']
+    for turn in range(3):                          # menu: en -> th -> en -> th
+        page.locator('#menu .lang-btn').tap()
+        want_th = turn % 2 == 0
+        assert lit('th', '#menu') == want_th and lit('en', '#menu') != want_th
+        assert ('วิธีเล่น' in page.locator('.howto').inner_text()) == want_th
+        assert page.evaluate("() => document.documentElement.lang") == ('th' if want_th else 'en')
+    page.locator('.lv').nth(3).tap(); page.click('#startBtn')   # in Thai: game bar switch flips back and forth
+    for want_th in (False, True, False):
+        page.locator('#game .lang-btn').tap()
+        assert lit('th', '#game') == want_th and (page.locator('#hintBtn').inner_text() == 'คำใบ้') == want_th
+        assert ('Drag blocks' in page.locator('#status').inner_text()) != want_th
+    page.screenshot(path=f'{SHOTS}/lang_switch_360.png')
+    hb = page.locator('#game .lang-btn').bounding_box(); title = page.locator('#lvTitle').bounding_box()
+    assert hb['x'] >= title['x'] + 20, 'switch not on top of the level title'
+    assert page.evaluate("() => document.documentElement.scrollWidth") <= 360
+    ctx.close(); assert not errors, errors
+
+def all_hints(p):
+    """Open every level in English and Thai, tap Hint twice: the text is complete, specific and fully translated."""
+    import re
+    ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=1, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.goto(URL)
+    bad = re.compile(r'undefined|NaN|null|\[object')
+    stats = {'goal_with_space': 0, 'goal_clear': 0, 'free': 0, 'generic_setup': 0, 'n': 0}
+    for th in (False, True):
+        if th: page.locator('#menu .lang-btn').click()
+        for idx in range(100):
+            lv(page, idx).click(); page.click('#startBtn')
+            for tap in (1, 2):
+                page.click('#hintBtn')
+                head, body, why = (page.locator(f'#{i}').inner_text() for i in ('tipHead', 'tipBody', 'tipWhy'))
+                txt = head + body + why
+                assert body.strip() and why.strip() and not bad.search(txt), (idx + 1, th, tap, txt)
+                if th: assert not re.search('[A-Za-z]{3,}', body + why), (idx + 1, 'untranslated', body + why)
+                if tap == 1:
+                    assert page.locator('.piece[data-focus]').count() >= 1 and page.locator('.piece[data-hint]').count() == 0, (idx + 1, 'tier1 outline')
+                else:
+                    assert page.locator('.piece[data-hint]').count() == 1, (idx + 1, 'tier2 arrow')
+                    if not th:
+                        stats['n'] += 1
+                        if 'set-up move' in body: stats['generic_setup'] += 1
+                if tap == 1 and not th:
+                    if 'Red is free' in head: stats['free'] += 1
+                    elif 'it has to slide' in body: stats['goal_with_space'] += 1
+                    else: stats['goal_clear'] += 1
+            page.click('#backBtn')
+    ctx.close(); assert not errors, errors
+    print('hints on 100 levels x EN/TH:', stats)
+    assert stats['generic_setup'] <= 40, 'too many fallback explanations: ' + str(stats)
+
+def trend(p):
+    """After a hint was used each move says closer / no progress / further; no such line without a hint."""
+    ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=1, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.goto(URL)
+    IDX = 12
+    lv(page, IDX).click(); page.click('#startBtn')
+    grid = page.evaluate("() => LEVELS[%d].g.split('').map(Number)" % IDX)
+    def do(move, g):
+        pc = next(q for q in page.evaluate("(g) => Solver.piecesOf(g)", g) if q['t'] == move['t'] and q['r'] == move['r'] and q['c'] == move['c'])
+        d = {'R': (2, 2), 'V': (1, 2), 'H': (2, 1), 'S': (1, 1)}[pc['t']]
+        box = page.locator('#board').bounding_box(); cs = (box['width'] - 4 - 16) / 4
+        sx = box['x'] + 10 + (pc['c'] + d[0] / 2) * cs; sy = box['y'] + 10 + (pc['r'] + d[1] / 2) * cs
+        page.mouse.move(sx, sy); page.mouse.down()
+        for i in range(1, 7): page.mouse.move(sx + move['dc'] * move['k'] * cs * i / 6, sy + move['dr'] * move['k'] * cs * i / 6)
+        page.mouse.up(); page.wait_for_timeout(400)
+        return page.evaluate("([g, m]) => Solver.slide(g, {t: m.t, r: m.r, c: m.c}, m.dr, m.dc, m.k)", [g, move])
+    best = page.evaluate("(g) => Solver.solve(g)", grid)
+    # no hint used yet: the good move gets no on-track line
+    g1 = do(best[0], grid)
+    assert 'Drag blocks' in page.locator('#status').inner_text(), 'no feedback line before any hint'
+    page.click('#hintBtn')                                           # now a hint has been used
+    best = page.evaluate("(g) => Solver.solve(g)", g1)
+    g2 = do(best[0], g1)
+    st = page.locator('#status').inner_text(); assert st.startswith('✓ Closer') and 'to go' in st, st
+    assert 'good' in page.locator('#status').get_attribute('class')
+    worse = page.evaluate("""(g) => { var d = Solver.solve(g).length; var ns = Solver.neighbors(g);
+        for (var i = 0; i < ns.length; i++) if (Solver.solve(ns[i].g).length > d) return ns[i].m; return null; }""", g2)
+    assert worse, 'a worse move exists'
+    g3 = do(worse, g2)
+    st = page.locator('#status').inner_text(); assert st.startswith('✗ Further'), st
+    page.locator('#menu .lang-btn, #game .lang-btn').first.click() if False else page.locator('#game .lang-btn').click()
+    assert page.locator('#status').inner_text().startswith('✗ ไกลขึ้น'), 'feedback follows the language'
+    page.locator('#game .lang-btn').click()
+    page.click('#undoBtn'); page.wait_for_timeout(300)
+    assert 'to go' in page.locator('#status').inner_text() and '✗' not in page.locator('#status').inner_text()
+    page.click('#restartBtn'); assert 'Drag blocks' in page.locator('#status').inner_text(), 'restart clears the line'
+    ctx.close(); assert not errors, errors
+
 def menu_pages(p):
     """Level list is paged (20 per page), remembers where you were, and header buttons do not cover the title."""
     for w in (412, 320):
@@ -356,6 +462,11 @@ def about(p):
 with sync_playwright() as p:
     features(p)
     print('features: auto-place default, skins, two-step hints OK')
+    lang_switch(p)
+    print('language switch: EN | ไทย highlights the active side, flips both ways, fits at 360px')
+    all_hints(p)
+    trend(p)
+    print('on-track feedback: closer / further / undo, hidden until a hint is used')
     menu_pages(p)
     print('menu pages: 20 per page, remembered, header does not cover the title')
     thai(p)

@@ -62,8 +62,10 @@ h3.grade small{color:var(--muted);font-weight:400;font-size:12px}
 .hud{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .hud .title{flex:1;font-weight:600;font-size:15px}
 .icon-btn{background:var(--panel2);border:1px solid var(--line);border-radius:12px;width:40px;height:40px;font-size:18px}
-.lang-btn{font-size:14px;font-weight:700}
-.lang-btn[aria-pressed=true]{color:var(--yellow);border-color:var(--yellow)}
+.lang-btn{display:inline-flex;align-items:center;width:auto;padding:0 4px;gap:2px;font-size:12.5px;font-weight:700}
+.lang-btn span{padding:5px 7px;border-radius:8px;color:var(--muted)}
+html:not([lang=th]) .lang-btn .en,html[lang=th] .lang-btn .th{background:var(--yellow);color:#10131a}
+@media (max-width:360px){.hud{gap:6px}.hud .icon-btn{width:36px}.hud .lang-btn{width:auto}}
 .stats{display:flex;gap:8px;margin-bottom:10px}
 .stat{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 8px;text-align:center}
 .stat small{display:block;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px}
@@ -161,7 +163,7 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 
 /* ---------- about ---------- */
 .card.about{max-width:400px;max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);overflow-y:auto;text-align:left;padding:18px 18px 20px;position:relative;-webkit-user-select:text;user-select:text}
-.about .lang-btn{position:absolute;right:14px;top:14px;width:44px;height:36px}
+.about .lang-btn{position:absolute;right:14px;top:14px;height:36px}
 .apager{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px}
 .apager .btn.sm{margin:0;padding:8px 12px}
 .apager .dots{display:flex;gap:8px}
@@ -196,7 +198,7 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
   <div class="brand">
     <div class="brandbar">
       <div class="left">
-      <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Thai guidance (off)" title="ไทย / English">ไทย</button>
+      <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Language: English (tap for Thai)" title="English / ไทย"><span class="en">EN</span><span class="th">ไทย</span></button>
       <button class="icon-btn about-btn" id="aboutBtn" aria-label="About this game" title="About this game">?</button>
       </div>
       <button class="icon-btn skin-btn" aria-label="Change skin" title="Change skin">🎨</button>
@@ -227,7 +229,7 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
   <div class="hud">
     <button class="icon-btn" id="backBtn" aria-label="Back">‹</button>
     <div class="title" id="lvTitle"></div>
-    <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Thai guidance (off)" title="ไทย / English">ไทย</button>
+    <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Language: English (tap for Thai)" title="English / ไทย"><span class="en">EN</span><span class="th">ไทย</span></button>
     <button class="icon-btn skin-btn" aria-label="Change skin" title="Change skin">🎨</button>
     <button class="icon-btn" id="hapBtn" aria-label="Vibration" aria-pressed="true">📳</button>
     <button class="icon-btn" id="muteBtn" aria-label="Sound">🔊</button>
@@ -272,7 +274,7 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 
 <div class="overlay hidden" id="about">
   <div class="card about" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
-    <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Thai guidance (off)" title="ไทย / English">ไทย</button>
+    <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Language: English (tap for Thai)" title="English / ไทย"><span class="en">EN</span><span class="th">ไทย</span></button>
     <h2 id="aboutTitle" data-th="เกี่ยวกับเกมนี้">About this game</h2>
     <p class="zh">華容道 · Huáróng Dào</p>
 
@@ -588,7 +590,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     clearTimer();
     menuPage = Math.floor(i / PAGE); store.set('hr_page', menuPage); // coming back to the menu lands on this level's page
     var lv = LV[i], target = lv.g.split('').map(Number);
-    G = { idx: i, lv: lv, target: target, tpieces: Sol.piecesOf(target), pieces: [], initial: null,
+    G = { idx: i, lv: lv, target: target, tpieces: Sol.piecesOf(target), pieces: [], initial: null, dc: {}, trend: null,
           phase: 'setup', sel: null, moves: 0, hints: 0, hist: [], t0: 0, elapsed: 0, msg: '', sol: null };
     clearBoard();
     $('menu').classList.add('hidden'); $('win').classList.add('hidden'); $('game').classList.remove('hidden');
@@ -696,8 +698,9 @@ if(typeof module!=="undefined")module.exports=LEVELS;
       else if (G.pieces.some(function (p) { return !verified(p); })) { s.textContent = L('Chip mismatch (amber) — tap that block to lift it. Verified ' + ok + '/' + total, 'ชิปไม่ตรง (สีเหลืองอำพัน) — แตะบล็อกนั้นเพื่อยกออก ตรงแล้ว ' + ok + '/' + total); s.classList.add('warn'); }
       else { s.textContent = L('Copy the LED layout: pick a block below, then tap the board. Verified ' + ok + '/' + total, 'วางให้เหมือนรูปบนจอ LED: เลือกบล็อกด้านล่าง แล้วแตะบนกระดาน ตรงแล้ว ' + ok + '/' + total); }
     } else if (G.phase === 'play') {
-      s.textContent = G.msg || L('Drag blocks to free the red square — slide it to the exit.', 'ลากบล็อกเพื่อเปิดทางให้สี่เหลี่ยมแดง — เลื่อนไปที่ทางออก');
-      if (G.msg) s.classList.add('warn');
+      var tr = G.trend ? trendText(G.trend) : null;
+      s.textContent = G.msg || (tr && tr.text) || L('Drag blocks to free the red square — slide it to the exit.', 'ลากบล็อกเพื่อเปิดทางให้สี่เหลี่ยมแดง — เลื่อนไปที่ทางออก');
+      if (G.msg) s.classList.add('warn'); else if (tr && tr.cls) s.classList.add(tr.cls);
     } else if (G.phase === 'solution') {
       s.textContent = '';
     }
@@ -759,7 +762,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
 
   function startPlay() {
     G.phase = 'play'; document.body.dataset.phase = 'play';
-    G.initial = snap(); G.moves = 0; G.hints = 0; G.hist = []; G.msg = ''; hideTip();
+    G.initial = snap(); G.moves = 0; G.hints = 0; G.hist = []; G.msg = ''; G.trend = null; hideTip();
     G.t0 = Date.now(); $('moves').textContent = '0'; $('time').textContent = '0:00';
     clearTimer(); timerId = setInterval(tick, 250);
     renderAll(); beep(740, 0.1);
@@ -808,23 +811,48 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   board.addEventListener('pointerup', endDrag);
   board.addEventListener('pointercancel', endDrag);
 
+  /* ---------- on-track feedback: after you have asked for a hint, each move says if it got you closer ---------- */
+  function trendText(t) {
+    var n = t.n, many = n === 1 ? '' : 's';
+    if (t.kind === 'closer') return { cls: 'good', text: L('✓ Closer — ' + n + ' move' + many + ' to go', '✓ ใกล้ขึ้นแล้ว — เหลืออีก ' + n + ' ครั้ง') };
+    if (t.kind === 'same') return { cls: '', text: L('↔ No progress — still ' + n + ' to go', '↔ ไม่คืบหน้า — ยังเหลืออีก ' + n + ' ครั้ง') };
+    if (t.kind === 'further') return { cls: 'warn', text: L('✗ Further away — now ' + n + ' to go. Undo may help', '✗ ไกลขึ้น — ตอนนี้เหลืออีก ' + n + ' ครั้ง ลองกด Undo') };
+    return { cls: '', text: L(n + ' move' + many + ' to go', 'เหลืออีก ' + n + ' ครั้ง') };
+  }
+  // Runs just after the move so the slide animation is not held up by the search.
+  function updateTrend(before, undone) {
+    var g0 = G, mv = G.moves;
+    if (!G.hints) return;
+    setTimeout(function () {
+      if (G !== g0 || G.phase !== 'play' || G.moves !== mv) return;
+      var now = distOf(gridOf()); if (now === null) return;
+      if (undone) G.trend = { kind: 'now', n: now };
+      else {
+        var was = distOf(before);
+        G.trend = { kind: was === null || now === was ? 'same' : now < was ? 'closer' : 'further', n: now };
+      }
+      renderStatus();
+    }, 30);
+  }
+
   function commitMove(p, dr, dc, k) {
-    G.hist.push(snap()); hideTip();
+    var before = gridOf();
+    G.hist.push(snap()); hideTip(); G.trend = null;
     p.r += dr * k; p.c += dc * k; G.moves++;
     $('moves').textContent = G.moves;
     renderPieces(); renderLED(); renderStatus(); beep(500, 0.04); buzz(15);
-    if (Sol.isGoal(gridOf())) win();
+    if (Sol.isGoal(gridOf())) win(); else updateTrend(before, false);
   }
 
   $('undoBtn').onclick = function () {
     if (!G || G.phase !== 'play' || !G.hist.length) return;
-    hideTip(); G.pieces = G.hist.pop(); G.moves = Math.max(0, G.moves - 1);
-    $('moves').textContent = G.moves; renderPieces(); renderLED();
+    hideTip(); G.trend = null; G.pieces = G.hist.pop(); G.moves = Math.max(0, G.moves - 1);
+    $('moves').textContent = G.moves; renderPieces(); renderLED(); renderStatus(); updateTrend(null, true);
   };
   $('restartBtn').onclick = function () {
     if (!G || !G.initial) return;
     G.pieces = G.initial.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; });
-    hideTip(); G.moves = 0; G.hist = []; G.phase = 'play'; document.body.dataset.phase = 'play';
+    hideTip(); G.trend = null; G.moves = 0; G.hist = []; G.phase = 'play'; document.body.dataset.phase = 'play';
     G.t0 = Date.now(); $('moves').textContent = '0'; $('time').textContent = '0:00';
     clearTimer(); timerId = setInterval(tick, 250);
     clearBoard(); renderAll();
@@ -849,68 +877,115 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     var n = ps.map(nameOf);
     return n.length < 2 ? n.join('') : n.slice(0, -1).join(', ') + L(' and ', ' และ ') + n[n.length - 1];
   }
-  function whyText(k) {
-    return k === 'apart' ? L('Rule of thumb: keep the two empty cells side by side — wide blocks and the red square can only move into a matching gap.',
-                             'หลักคิด: พยายามให้ช่องว่างสองช่องอยู่ติดกัน — บล็อกนอนและตัวแดงจะเลื่อนได้ก็ต่อเมื่อมีช่องว่างพอดีกับขนาด')
-      : k === 'align' ? L('Rule of thumb: the exit is under columns 2–3, so red has to line up there before it can drop out.',
-                          'หลักคิด: ทางออกอยู่ใต้คอลัมน์ 2–3 ตัวแดงต้องมาอยู่ตรงนั้นก่อนจึงจะหล่นออกได้')
-      : L('Rule of thumb: every move should either clear red’s path or make room for a blocker to leave it.',
-          'หลักคิด: ทุกการเดินควรเปิดทางให้ตัวแดง หรือสร้างที่ว่างให้บล็อกที่ขวางเลื่อนออกไป');
+  // Distance (moves to go) of any position, cached per level. A solve also tells us the distance of every position along
+  // its line, so following the hints keeps hitting the cache.
+  function seedDist(g, sol) {
+    var cur = g, n = sol.length; G.dc[Sol.key(g)] = n;
+    for (var i = 0; i < sol.length; i++) { cur = slideBy(cur, sol[i]); G.dc[Sol.key(cur)] = n - i - 1; }
+  }
+  function distOf(g) {
+    var d = G.dc[Sol.key(g)]; if (d !== undefined) return d;
+    var sol = Sol.solve(g); if (!sol) return null;
+    seedDist(g, sol); return sol.length;
   }
   function pieceAt(m) { return G.pieces.filter(function (x) { return x.t === m.t && x.r === m.r && x.c === m.c; })[0]; }
 
-  // Study the optimal line: when does red first move, and which blocks stand on the squares it needs for that slide?
+  // Cells a block slides across/into (not the ones it already covers) and how many of them are empty in grid g.
+  function sweptCells(m) {
+    var own = {}, out = {};
+    cellsOf(m.t, m.r, m.c).forEach(function (c) { own[c] = 1; });
+    for (var s = 1; s <= m.k; s++) cellsOf(m.t, m.r + m.dr * s, m.c + m.dc * s).forEach(function (c) { if (!own[c]) out[c] = 1; });
+    return Object.keys(out).map(Number);
+  }
+  function freeCount(g, cells) { return cells.filter(function (c) { return g[c] === 0; }).length; }
+  function slideBy(g, m) { return Sol.slide(g, { t: m.t, r: m.r, c: m.c }, m.dr, m.dc, m.k); }
+
+  // Study the optimal line: which block stands in red's way, which one does the line free first, what space that needs,
+  // and how the very next move helps with it. The hint text is built from these facts at display time (so the language
+  // toggle applies).
   function analyze(g, sol) {
-    var j = -1, i;
+    var j = -1, i, k;
     for (i = 0; i < sol.length; i++) if (sol[i].t === 'R') { j = i; break; }
-    var info = { j: j, first: sol[0], mover: pieceAt(sol[0]), red: j >= 0 ? sol[j] : null, blockers: [] };
+    var info = { j: j, first: sol[0], mover: pieceAt(sol[0]), red: j >= 0 ? sol[j] : null, blockers: [], left: sol.length,
+                 X: null, b: -1, xmove: null, need: 0, free0: 0, free1: 0, onNeeded: false, opens: null };
     if (j > 0) {
       var rm = sol[j], path = {};
       for (var s = 1; s <= rm.k; s++) cellsOf('R', rm.r + rm.dr * s, rm.c + rm.dc * s).forEach(function (c) { path[c] = 1; });
       G.pieces.forEach(function (p) {
         if (p.t !== 'R' && cellsOf(p.t, p.r, p.c).some(function (c) { return path[c]; })) info.blockers.push(p);
       });
+      // the blocker the line frees first (a block keeps its square until its own first move, so matching by position is exact)
+      for (i = 0; i < sol.length && !info.X; i++)
+        for (k = 0; k < info.blockers.length; k++) {
+          var q = info.blockers[k];
+          if (sol[i].t === q.t && sol[i].r === q.r && sol[i].c === q.c) { info.X = q; info.b = i; info.xmove = sol[i]; break; }
+        }
+      if (info.X) {
+        var need = sweptCells(info.xmove), g1 = slideBy(g, sol[0]);
+        info.need = need.length; info.free0 = freeCount(g, need); info.free1 = freeCount(g1, need);
+        if (info.mover) info.onNeeded = cellsOf(info.mover.t, info.mover.r, info.mover.c).some(function (c) { return need.indexOf(c) >= 0; });
+      }
     }
-    var empty = [];
-    for (i = 0; i < Sol.N; i++) if (g[i] === 0) empty.push(i);
-    var apart = empty.length === 2 && Math.abs(empty[0] - empty[1]) !== 1 && Math.abs(empty[0] - empty[1]) !== W;
-    var red = G.pieces.filter(function (p) { return p.t === 'R'; })[0];
-    info.why = apart ? 'apart' : red.c !== 1 && red.r < 3 ? 'align' : 'clear'; // text is picked at display time so the language toggle applies
-    info.left = sol.length;
+    // does the first move vacate space that the second move slides into?
+    if (sol.length > 1 && info.mover) {
+      var after = {}, vac = [];
+      cellsOf(sol[0].t, sol[0].r + sol[0].dr * sol[0].k, sol[0].c + sol[0].dc * sol[0].k).forEach(function (c) { after[c] = 1; });
+      cellsOf(sol[0].t, sol[0].r, sol[0].c).forEach(function (c) { if (!after[c]) vac.push(c); });
+      var nq = pieceAt(sol[1]);
+      if (nq && nq !== info.mover && sweptCells(sol[1]).some(function (c) { return vac.indexOf(c) >= 0; })) info.opens = nq;
+    }
     return info;
   }
 
+  function plural(n, en) { return n + ' ' + en + (n === 1 ? '' : 's'); }
+
   function hintText(h) {
-    var i = h.info, m = i.first, mv = i.mover, step = ' ' + dirWord(m) + cellsWord(m.k), why = whyText(i.why);
+    var i = h.info, m = i.first, mv = i.mover, step = ' ' + dirWord(m) + cellsWord(m.k), X = i.X;
+    var plan = i.j === 0 ? L('Plan: red can move right now — ' + plural(i.left, 'move') + ' to go in total.', 'แผน: ตัวแดงเดินได้ทันที — เหลืออีก ' + i.left + ' ครั้ง')
+      : L('Plan: ' + (i.b > 0 ? plural(i.b, 'move') + ' to make room, then free it; ' : 'free it; ') + 'red can move after ' + plural(i.j, 'move') + ' — ' + i.left + ' to go in total.',
+          'แผน: ' + (i.b > 0 ? 'เดิน ' + i.b + ' ครั้งเพื่อเปิดที่ว่าง แล้วปลดบล็อก ' : 'ปลดบล็อก ') + 'ตัวแดงจะเดินได้หลังเดิน ' + i.j + ' ครั้ง — รวมเหลืออีก ' + i.left + ' ครั้ง');
     if (h.tier === 1) {
       if (i.j === 0) {
-        var rd = dirWord(i.red);
         return { head: L('Red is free to move', 'สีแดงเคลื่อนที่ได้เลย'),
           body: L('Nothing is in the way of the red square right now. ', 'ตอนนี้ไม่มีอะไรขวางสี่เหลี่ยมแดงอยู่ ') +
             (i.red.dr > 0 ? L('Slide it down toward the exit.', 'เลื่อนลงไปทางทางออกได้เลย')
             : i.red.dr < 0 ? L('Back it up — red sometimes has to retreat so other blocks can swing around.', 'ถอยขึ้นไปก่อน — บางครั้งตัวแดงต้องถอยเพื่อให้บล็อกอื่นหมุนผ่านได้')
-            : L('Shift it sideways — the exit is under columns 2–3, so red has to line up there before it drops.', 'เลื่อนไปด้านข้าง — ทางออกอยู่ใต้คอลัมน์ 2–3 ตัวแดงต้องมาอยู่ตรงนั้นก่อนจึงจะหล่นลงได้')), why: why };
+            : L('Shift it sideways — the exit is under columns 2–3, so red has to line up there before it drops.', 'เลื่อนไปด้านข้าง — ทางออกอยู่ใต้คอลัมน์ 2–3 ตัวแดงต้องมาอยู่ตรงนั้นก่อนจึงจะหล่นลงได้')), why: plan };
       }
-      var many = i.blockers.length > 1, prep = i.j > 1;
-      return { head: i.blockers.length ? L('Focus on the outlined block' + (many ? 's' : ''), 'ดูบล็อกที่มีกรอบสว่าง') : L('Make room first', 'เปิดที่ว่างก่อน'),
-        body: i.blockers.length
-          ? L('Red’s next slide ' + dirWord(i.red) + ' is blocked by ' + listOf(i.blockers) + '. Get ' + (many ? 'them' : 'it') +
-              ' out of the way — red can move after ' + i.j + ' prep move' + (prep ? 's' : '') + '.',
-              'ตัวแดงเลื่อน' + dirWord(i.red) + 'ไม่ได้เพราะมี ' + listOf(i.blockers) + ' ขวางอยู่ ให้ขยับออกไปก่อน — เดินเตรียมอีก ' + i.j + ' ครั้ง ตัวแดงก็จะเดินได้')
-          : L('Red can’t move yet, but ' + i.j + ' prep move' + (prep ? 's' : '') + ' will open its path.',
-              'ตัวแดงยังเดินไม่ได้ แต่เดินเตรียมอีก ' + i.j + ' ครั้งก็จะเปิดทางให้'),
-        why: why };
+      if (!X) {
+        return { head: L('Make room first', 'เปิดที่ว่างก่อน'),
+          body: L('Red can’t move yet, but ' + plural(i.j, 'prep move') + ' will open its path.', 'ตัวแดงยังเดินไม่ได้ แต่เดินเตรียมอีก ' + i.j + ' ครั้งก็จะเปิดทางให้'), why: plan };
+      }
+      var many = i.blockers.length > 1, xs = ' ' + dirWord(i.xmove) + cellsWord(i.xmove.k), nm = nameOf(X);
+      var blocked = L('Red can’t slide ' + dirWord(i.red) + ' while ' + listOf(i.blockers) + (many ? ' are' : ' is') + ' in the way.',
+                      'ตัวแดงเลื่อน' + dirWord(i.red) + 'ไม่ได้ เพราะมี ' + listOf(i.blockers) + ' ขวางอยู่');
+      var todo = i.b === 0
+        ? L(' Slide ' + nm + xs + ' to clear the way.', ' เลื่อน' + nm + xs + ' เพื่อเปิดทาง')
+        : L(' Start with ' + nm + ': it has to slide' + xs + ', but ' + (i.free0 === 0
+              ? (i.need === 1 ? 'the cell it needs is taken' : 'none of the ' + i.need + ' cells it needs are empty')
+              : 'only ' + i.free0 + ' of the ' + i.need + ' cells it needs ' + (i.free0 === 1 ? 'is' : 'are') + ' empty') +
+            '. Opening that space takes ' + plural(i.b, 'move') + '.',
+            ' เริ่มที่' + nm + ': ต้องเลื่อน' + xs + ' แต่ตอนนี้' + (i.free0 === 0 ? 'ช่องที่ต้องใช้ยังไม่ว่างเลย' : 'ช่องที่ต้องใช้ว่างเพียง ' + i.free0 + ' จาก ' + i.need + ' ช่อง') + ' การเปิดที่ว่างนั้นใช้ ' + i.b + ' ครั้ง');
+      return { head: L('Next goal: free ' + nm, 'เป้าหมายถัดไป: ปลด' + nm), body: blocked + todo, why: plan };
     }
-    var reason = i.j === 0 ? L('This is red’s own move.', 'นี่คือการเดินของตัวแดงเอง')
-      : i.blockers.indexOf(mv) >= 0 ? L('It is sitting in red’s way.', 'บล็อกนี้ขวางทางตัวแดงอยู่')
-      : L('It is not in red’s way itself, but it opens the gap the blocking pieces need to slide out.', 'บล็อกนี้ไม่ได้ขวางตัวแดงโดยตรง แต่ช่วยเปิดช่องว่างให้บล็อกที่ขวางเลื่อนออกไปได้');
-    return { head: L('Try this', 'ลองทำแบบนี้'), body: L('Move ' + nameOf(m) + step + '. ' + reason, 'เลื่อน' + nameOf(m) + step + ' ' + reason), why: why };
+    var reason;
+    if (i.j === 0) reason = L('This is red’s own move.', 'นี่คือการเดินของตัวแดงเอง');
+    else if (X && mv === X) reason = L('This is the block standing in red’s way.', 'บล็อกนี้คือตัวที่ขวางทางตัวแดงอยู่');
+    else if (X && i.onNeeded) reason = L('It is sitting on a space ' + nameOf(X) + ' needs.', 'บล็อกนี้ยืนอยู่บนช่องที่' + nameOf(X) + ' ต้องใช้');
+    else if (X && i.free1 > i.free0) reason = L('It moves the empty space next to ' + nameOf(X) + ' — then ' + i.free1 + ' of the ' + plural(i.need, 'cell') + ' it needs ' + (i.free1 === 1 ? 'is' : 'are') + ' empty.',
+      'ทำให้ช่องว่างเลื่อนเข้าไปใกล้' + nameOf(X) + ' — หลังเดินช่องที่ต้องใช้จะว่าง ' + i.free1 + ' จาก ' + i.need + ' ช่อง');
+    else if (i.opens) reason = L('It empties the space ' + nameOf(i.opens) + ' slides into next' + (X ? ' — a step toward freeing ' + nameOf(X) + '.' : '.'),
+      'ทำให้ช่องที่' + nameOf(i.opens) + ' จะเลื่อนเข้าไปต่อไปว่างลง' + (X ? ' — เป็นขั้นหนึ่งในการปลด' + nameOf(X) : ''));
+    else reason = X ? L('It is a set-up move: it shuffles the empty spaces so ' + nameOf(X) + ' can be freed ' + plural(i.b, 'move') + ' from now.',
+      'นี่คือการเดินเตรียมการ: จัดช่องว่างใหม่เพื่อให้ปลด' + nameOf(X) + ' ได้ในอีก ' + i.b + ' ครั้ง')
+      : L('It is a set-up move that makes room around red.', 'นี่คือการเดินเตรียมการ เพื่อเปิดที่ว่างรอบตัวแดง');
+    return { head: L('Try this', 'ลองทำแบบนี้'), body: L('Move ' + nameOf(m) + step + '. ' + reason, 'เลื่อน' + nameOf(m) + step + ' ' + reason), why: plan };
   }
 
   function showHint(h) {
     var t = hintText(h), i = h.info;
     els.forEach(function (el) { el.removeAttribute('data-focus'); el.removeAttribute('data-hint'); });
-    var focus = i.j === 0 ? [i.mover] : i.blockers;
+    var focus = i.j === 0 ? [i.mover] : i.X ? [i.X] : i.blockers.length ? i.blockers : [i.mover];
     focus.forEach(function (p) { if (p && els.get(p.id)) els.get(p.id).setAttribute('data-focus', ''); });
     if (h.tier === 2 && i.mover && els.get(i.mover.id)) {
       var m = i.first, arrow = m.dr < 0 ? '↑' : m.dr > 0 ? '↓' : m.dc < 0 ? '←' : '→';
@@ -930,7 +1005,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     if (!G.hint || G.hint.key !== k) {
       var sol = Sol.solve(g);
       if (!sol || !sol.length) { G.msg = L('No solution from here — try Undo', 'จากตำแหน่งนี้ไม่มีทางไข — ลองกด Undo'); renderStatus(); return; }
-      G.hint = { key: k, info: analyze(g, sol), tier: 0 };
+      seedDist(g, sol); G.hint = { key: k, info: analyze(g, sol), tier: 0 };
     }
     G.hint.tier = Math.min(2, G.hint.tier + 1); G.hints++;
     showHint(G.hint);
@@ -1095,7 +1170,8 @@ if(typeof module!=="undefined")module.exports=LEVELS;
       el.innerHTML = lang === 'th' ? el.dataset.th : el.dataset.en;
     });
     Array.prototype.forEach.call(document.querySelectorAll('.lang-btn'), function (b) {
-      b.setAttribute('aria-pressed', lang === 'th'); b.setAttribute('aria-label', lang === 'th' ? 'ภาษาไทย (เปิด)' : 'Thai guidance (off)');
+      b.setAttribute('aria-pressed', lang === 'th');
+      b.setAttribute('aria-label', lang === 'th' ? 'ภาษา: ไทย (แตะเพื่อเปลี่ยนเป็น English)' : 'Language: English (tap for Thai)');
     });
     if (!G) return;
     if (G.msg) G.msg = '';

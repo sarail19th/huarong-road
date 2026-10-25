@@ -61,8 +61,10 @@ h3.grade small{color:var(--muted);font-weight:400;font-size:12px}
 .hud{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .hud .title{flex:1;font-weight:600;font-size:15px}
 .icon-btn{background:var(--panel2);border:1px solid var(--line);border-radius:12px;width:40px;height:40px;font-size:18px}
-.lang-btn{font-size:14px;font-weight:700}
-.lang-btn[aria-pressed=true]{color:var(--yellow);border-color:var(--yellow)}
+.lang-btn{display:inline-flex;align-items:center;width:auto;padding:0 4px;gap:2px;font-size:12.5px;font-weight:700}
+.lang-btn span{padding:5px 7px;border-radius:8px;color:var(--muted)}
+html:not([lang=th]) .lang-btn .en,html[lang=th] .lang-btn .th{background:var(--yellow);color:#10131a}
+@media (max-width:360px){.hud{gap:6px}.hud .icon-btn{width:36px}.hud .lang-btn{width:auto}}
 .stats{display:flex;gap:8px;margin-bottom:10px}
 .stat{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 8px;text-align:center}
 .stat small{display:block;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px}
@@ -160,7 +162,7 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 
 /* ---------- about ---------- */
 .card.about{max-width:400px;max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);overflow-y:auto;text-align:left;padding:18px 18px 20px;position:relative;-webkit-user-select:text;user-select:text}
-.about .lang-btn{position:absolute;right:14px;top:14px;width:44px;height:36px}
+.about .lang-btn{position:absolute;right:14px;top:14px;height:36px}
 .apager{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px}
 .apager .btn.sm{margin:0;padding:8px 12px}
 .apager .dots{display:flex;gap:8px}
