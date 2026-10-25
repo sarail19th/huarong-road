@@ -288,7 +288,7 @@ def lang_switch(p):
     lit = lambda side, scope: bg(f'{scope} .lang-btn .{side}') != 'rgba(0, 0, 0, 0)'
     for scope in ('#menu',):
         assert lit('en', scope) and not lit('th', scope), 'English side lit at start'
-    assert page.locator('#menu .lang-btn').inner_text().replace('\n', ' ').split() == ['EN', 'ไทย']
+    assert page.locator('#menu .lang-btn').inner_text().replace('\n', ' ').split() == ['EN', 'TH']
     for turn in range(3):                          # menu: en -> th -> en -> th
         page.locator('#menu .lang-btn').tap()
         want_th = turn % 2 == 0
@@ -527,7 +527,7 @@ with sync_playwright() as p:
     features(p)
     print('features: auto-place default, skins, two-step hints OK')
     lang_switch(p)
-    print('language switch: EN | ไทย highlights the active side, flips both ways, fits at 360px')
+    print('language switch: EN | TH highlights the active side, flips both ways, fits at 360px')
     all_hints(p)
     trend(p)
     print('on-track feedback: closer / further / undo, hidden until a hint is used')

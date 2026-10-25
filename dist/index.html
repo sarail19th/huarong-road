@@ -220,7 +220,7 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
   <div class="brand">
     <div class="brandbar">
       <div class="left">
-      <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Language: English (tap for Thai)" title="English / ไทย"><span class="en">EN</span><span class="th">ไทย</span></button>
+      <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Language: English (tap for Thai)" title="English / Thai"><span class="en">EN</span><span class="th">TH</span></button>
       <button class="icon-btn about-btn" id="aboutBtn" aria-label="About this game" title="About this game">?</button>
       <button class="icon-btn" id="refreshBtn" aria-label="Refresh app to get the latest version" title="Refresh / get latest version">↻</button>
       </div>
@@ -253,7 +253,7 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
   <div class="hud">
     <button class="icon-btn" id="backBtn" aria-label="Back">‹</button>
     <div class="title" id="lvTitle"></div>
-    <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Language: English (tap for Thai)" title="English / ไทย"><span class="en">EN</span><span class="th">ไทย</span></button>
+    <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Language: English (tap for Thai)" title="English / Thai"><span class="en">EN</span><span class="th">TH</span></button>
     <button class="icon-btn skin-btn" aria-label="Change skin" title="Change skin">🎨</button>
     <button class="icon-btn" id="hapBtn" aria-label="Vibration" aria-pressed="true">📳</button>
     <button class="icon-btn" id="muteBtn" aria-label="Sound">🔊</button>
@@ -298,7 +298,7 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 
 <div class="overlay hidden" id="about">
   <div class="card about" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
-    <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Language: English (tap for Thai)" title="English / ไทย"><span class="en">EN</span><span class="th">ไทย</span></button>
+    <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Language: English (tap for Thai)" title="English / Thai"><span class="en">EN</span><span class="th">TH</span></button>
     <h2 id="aboutTitle" data-th="เกี่ยวกับเกมนี้">About this game</h2>
     <p class="zh">華容道 · Huáróng Dào</p>
 
@@ -506,7 +506,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   var muted = store.get('hr_muted', false);
   var haptics = store.get('hr_haptics', true);
   var autoPlace = store.get('hr_auto', true);
-  var BUILD = 'dd73b68'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = 'f6d2b18'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
