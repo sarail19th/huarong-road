@@ -15,6 +15,7 @@
   var muted = store.get('hr_muted', false);
   var haptics = store.get('hr_haptics', true);
   var autoPlace = store.get('hr_auto', true);
+  var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
     { id: 'blossom', name: 'Blossom · pastel pink & black', theme: '#0b0709' },
@@ -28,6 +29,7 @@
   var RSVG = '<svg viewBox="0 0 100 100"><polygon points="50,12 90,84 10,84" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="6" stroke-linejoin="round"/><polygon points="50,38 68,70 32,70" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="5" stroke-linejoin="round"/></svg>';
 
   /* ---------- helpers ---------- */
+  function L(en, th) { return lang === 'th' ? th : en; }
   function beep(f, d) {
     if (muted) return;
     try {
@@ -195,11 +197,11 @@
       $('startBtn').classList.toggle('ready', ready);
       s.classList.toggle('hidden', ready && !G.msg); // the lit-up Start button already says it
       if (G.msg) { s.textContent = G.msg; s.classList.add('warn'); }
-      else if (ready) { s.textContent = 'All ' + total + ' chips confirmed ✓ — ready to play'; s.classList.add('good'); }
-      else if (G.pieces.some(function (p) { return !verified(p); })) { s.textContent = 'Chip mismatch (amber) — tap that block to lift it. Verified ' + ok + '/' + total; s.classList.add('warn'); }
-      else { s.textContent = 'Copy the LED layout: pick a block below, then tap the board. Verified ' + ok + '/' + total; }
+      else if (ready) { s.textContent = L('All ' + total + ' chips confirmed ✓ — ready to play', 'ยืนยันชิปครบ ' + total + ' ตัว ✓ — พร้อมเล่น'); s.classList.add('good'); }
+      else if (G.pieces.some(function (p) { return !verified(p); })) { s.textContent = L('Chip mismatch (amber) — tap that block to lift it. Verified ' + ok + '/' + total, 'ชิปไม่ตรง (สีเหลืองอำพัน) — แตะบล็อกนั้นเพื่อยกออก ตรงแล้ว ' + ok + '/' + total); s.classList.add('warn'); }
+      else { s.textContent = L('Copy the LED layout: pick a block below, then tap the board. Verified ' + ok + '/' + total, 'วางให้เหมือนรูปบนจอ LED: เลือกบล็อกด้านล่าง แล้วแตะบนกระดาน ตรงแล้ว ' + ok + '/' + total); }
     } else if (G.phase === 'play') {
-      s.textContent = G.msg || 'Drag blocks to free the red square — slide it to the exit.';
+      s.textContent = G.msg || L('Drag blocks to free the red square — slide it to the exit.', 'ลากบล็อกเพื่อเปิดทางให้สี่เหลี่ยมแดง — เลื่อนไปที่ทางออก');
       if (G.msg) s.classList.add('warn');
     } else if (G.phase === 'solution') {
       s.textContent = '';
@@ -226,12 +228,12 @@
       if (!G.sel || remaining(G.sel) <= 0) G.sel = firstAvailable();
       beep(380, 0.05); renderAll(); return;
     }
-    if (!G.sel) { say('All blocks are placed'); return; }
+    if (!G.sel) { say(L('All blocks are placed', 'วางบล็อกครบแล้ว')); return; }
     var rect = this.getBoundingClientRect();
     var c0 = Math.floor((e.clientX - rect.left - PAD) / cell), r0 = Math.floor((e.clientY - rect.top - PAD) / cell);
     var d = DIM[G.sel];
     var c = Math.max(0, Math.min(W - d.w, c0)), r = Math.max(0, Math.min(H - d.h, r0));
-    if (overlaps(r, c, d)) { say('That space is already taken'); buzz(20); return; }
+    if (overlaps(r, c, d)) { say(L('That space is already taken', 'ช่องนี้มีบล็อกอยู่แล้ว')); buzz(20); return; }
     G.pieces.push({ id: ++uid, t: G.sel, r: r, c: c });
     if (remaining(G.sel) <= 0) G.sel = firstAvailable();
     beep(660, 0.05); renderAll();
@@ -334,16 +336,31 @@
   };
   /* ---------- hints: explain what to focus on, where and why ---------- */
   var KIND = { R: 'big red square', V: 'tall block', H: 'wide block', S: 'small square' };
+  var KIND_TH = { R: 'สี่เหลี่ยมแดงใหญ่', V: 'บล็อกตั้ง', H: 'บล็อกนอน', S: 'บล็อกเล็ก' };
   function cellsOf(t, r, c) {
     var d = DIM[t], out = [];
     for (var y = 0; y < d.h; y++) for (var x = 0; x < d.w; x++) out.push((r + y) * W + c + x);
     return out;
   }
-  function dirWord(m) { return m.dr < 0 ? 'up' : m.dr > 0 ? 'down' : m.dc < 0 ? 'left' : 'right'; }
-  function nameOf(p) { return 'the ' + KIND[p.t] + ' at row ' + (p.r + 1) + ', col ' + (p.c + 1); }
+  function dirWord(m) {
+    return m.dr < 0 ? L('up', 'ขึ้น') : m.dr > 0 ? L('down', 'ลง') : m.dc < 0 ? L('left', 'ซ้าย') : L('right', 'ขวา');
+  }
+  function cellsWord(k) { return k > 1 ? ' ' + k + L(' cells', ' ช่อง') : ''; }
+  function nameOf(p) {
+    return L('the ' + KIND[p.t] + ' at row ' + (p.r + 1) + ', col ' + (p.c + 1),
+             KIND_TH[p.t] + ' แถว ' + (p.r + 1) + ' คอลัมน์ ' + (p.c + 1));
+  }
   function listOf(ps) {
     var n = ps.map(nameOf);
-    return n.length < 2 ? n.join('') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1];
+    return n.length < 2 ? n.join('') : n.slice(0, -1).join(', ') + L(' and ', ' และ ') + n[n.length - 1];
+  }
+  function whyText(k) {
+    return k === 'apart' ? L('Rule of thumb: keep the two empty cells side by side — wide blocks and the red square can only move into a matching gap.',
+                             'หลักคิด: พยายามให้ช่องว่างสองช่องอยู่ติดกัน — บล็อกนอนและตัวแดงจะเลื่อนได้ก็ต่อเมื่อมีช่องว่างพอดีกับขนาด')
+      : k === 'align' ? L('Rule of thumb: the exit is under columns 2–3, so red has to line up there before it can drop out.',
+                          'หลักคิด: ทางออกอยู่ใต้คอลัมน์ 2–3 ตัวแดงต้องมาอยู่ตรงนั้นก่อนจึงจะหล่นออกได้')
+      : L('Rule of thumb: every move should either clear red’s path or make room for a blocker to leave it.',
+          'หลักคิด: ทุกการเดินควรเปิดทางให้ตัวแดง หรือสร้างที่ว่างให้บล็อกที่ขวางเลื่อนออกไป');
   }
   function pieceAt(m) { return G.pieces.filter(function (x) { return x.t === m.t && x.r === m.r && x.c === m.c; })[0]; }
 
@@ -363,33 +380,36 @@
     for (i = 0; i < Sol.N; i++) if (g[i] === 0) empty.push(i);
     var apart = empty.length === 2 && Math.abs(empty[0] - empty[1]) !== 1 && Math.abs(empty[0] - empty[1]) !== W;
     var red = G.pieces.filter(function (p) { return p.t === 'R'; })[0];
-    info.why = apart ? 'Rule of thumb: keep the two empty cells side by side — wide blocks and the red square can only move into a matching gap.'
-      : red.c !== 1 && red.r < 3 ? 'Rule of thumb: the exit is under columns 2–3, so red has to line up there before it can drop out.'
-      : 'Rule of thumb: every move should either clear red’s path or make room for a blocker to leave it.';
+    info.why = apart ? 'apart' : red.c !== 1 && red.r < 3 ? 'align' : 'clear'; // text is picked at display time so the language toggle applies
     info.left = sol.length;
     return info;
   }
 
   function hintText(h) {
-    var i = h.info, m = i.first, mv = i.mover, step = ' ' + dirWord(m) + (m.k > 1 ? ' ' + m.k + ' cells' : '');
+    var i = h.info, m = i.first, mv = i.mover, step = ' ' + dirWord(m) + cellsWord(m.k), why = whyText(i.why);
     if (h.tier === 1) {
       if (i.j === 0) {
         var rd = dirWord(i.red);
-        return { head: 'Red is free to move', body: 'Nothing is in the way of the red square right now. ' +
-          (rd === 'down' ? 'Slide it down toward the exit.' : rd === 'up' ? 'Back it up — red sometimes has to retreat so other blocks can swing around.' :
-          'Shift it sideways — the exit is under columns 2–3, so red has to line up there before it drops.'), why: i.why };
+        return { head: L('Red is free to move', 'สีแดงเคลื่อนที่ได้เลย'),
+          body: L('Nothing is in the way of the red square right now. ', 'ตอนนี้ไม่มีอะไรขวางสี่เหลี่ยมแดงอยู่ ') +
+            (i.red.dr > 0 ? L('Slide it down toward the exit.', 'เลื่อนลงไปทางทางออกได้เลย')
+            : i.red.dr < 0 ? L('Back it up — red sometimes has to retreat so other blocks can swing around.', 'ถอยขึ้นไปก่อน — บางครั้งตัวแดงต้องถอยเพื่อให้บล็อกอื่นหมุนผ่านได้')
+            : L('Shift it sideways — the exit is under columns 2–3, so red has to line up there before it drops.', 'เลื่อนไปด้านข้าง — ทางออกอยู่ใต้คอลัมน์ 2–3 ตัวแดงต้องมาอยู่ตรงนั้นก่อนจึงจะหล่นลงได้')), why: why };
       }
-      return { head: i.blockers.length ? 'Focus on the outlined block' + (i.blockers.length > 1 ? 's' : '') : 'Make room first',
+      var many = i.blockers.length > 1, prep = i.j > 1;
+      return { head: i.blockers.length ? L('Focus on the outlined block' + (many ? 's' : ''), 'ดูบล็อกที่มีกรอบสว่าง') : L('Make room first', 'เปิดที่ว่างก่อน'),
         body: i.blockers.length
-          ? 'Red’s next slide ' + dirWord(i.red) + ' is blocked by ' + listOf(i.blockers) + '. Get ' + (i.blockers.length > 1 ? 'them' : 'it') +
-            ' out of the way — red can move after ' + i.j + ' prep move' + (i.j > 1 ? 's' : '') + '.'
-          : 'Red can’t move yet, but ' + i.j + ' prep move' + (i.j > 1 ? 's' : '') + ' will open its path.',
-        why: i.why };
+          ? L('Red’s next slide ' + dirWord(i.red) + ' is blocked by ' + listOf(i.blockers) + '. Get ' + (many ? 'them' : 'it') +
+              ' out of the way — red can move after ' + i.j + ' prep move' + (prep ? 's' : '') + '.',
+              'ตัวแดงเลื่อน' + dirWord(i.red) + 'ไม่ได้เพราะมี ' + listOf(i.blockers) + ' ขวางอยู่ ให้ขยับออกไปก่อน — เดินเตรียมอีก ' + i.j + ' ครั้ง ตัวแดงก็จะเดินได้')
+          : L('Red can’t move yet, but ' + i.j + ' prep move' + (prep ? 's' : '') + ' will open its path.',
+              'ตัวแดงยังเดินไม่ได้ แต่เดินเตรียมอีก ' + i.j + ' ครั้งก็จะเปิดทางให้'),
+        why: why };
     }
-    var reason = i.j === 0 ? 'This is red’s own move.'
-      : i.blockers.indexOf(mv) >= 0 ? 'It is sitting in red’s way.'
-      : 'It is not in red’s way itself, but it opens the gap the blocking pieces need to slide out.';
-    return { head: 'Try this', body: 'Move ' + nameOf(m) + step + '. ' + reason, why: i.why };
+    var reason = i.j === 0 ? L('This is red’s own move.', 'นี่คือการเดินของตัวแดงเอง')
+      : i.blockers.indexOf(mv) >= 0 ? L('It is sitting in red’s way.', 'บล็อกนี้ขวางทางตัวแดงอยู่')
+      : L('It is not in red’s way itself, but it opens the gap the blocking pieces need to slide out.', 'บล็อกนี้ไม่ได้ขวางตัวแดงโดยตรง แต่ช่วยเปิดช่องว่างให้บล็อกที่ขวางเลื่อนออกไปได้');
+    return { head: L('Try this', 'ลองทำแบบนี้'), body: L('Move ' + nameOf(m) + step + '. ' + reason, 'เลื่อน' + nameOf(m) + step + ' ' + reason), why: why };
   }
 
   function showHint(h) {
@@ -401,7 +421,7 @@
       var m = i.first, arrow = m.dr < 0 ? '↑' : m.dr > 0 ? '↓' : m.dc < 0 ? '←' : '→';
       els.get(i.mover.id).setAttribute('data-hint', arrow + (m.k > 1 ? m.k : ''));
     }
-    $('tipHead').innerHTML = t.head + '<span class="step">' + i.left + ' move' + (i.left > 1 ? 's' : '') + ' to go · hint ' + h.tier + '/2' + '</span>';
+    $('tipHead').innerHTML = t.head + '<span class="step">' + L(i.left + ' move' + (i.left > 1 ? 's' : '') + ' to go · hint ' + h.tier + '/2', 'เหลืออีก ' + i.left + ' ครั้ง · คำใบ้ ' + h.tier + '/2') + '</span>';
     $('tipBody').textContent = t.body; $('tipWhy').textContent = t.why;
     $('tip').classList.remove('hidden');
     try { $('tip').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
@@ -414,7 +434,7 @@
     var g = gridOf(), k = Sol.key(g);
     if (!G.hint || G.hint.key !== k) {
       var sol = Sol.solve(g);
-      if (!sol || !sol.length) { G.msg = 'No solution from here — try Undo'; renderStatus(); return; }
+      if (!sol || !sol.length) { G.msg = L('No solution from here — try Undo', 'จากตำแหน่งนี้ไม่มีทางไข — ลองกด Undo'); renderStatus(); return; }
       G.hint = { key: k, info: analyze(g, sol), tier: 0 };
     }
     G.hint.tier = Math.min(2, G.hint.tier + 1); G.hints++;
@@ -436,7 +456,7 @@
   function openSolution() {
     if (!G || G.phase !== 'play') return;
     var steps = Sol.solve(Sol.fromPieces(G.initial));
-    if (!steps) { say('No solution found for this layout'); return; }
+    if (!steps) { say(L('No solution found for this layout', 'ไม่พบเฉลยสำหรับรูปแบบนี้')); return; }
     seen[G.lv.id] = 1; store.set('hr_seen', seen);
     // freeze the player's attempt, show the start position again and walk it from there
     G.sol = { steps: steps, i: 0, stash: { pieces: snap(), hist: G.hist, moves: G.moves }, pausedAt: Date.now() };
@@ -454,16 +474,16 @@
     if (next) {
       var mv = pieceAt(next), arrow = next.dr < 0 ? '↑' : next.dr > 0 ? '↓' : next.dc < 0 ? '←' : '→';
       if (mv && els.get(mv.id)) els.get(mv.id).setAttribute('data-hint', arrow + (next.k > 1 ? next.k : ''));
-      $('solHead').textContent = 'Step ' + (i + 1) + ' of ' + n;
-      $('solBody').textContent = 'Move ' + nameOf(next) + ' ' + dirWord(next) + (next.k > 1 ? ' ' + next.k + ' cells' : '') + '.';
+      $('solHead').textContent = L('Step ' + (i + 1) + ' of ' + n, 'ขั้นที่ ' + (i + 1) + ' จาก ' + n);
+      $('solBody').textContent = L('Move ' + nameOf(next) + ' ' + dirWord(next) + cellsWord(next.k) + '.', 'เลื่อน' + nameOf(next) + ' ' + dirWord(next) + cellsWord(next.k));
     } else {
-      $('solHead').textContent = 'Solved in ' + n + ' move' + (n > 1 ? 's' : '');
-      $('solBody').textContent = 'The red square is out. Go back and solve it yourself — this level earns no stars now.';
+      $('solHead').textContent = L('Solved in ' + n + ' move' + (n > 1 ? 's' : ''), 'ไขได้ใน ' + n + ' ครั้ง');
+      $('solBody').textContent = L('The red square is out. Go back and solve it yourself — this level earns no stars now.', 'ตัวแดงออกมาแล้ว กลับไปลองไขเองดู — ด่านนี้จะไม่ได้ดาวแล้ว');
     }
     $('solPrev').disabled = i === 0;
     $('solNext').disabled = i >= n;
     $('solPlay').disabled = i >= n && !autoTimer;
-    $('solPlay').textContent = autoTimer ? '❚❚ Pause' : '▶ Play';
+    $('solPlay').textContent = autoTimer ? L('❚❚ Pause', '❚❚ หยุด') : L('▶ Play', '▶ เล่น');
     renderLED();
   }
 
@@ -525,7 +545,7 @@
     setTimeout(function () {
       $('winStars').textContent = stars(st);
       $('winInfo').innerHTML = 'Moves <b>' + G.moves + '</b> (par ' + par + ') · Time <b>' + fmt(G.elapsed) + '</b>' +
-        (G.hints ? ' · Hints ' + G.hints : '') + (seen[G.lv.id] ? '<br>Solution viewed — no stars for this level' : '');
+        (G.hints ? ' · Hints ' + G.hints : '') + (seen[G.lv.id] ? '<br>' + L('Solution viewed — no stars for this level', 'ดูเฉลยแล้ว — ด่านนี้ไม่ได้ดาว') : '');
       $('nextBtn').classList.toggle('hidden', G.idx + 1 >= LV.length);
       $('win').classList.remove('hidden');
     }, 950);
@@ -546,6 +566,40 @@
   $('hapBtn').onclick = function () { haptics = !haptics; store.set('hr_haptics', haptics); renderHaptics(); buzz(30); };
   renderHaptics();
 
+  /* ---------- about: the story behind the name ---------- */
+  function showAbout(on) {
+    $('about').classList.toggle('hidden', !on);
+    if (on) $('about').firstElementChild.scrollTop = 0;
+  }
+  $('aboutBtn').onclick = function () { showAbout(true); };
+  $('aboutClose').onclick = function () { showAbout(false); };
+  $('about').addEventListener('click', function (e) { if (e.target === this) showAbout(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') showAbout(false); });
+
+  /* ---------- language: instructions, hints and solution in English or Thai ---------- */
+  // Static text carries its Thai copy in data-th; the English original is stashed in data-en on first switch.
+  function applyLang() {
+    document.documentElement.lang = lang;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-th]'), function (el) {
+      if (el.dataset.en === undefined) el.dataset.en = el.innerHTML;
+      el.innerHTML = lang === 'th' ? el.dataset.th : el.dataset.en;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.lang-btn'), function (b) {
+      b.setAttribute('aria-pressed', lang === 'th'); b.setAttribute('aria-label', lang === 'th' ? 'ภาษาไทย (เปิด)' : 'Thai guidance (off)');
+    });
+    if (!G) return;
+    if (G.msg) G.msg = '';
+    renderStatus();
+    if (G.phase === 'play' && G.hint && !$('tip').classList.contains('hidden')) showHint(G.hint);
+    if (G.phase === 'solution' && G.sol) renderSol();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.lang-btn'), function (b) {
+    b.onclick = function () {
+      lang = lang === 'th' ? 'en' : 'th'; store.set('hr_lang', lang); applyLang();
+      if ($('about').classList.contains('hidden')) toast(lang === 'th' ? 'คำแนะนำ คำใบ้ เฉลย: ภาษาไทย' : 'Instructions, hints, solution: English');
+    };
+  });
+
   /* ---------- skins ---------- */
   var toastTimer = null;
   function toast(m) {
@@ -565,6 +619,7 @@
     };
   });
   applySkin();
+  applyLang();
 
   /* ---------- init ---------- */
   (function init() {

@@ -14,11 +14,18 @@
 
 <section id="menu" class="screen">
   <div class="brand">
+    <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Thai guidance (off)" title="ไทย / English">ไทย</button>
+    <button class="icon-btn about-btn" id="aboutBtn" aria-label="About this game" title="About this game">?</button>
     <button class="icon-btn skin-btn" aria-label="Change skin" title="Change skin">🎨</button>
     <h1>Huarong <span>Road</span></h1>
     <p>Sliding-block puzzle · 100 graded levels · exact par for every level</p>
   </div>
-  <div class="howto">
+  <div class="howto" data-th="<b>วิธีเล่น</b>
+    <ol>
+      <li><b>ตั้งค่า</b> — วางบล็อกให้เหมือนรูปบนจอ LED เมื่อวางถูกตำแหน่ง “ชิป” ของบล็อกนั้นจะสว่างขึ้น</li>
+      <li><b>เลื่อน</b> — ลากบล็อกเข้าไปในช่องว่าง</li>
+      <li><b>หนีออก</b> — พาสี่เหลี่ยม<b style='color:#ff6a6f'>สีแดง</b>ขนาดใหญ่ออกทางประตูด้านล่าง</li>
+    </ol>">
     <b>How it works</b>
     <ol>
       <li><b>Set up</b> — copy the layout shown on the LED. Place each block; its “chip” lights up when it sits in the right spot.</li>
@@ -34,6 +41,7 @@
   <div class="hud">
     <button class="icon-btn" id="backBtn" aria-label="Back">‹</button>
     <div class="title" id="lvTitle"></div>
+    <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Thai guidance (off)" title="ไทย / English">ไทย</button>
     <button class="icon-btn skin-btn" aria-label="Change skin" title="Change skin">🎨</button>
     <button class="icon-btn" id="hapBtn" aria-label="Vibration" aria-pressed="true">📳</button>
     <button class="icon-btn" id="muteBtn" aria-label="Sound">🔊</button>
@@ -50,7 +58,7 @@
       <div class="keys">
         <button class="key toggle only-setup" id="autoBtn" aria-pressed="true">Auto-place</button>
         <button class="key only-setup" id="clearBtn">Clear</button>
-        <button class="key only-play" id="hintBtn">Hint</button>
+        <button class="key only-play" id="hintBtn" data-th="คำใบ้">Hint</button>
         <button class="key only-play" id="undoBtn">Undo</button>
         <button class="key red only-play" id="restartBtn">Restart</button>
       </div>
@@ -60,15 +68,15 @@
 
   <div class="status" id="status"></div>
   <div class="tip hidden" id="tip"><b id="tipHead"></b><span id="tipBody"></span><em id="tipWhy"></em></div>
-  <div class="row only-play"><button class="btn sm" id="solBtn">Show solution</button></div>
+  <div class="row only-play"><button class="btn sm" id="solBtn" data-th="ดูเฉลย">Show solution</button></div>
   <div class="solbar only-sol">
     <div class="solinfo"><b id="solHead"></b><span id="solBody"></span></div>
     <div class="row">
-      <button class="btn" id="solPrev" aria-label="Previous step">‹ Prev</button>
+      <button class="btn" id="solPrev" aria-label="Previous step" data-th="‹ ก่อนหน้า">‹ Prev</button>
       <button class="btn go" id="solPlay">▶ Play</button>
-      <button class="btn" id="solNext" aria-label="Next step">Next ›</button>
+      <button class="btn" id="solNext" aria-label="Next step" data-th="ถัดไป ›">Next ›</button>
     </div>
-    <div class="row"><button class="btn sm" id="solBack">Back to puzzle</button></div>
+    <div class="row"><button class="btn sm" id="solBack" data-th="กลับไปเล่น">Back to puzzle</button></div>
   </div>
   <div class="tray only-setup" id="tray"></div>
   <div class="row only-setup"><button class="btn go" id="startBtn" disabled>Start puzzle</button></div>
@@ -76,13 +84,46 @@
 
 <div class="toast hidden" id="toast"></div>
 
+<div class="overlay hidden" id="about">
+  <div class="card about" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+    <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Thai guidance (off)" title="ไทย / English">ไทย</button>
+    <h2 id="aboutTitle" data-th="เกี่ยวกับเกมนี้">About this game</h2>
+    <p class="zh">華容道 · Huáróng Dào</p>
+
+    <h4 data-th="เรื่องราว">The story</h4>
+    <p data-th="ในปี ค.ศ. 208 <b>โจโฉ</b> (Cao Cao) พ่ายแพ้ในศึกเซ็กเพ็ก (Red Cliffs) และพาทหารที่เหลือหนีกลับ ในวรรณกรรม<i>สามก๊ก</i> ทางรอดเดียวคือ<b>เส้นทางฮัวหยง (Huarong)</b> อันแคบ และผู้ที่ดักรออยู่คือ<b>กวนอู</b> พี่น้องร่วมสาบานของเล่าปี่ศัตรูของโจโฉ แต่โจโฉเคยปฏิบัติต่อกวนอูด้วยน้ำใจอย่างมาก กวนอูจึงต้องเลือกระหว่างหน้าที่กับคุณธรรม และสุดท้ายก็เปิดทางให้โจโฉหนีไป">In 208 AD the warlord <b>Cao Cao</b> lost the Battle of Red Cliffs and fled with what was left of his army. In the classic novel <i>Romance of the Three Kingdoms</i>, the only way home was the narrow <b>Huarong Road</b> — and waiting there to stop him was <b>Guan Yu</b>, sworn brother of his enemy Liu Bei. But Cao Cao had once treated Guan Yu with great kindness. Torn between duty and honour, Guan Yu stepped aside and let him escape.</p>
+    <p class="note" data-th="ฉากนี้มาจากนิยาย ไม่ได้มาจากบันทึกประวัติศาสตร์">That scene comes from the novel, not from the history books.</p>
+
+    <h4 data-th="ทำไมถึงเป็นปริศนา">Why a puzzle?</h4>
+    <p data-th="ปริศนานี้เปลี่ยนการหนีครั้งนั้นให้เป็นเกม บล็อกแดงใหญ่คือโจโฉ บล็อกอื่น ๆ คือแม่ทัพและทหารที่ขวางทางอยู่ และทางออกด้านล่างคือเส้นทางหนี">The puzzle turns that escape into a game. The big red block is Cao Cao, every other block is a general or soldier standing in his way, and the gap at the bottom is the road out. In the classic layout:</p>
+    <ul class="cast">
+      <li><i class="sw R"></i><span data-th="<b>บล็อกแดงใหญ่</b> = โจโฉ"><b>Big red block</b> = Cao Cao</span></li>
+      <li><i class="sw V"></i><span data-th="<b>บล็อกนอน</b> = กวนอู ผู้เฝ้าทาง"><b>Wide block</b> = Guan Yu, who guards the road</span></li>
+      <li><i class="sw V"></i><span data-th="<b>บล็อกตั้ง</b> = แม่ทัพ เตียวหุย (Zhang Fei) จูล่ง (Zhao Yun) ม้าเฉียว (Ma Chao) และฮองตง (Huang Zhong)"><b>Tall blocks</b> = the generals Zhang Fei, Zhao Yun, Ma Chao and Huang Zhong</span></li>
+      <li><i class="sw S"></i><span data-th="<b>บล็อกเล็ก</b> = ทหาร"><b>Small squares</b> = soldiers</span></li>
+    </ul>
+
+    <h4 data-th="ทำไมถึงชื่อ “Road”">Why “Road”?</h4>
+    <p data-th="華容道 (Huáróng Dào) แปลตรงตัวว่า “เส้นทางฮัวหยง” <i>Huarong</i> เป็นชื่อสถานที่จริง (ปัจจุบันคืออำเภอฮัวหยง มณฑลหูหนาน ประเทศจีน) ส่วน <i>dào</i> แปลว่าถนนหรือเส้นทาง ในโลกตะวันตกปริศนาแบบนี้เรียกว่า <b>Klotski</b> (มาจากคำโปแลนด์ <i>klocki</i> แปลว่า “ก้อนบล็อก”) และในฝรั่งเศสเรียกว่า <i>L’Âne Rouge</i> หรือ “ลาแดง”">華容道 (Huáróng Dào) simply means “Huarong Road”: <i>Huarong</i> is a real place (today Huarong County in Hunan, China) and <i>dào</i> means road or path. In the West the same kind of puzzle is called <b>Klotski</b> (from the Polish <i>klocki</i>, “blocks”), and in France <i>L’Âne Rouge</i> — “the Red Donkey”.</p>
+
+    <h4 data-th="เกร็ดน่ารู้">Fun facts</h4>
+    <ul class="facts">
+      <li data-th="รูปแบบเริ่มต้นสุดคลาสสิกชื่อ <b>เหิงเตาลี่หม่า</b> (橫刀立馬 แปลว่า “ดาบพาดขวาง ม้ายืนตรง”) แก้ได้เร็วสุดใน 81 ครั้งหากบล็อกเลี้ยวมุมได้ในหนึ่งครั้ง และ 90 ครั้งในเกมนี้ที่หนึ่งครั้งคือการเลื่อนตรงหนึ่งเส้น">The classic starting layout, <b>Heng Dao Li Ma</b> (橫刀立馬, “sabre laid across, horse standing”), takes at least 81 moves if a block may turn corners in one move — and 90 here, where a move is one straight slide.</li>
+      <li data-th="จากรูปแบบนั้นไปถึงตำแหน่งอื่นได้เพียง <b>25,955</b> แบบเท่านั้น แต่เส้นทางสั้นที่สุดซ่อนอยู่ในนั้น">From that start only <b>25,955</b> different positions can ever be reached — and the shortest way out is hidden somewhere among them.</li>
+      <li data-th="ทุกด่านในเกมนี้ถูกตรวจด้วยโปรแกรมแก้ปริศนา ค่า par คือจำนวนครั้งที่น้อยที่สุดจริง ๆ ดังนั้นได้ 3 ดาวหมายถึงเดินได้สมบูรณ์แบบ">Every level here is checked by a solver, so <b>par</b> is the true minimum — three stars means you played it perfectly.</li>
+      <li data-th="ไม่มีใครรู้แน่ชัดว่าใครคิดปริศนาบล็อกเลื่อนนี้เป็นคนแรก เรื่องสามก๊กเป็นธีมที่ถูกผูกเข้ามา และปริศนาบล็อกเลื่อนคล้ายกันก็เป็นที่รู้จักในโลกตะวันตกตั้งแต่ต้นคริสต์ศตวรรษที่ 1900">Nobody knows for sure who first made a sliding-block puzzle. The Three Kingdoms story is the theme it was given, and similar puzzles were known in the West from the early 1900s.</li>
+    </ul>
+    <div class="row"><button class="btn go" id="aboutClose" data-th="เข้าใจแล้ว">Got it</button></div>
+  </div>
+</div>
+
 <div class="overlay hidden" id="solAsk">
   <div class="card">
-    <h2>Show the solution?</h2>
-    <p>Once you have seen the solution, this level will <b>not earn any stars</b>.</p>
+    <h2 data-th="ดูเฉลยไหม?">Show the solution?</h2>
+    <p data-th="เมื่อดูเฉลยแล้ว ด่านนี้จะ<b>ไม่ได้ดาว</b>">Once you have seen the solution, this level will <b>not earn any stars</b>.</p>
     <div class="row">
-      <button class="btn" id="solNo">Keep trying</button>
-      <button class="btn go" id="solYes">Show it</button>
+      <button class="btn" id="solNo" data-th="ลองต่อ">Keep trying</button>
+      <button class="btn go" id="solYes" data-th="ดูเลย">Show it</button>
     </div>
   </div>
 </div>

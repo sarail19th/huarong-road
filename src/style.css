@@ -37,6 +37,8 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 /* ---------- menu ---------- */
 .brand{position:relative;text-align:center;margin:8px 0 14px}
 .brand .skin-btn{position:absolute;right:0;top:0}
+.brand .lang-btn{position:absolute;left:0;top:0}
+.brand .about-btn{position:absolute;left:48px;top:0;font-weight:700}
 .brand h1{margin:0;font-size:26px;letter-spacing:.5px}
 .brand h1 span{color:var(--yellow)}
 .brand p{margin:4px 0 0;color:var(--muted);font-size:13px}
@@ -59,6 +61,8 @@ h3.grade small{color:var(--muted);font-weight:400;font-size:12px}
 .hud{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .hud .title{flex:1;font-weight:600;font-size:15px}
 .icon-btn{background:var(--panel2);border:1px solid var(--line);border-radius:12px;width:40px;height:40px;font-size:18px}
+.lang-btn{font-size:14px;font-weight:700}
+.lang-btn[aria-pressed=true]{color:var(--yellow);border-color:var(--yellow)}
 .stats{display:flex;gap:8px;margin-bottom:10px}
 .stat{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 8px;text-align:center}
 .stat small{display:block;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px}
@@ -153,3 +157,21 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 .card .big{font-size:38px;letter-spacing:6px;color:var(--yellow);margin:6px 0 10px}
 .card p{margin:4px 0;color:#c9d2de;font-size:14px}
 .card .row{margin-top:16px}
+
+/* ---------- about ---------- */
+.card.about{max-width:400px;max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);overflow-y:auto;text-align:left;padding:18px 18px 20px;position:relative;-webkit-user-select:text;user-select:text}
+.about .lang-btn{position:absolute;right:14px;top:14px;width:44px;height:36px}
+.about h2{margin:0 52px 0 0}
+.about .zh{margin:2px 0 6px;color:var(--yellow);font-size:13px;letter-spacing:.5px}
+.about h4{margin:14px 0 4px;font-size:14px;color:var(--yellow)}
+.about p{font-size:13.5px;line-height:1.55}
+.about p.note{color:var(--muted);font-size:12.5px;font-style:italic}
+.about ul{margin:6px 0 0;padding-left:0;list-style:none;font-size:13.5px;line-height:1.5;color:#c9d2de}
+.about ul.facts{padding-left:18px;list-style:disc}
+.about ul.facts li{margin:0 0 7px}
+.about ul.cast li{display:flex;align-items:center;gap:10px;margin:0 0 6px}
+.about .sw{flex:none;width:18px;height:18px;border-radius:5px}
+.about .sw.R{background:var(--pR);width:26px;height:26px}
+.about .sw.V{background:var(--pV);height:26px}
+.about .sw.S{background:var(--pS)}
+.about b{color:var(--text)}

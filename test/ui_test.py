@@ -213,9 +213,104 @@ def solution_view(p, idx):
     ctx.close()
     assert not errors, errors
 
+def thai(p):
+    """Language toggle: instructions, hints and solution switch to Thai and back; the choice persists."""
+    import re
+    ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.goto(URL)
+    has_thai = lambda t: re.search('[\u0e00-\u0e7f]', t) is not None
+    assert 'How it works' in page.locator('.howto').inner_text() and page.evaluate("() => document.documentElement.lang") == 'en'
+    page.locator('#menu .lang-btn').click()
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_lang'))") == 'th'
+    assert page.evaluate("() => document.documentElement.lang") == 'th'
+    assert 'วิธีเล่น' in page.locator('.howto').inner_text() and page.locator('#menu .lang-btn').get_attribute('aria-pressed') == 'true'
+    page.screenshot(path=f'{SHOTS}/thai_menu.png')
+    page.locator('.lv').nth(5).click()
+    assert has_thai(page.locator('#status').inner_text()) or page.locator('#status').is_hidden()
+    page.click('#startBtn')
+    assert 'ลากบล็อก' in page.locator('#status').inner_text()
+    assert page.locator('#hintBtn').inner_text() == 'คำใบ้' and page.locator('#solBtn').inner_text() == 'ดูเฉลย'
+    page.click('#hintBtn')
+    h1, b1, w1 = page.locator('#tipHead').inner_text(), page.locator('#tipBody').inner_text(), page.locator('#tipWhy').inner_text()
+    assert has_thai(h1) and has_thai(b1) and has_thai(w1) and 'คำใบ้ 1/2' in h1, (h1, b1, w1)
+    assert not re.search('[A-Za-z]{4,}', b1 + w1), 'hint body fully Thai: ' + b1 + w1
+    page.screenshot(path=f'{SHOTS}/thai_hint1.png')
+    page.click('#hintBtn')
+    assert 'ลองทำแบบนี้' in page.locator('#tipHead').inner_text() and 'เลื่อน' in page.locator('#tipBody').inner_text()
+    thai_body2 = page.locator('#tipBody').inner_text()
+    page.screenshot(path=f'{SHOTS}/thai_hint2.png')
+    page.locator('#game .lang-btn').click()      # switch back mid-hint: the open tip re-renders in English
+    assert 'Try this' in page.locator('#tipHead').inner_text() and page.locator('#hintBtn').inner_text() == 'Hint'
+    assert 'Drag blocks' in page.locator('#status').inner_text()
+    page.locator('#game .lang-btn').click()      # and Thai again
+    assert 'ลองทำแบบนี้' in page.locator('#tipHead').inner_text()
+    # solution flow in Thai
+    page.click('#solBtn')
+    assert 'ดูเฉลยไหม' in page.locator('#solAsk h2').inner_text() and 'ไม่ได้ดาว' in page.locator('#solAsk p').inner_text()
+    assert page.locator('#solNo').inner_text() == 'ลองต่อ' and page.locator('#solYes').inner_text() == 'ดูเลย'
+    page.screenshot(path=f'{SHOTS}/thai_confirm.png')
+    page.click('#solYes')
+    n = page.evaluate("() => Solver.solve(LEVELS[5].g.split('').map(Number)).length")
+    assert page.locator('#solHead').inner_text() == f'ขั้นที่ 1 จาก {n}', page.locator('#solHead').inner_text()
+    assert page.locator('#solBody').inner_text().startswith('เลื่อน')
+    assert page.locator('#solNext').inner_text() == 'ถัดไป ›' and page.locator('#solBack').inner_text() == 'กลับไปเล่น' and '▶ เล่น' in page.locator('#solPlay').inner_text()
+    page.screenshot(path=f'{SHOTS}/thai_solution.png')
+    for i in range(n): page.click('#solNext')
+    assert page.locator('#solHead').inner_text() == f'ไขได้ใน {n} ครั้ง'
+    page.locator('#game .lang-btn').click()      # language switch while the solution is open
+    assert page.locator('#solHead').inner_text().startswith('Solved in') and page.locator('#solPrev').inner_text() == '‹ Prev'
+    page.locator('#game .lang-btn').click()
+    # persisted across a reload, and English restores exactly
+    page.reload()
+    assert page.evaluate("() => document.documentElement.lang") == 'th' and 'วิธีเล่น' in page.locator('.howto').inner_text()
+    page.locator('#menu .lang-btn').click()
+    assert 'How it works' in page.locator('.howto').inner_text() and page.evaluate("() => JSON.parse(localStorage.getItem('hr_lang'))") == 'en'
+    ctx.close()
+    assert not errors, errors
+    print('thai hint 2:', thai_body2)
+
+def about(p):
+    """? button: 'about this game' panel with the story, in English or Thai; closes three ways."""
+    import re
+    ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.goto(URL)
+    assert page.locator('#about').is_hidden()
+    page.click('#aboutBtn')
+    assert page.locator('#about').is_visible()
+    txt = page.locator('#about').inner_text()
+    for w in ('Cao Cao', 'Guan Yu', 'Huarong Road', 'Klotski', '25,955', '81'): assert w in txt, w
+    page.wait_for_timeout(400)
+    page.screenshot(path=f'{SHOTS}/about_en.png')
+    page.locator('#about .lang-btn').click()      # switch language from inside the panel
+    th = page.locator('#about').inner_text()
+    assert 'โจโฉ' in th and 'กวนอู' in th and 'เกี่ยวกับเกมนี้' in th and 'Why a puzzle' not in th
+    assert page.locator('#about').is_visible(), 'panel stays open when the language changes'
+    page.screenshot(path=f'{SHOTS}/about_th.png')
+    page.evaluate("() => document.querySelector('#about .card').scrollTop = 99999")
+    page.wait_for_timeout(100)
+    page.screenshot(path=f'{SHOTS}/about_th_bottom.png')
+    assert page.locator('#aboutClose').is_visible(), 'close button reachable after scrolling'
+    page.click('#aboutClose'); assert page.locator('#about').is_hidden()
+    page.click('#aboutBtn'); page.keyboard.press('Escape'); assert page.locator('#about').is_hidden()
+    page.click('#aboutBtn'); page.mouse.click(5, 5); assert page.locator('#about').is_hidden(), 'backdrop tap closes'
+    page.locator('#menu .lang-btn').click()      # back to English; panel is English again
+    page.click('#aboutBtn'); assert 'The story' in page.locator('#about').inner_text()
+    ctx.close()
+    assert not errors, errors
+
 with sync_playwright() as p:
     features(p)
     print('features: auto-place default, skins, two-step hints OK')
+    thai(p)
+    about(p)
+    print('about panel: story in EN/TH, closes via button, backdrop, Esc')
+    print('thai toggle: instructions, hints, solution switch language and persist')
     for idx in (0, 45, 99): solution_view(p, idx)
     print('solution viewer: confirm, step/play/pause, back, no stars after viewing OK')
     # level 1 (with screenshots), a mid level, and a hard level
