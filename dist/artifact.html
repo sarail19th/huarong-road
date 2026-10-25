@@ -37,9 +37,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 
 /* ---------- menu ---------- */
 .brand{position:relative;text-align:center;margin:8px 0 14px}
-.brand .skin-btn{position:absolute;right:0;top:0}
-.brand .lang-btn{position:absolute;left:0;top:0}
-.brand .about-btn{position:absolute;left:48px;top:0;font-weight:700}
+.brandbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.brandbar .left{display:flex;gap:8px}
+.about-btn{font-weight:700}
 .brand h1{margin:0;font-size:26px;letter-spacing:.5px}
 .brand h1 span{color:var(--yellow)}
 .brand p{margin:4px 0 0;color:var(--muted);font-size:13px}
@@ -162,6 +162,12 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 /* ---------- about ---------- */
 .card.about{max-width:400px;max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);overflow-y:auto;text-align:left;padding:18px 18px 20px;position:relative;-webkit-user-select:text;user-select:text}
 .about .lang-btn{position:absolute;right:14px;top:14px;width:44px;height:36px}
+.apager{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px}
+.apager .btn.sm{margin:0;padding:8px 12px}
+.apager .dots{display:flex;gap:8px}
+.apager .dots i{width:9px;height:9px;border-radius:50%;background:var(--line);display:block}
+.apager .dots i.on{background:var(--yellow)}
+.about .row{margin-top:12px}
 .about h2{margin:0 52px 0 0}
 .about .zh{margin:2px 0 6px;color:var(--yellow);font-size:13px;letter-spacing:.5px}
 .about h4{margin:14px 0 4px;font-size:14px;color:var(--yellow)}
@@ -176,14 +182,25 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 .about .sw.V{background:var(--pV);height:26px}
 .about .sw.S{background:var(--pS)}
 .about b{color:var(--text)}
+
+/* ---------- level pages ---------- */
+.pgchips{display:flex;gap:6px;margin:4px 0 2px}
+.pgchip{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 0;font-size:12.5px;font-weight:600;color:var(--muted)}
+.pgchip.on{color:var(--yellow);border-color:var(--yellow)}
+.pgnav{margin-top:18px;gap:10px}
+.pgnav .btn{font-size:13px;color:var(--muted)}
 </style>
 
 
 <section id="menu" class="screen">
   <div class="brand">
-    <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Thai guidance (off)" title="ไทย / English">ไทย</button>
-    <button class="icon-btn about-btn" id="aboutBtn" aria-label="About this game" title="About this game">?</button>
-    <button class="icon-btn skin-btn" aria-label="Change skin" title="Change skin">🎨</button>
+    <div class="brandbar">
+      <div class="left">
+      <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Thai guidance (off)" title="ไทย / English">ไทย</button>
+      <button class="icon-btn about-btn" id="aboutBtn" aria-label="About this game" title="About this game">?</button>
+      </div>
+      <button class="icon-btn skin-btn" aria-label="Change skin" title="Change skin">🎨</button>
+    </div>
     <h1>Huarong <span>Road</span></h1>
     <p>Sliding-block puzzle · 100 graded levels · exact par for every level</p>
   </div>
@@ -201,7 +218,9 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
     </ol>
   </div>
   <div class="total"><span>Stars collected</span><b id="totalStars">0 / 0</b></div>
+  <div class="pgchips" id="pgchips" role="tablist" aria-label="Level pages"></div>
   <div id="levels"></div>
+  <div class="row pgnav"><button class="btn" id="pgPrev"></button><button class="btn" id="pgNext"></button></div>
 </section>
 
 <section id="game" class="screen hidden">
@@ -257,10 +276,13 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
     <h2 id="aboutTitle" data-th="เกี่ยวกับเกมนี้">About this game</h2>
     <p class="zh">華容道 · Huáróng Dào</p>
 
+    <section class="apage">
     <h4 data-th="เรื่องราว">The story</h4>
     <p data-th="ในปี ค.ศ. 208 <b>โจโฉ</b> (Cao Cao) พ่ายแพ้ในศึกเซ็กเพ็ก (Red Cliffs) และพาทหารที่เหลือหนีกลับ ในวรรณกรรม<i>สามก๊ก</i> ทางรอดเดียวคือ<b>เส้นทางฮัวหยง (Huarong)</b> อันแคบ และผู้ที่ดักรออยู่คือ<b>กวนอู</b> พี่น้องร่วมสาบานของเล่าปี่ศัตรูของโจโฉ แต่โจโฉเคยปฏิบัติต่อกวนอูด้วยน้ำใจอย่างมาก กวนอูจึงต้องเลือกระหว่างหน้าที่กับคุณธรรม และสุดท้ายก็เปิดทางให้โจโฉหนีไป">In 208 AD the warlord <b>Cao Cao</b> lost the Battle of Red Cliffs and fled with what was left of his army. In the classic novel <i>Romance of the Three Kingdoms</i>, the only way home was the narrow <b>Huarong Road</b> — and waiting there to stop him was <b>Guan Yu</b>, sworn brother of his enemy Liu Bei. But Cao Cao had once treated Guan Yu with great kindness. Torn between duty and honour, Guan Yu stepped aside and let him escape.</p>
     <p class="note" data-th="ฉากนี้มาจากนิยาย ไม่ได้มาจากบันทึกประวัติศาสตร์">That scene comes from the novel, not from the history books.</p>
 
+    </section>
+    <section class="apage hidden">
     <h4 data-th="ทำไมถึงเป็นปริศนา">Why a puzzle?</h4>
     <p data-th="ปริศนานี้เปลี่ยนการหนีครั้งนั้นให้เป็นเกม บล็อกแดงใหญ่คือโจโฉ บล็อกอื่น ๆ คือแม่ทัพและทหารที่ขวางทางอยู่ และทางออกด้านล่างคือเส้นทางหนี">The puzzle turns that escape into a game. The big red block is Cao Cao, every other block is a general or soldier standing in his way, and the gap at the bottom is the road out. In the classic layout:</p>
     <ul class="cast">
@@ -270,9 +292,13 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
       <li><i class="sw S"></i><span data-th="<b>บล็อกเล็ก</b> = ทหาร"><b>Small squares</b> = soldiers</span></li>
     </ul>
 
+    </section>
+    <section class="apage hidden">
     <h4 data-th="ทำไมถึงชื่อ “Road”">Why “Road”?</h4>
     <p data-th="華容道 (Huáróng Dào) แปลตรงตัวว่า “เส้นทางฮัวหยง” <i>Huarong</i> เป็นชื่อสถานที่จริง (ปัจจุบันคืออำเภอฮัวหยง มณฑลหูหนาน ประเทศจีน) ส่วน <i>dào</i> แปลว่าถนนหรือเส้นทาง ในโลกตะวันตกปริศนาแบบนี้เรียกว่า <b>Klotski</b> (มาจากคำโปแลนด์ <i>klocki</i> แปลว่า “ก้อนบล็อก”) และในฝรั่งเศสเรียกว่า <i>L’Âne Rouge</i> หรือ “ลาแดง”">華容道 (Huáróng Dào) simply means “Huarong Road”: <i>Huarong</i> is a real place (today Huarong County in Hunan, China) and <i>dào</i> means road or path. In the West the same kind of puzzle is called <b>Klotski</b> (from the Polish <i>klocki</i>, “blocks”), and in France <i>L’Âne Rouge</i> — “the Red Donkey”.</p>
 
+    </section>
+    <section class="apage hidden">
     <h4 data-th="เกร็ดน่ารู้">Fun facts</h4>
     <ul class="facts">
       <li data-th="รูปแบบเริ่มต้นสุดคลาสสิกชื่อ <b>เหิงเตาลี่หม่า</b> (橫刀立馬 แปลว่า “ดาบพาดขวาง ม้ายืนตรง”) แก้ได้เร็วสุดใน 81 ครั้งหากบล็อกเลี้ยวมุมได้ในหนึ่งครั้ง และ 90 ครั้งในเกมนี้ที่หนึ่งครั้งคือการเลื่อนตรงหนึ่งเส้น">The classic starting layout, <b>Heng Dao Li Ma</b> (橫刀立馬, “sabre laid across, horse standing”), takes at least 81 moves if a block may turn corners in one move — and 90 here, where a move is one straight slide.</li>
@@ -280,6 +306,8 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
       <li data-th="ทุกด่านในเกมนี้ถูกตรวจด้วยโปรแกรมแก้ปริศนา ค่า par คือจำนวนครั้งที่น้อยที่สุดจริง ๆ ดังนั้นได้ 3 ดาวหมายถึงเดินได้สมบูรณ์แบบ">Every level here is checked by a solver, so <b>par</b> is the true minimum — three stars means you played it perfectly.</li>
       <li data-th="ไม่มีใครรู้แน่ชัดว่าใครคิดปริศนาบล็อกเลื่อนนี้เป็นคนแรก เรื่องสามก๊กเป็นธีมที่ถูกผูกเข้ามา และปริศนาบล็อกเลื่อนคล้ายกันก็เป็นที่รู้จักในโลกตะวันตกตั้งแต่ต้นคริสต์ศตวรรษที่ 1900">Nobody knows for sure who first made a sliding-block puzzle. The Three Kingdoms story is the theme it was given, and similar puzzles were known in the West from the early 1900s.</li>
     </ul>
+    </section>
+    <div class="apager"><button class="btn sm" id="aPrev" data-th="‹ ก่อนหน้า">‹ Back</button><span class="dots" id="aDots"></span><button class="btn sm" id="aNext" data-th="ถัดไป ›">Next ›</button></div>
     <div class="row"><button class="btn go" id="aboutClose" data-th="เข้าใจแล้ว">Got it</button></div>
   </div>
 </div>
@@ -493,10 +521,27 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   function snap() { return G.pieces.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; }); }
 
   /* ---------- menu ---------- */
+  var PAGE = 20, PAGES = Math.ceil(LV.length / PAGE);
+  var menuPage = store.get('hr_page', null);
+  if (typeof menuPage !== 'number') { // first visit: open on the page of the first unfinished level
+    var firstOpen = 0;
+    while (firstOpen < LV.length - 1 && progress[LV[firstOpen].id]) firstOpen++;
+    menuPage = Math.floor(firstOpen / PAGE);
+  }
+  menuPage = Math.max(0, Math.min(PAGES - 1, menuPage));
+  function rangeOf(pg) { return (pg * PAGE + 1) + '–' + Math.min(LV.length, (pg + 1) * PAGE); }
+  function setMenuPage(pg, jump) {
+    menuPage = Math.max(0, Math.min(PAGES - 1, pg)); store.set('hr_page', menuPage);
+    renderMenu(); if (jump) $('pgchips').scrollIntoView({ block: 'start' });
+  }
+
   function renderMenu() {
     var wrap = $('levels'); wrap.innerHTML = '';
     var last = null, row = null, total = 0;
     LV.forEach(function (lv, i) {
+      var pr = progress[lv.id];
+      if (pr) total += pr.stars;
+      if (Math.floor(i / PAGE) !== menuPage) return;
       var gr = gradeOf(lv.par);
       if (gr.name !== last) {
         last = gr.name;
@@ -505,16 +550,28 @@ if(typeof module!=="undefined")module.exports=LEVELS;
         wrap.appendChild(h);
         row = document.createElement('div'); row.className = 'lvgrid'; wrap.appendChild(row);
       }
-      var pr = progress[lv.id];
       var b = document.createElement('button');
       b.className = 'lv' + (pr ? ' done' : '');
       b.innerHTML = '<b>' + (i + 1) + '</b><span class="stars">' + (seen[lv.id] ? '👁 ' : '') + stars(pr ? pr.stars : 0) + '</span>';
       b.onclick = function () { openLevel(i); };
       row.appendChild(b);
-      if (pr) total += pr.stars;
     });
     $('totalStars').textContent = total + ' / ' + LV.length * 3;
+    var chips = $('pgchips'); chips.innerHTML = '';
+    for (var pg = 0; pg < PAGES; pg++) (function (pg) {
+      var c = document.createElement('button');
+      c.className = 'pgchip' + (pg === menuPage ? ' on' : ''); c.textContent = rangeOf(pg);
+      c.setAttribute('role', 'tab'); c.setAttribute('aria-selected', pg === menuPage);
+      c.onclick = function () { setMenuPage(pg, false); };
+      chips.appendChild(c);
+    })(pg);
+    var pv = $('pgPrev'), nx = $('pgNext');
+    pv.disabled = menuPage === 0; nx.disabled = menuPage === PAGES - 1;
+    pv.textContent = menuPage > 0 ? '‹ ' + rangeOf(menuPage - 1) : '‹';
+    nx.textContent = menuPage < PAGES - 1 ? rangeOf(menuPage + 1) + ' ›' : '›';
   }
+  $('pgPrev').onclick = function () { setMenuPage(menuPage - 1, true); };
+  $('pgNext').onclick = function () { setMenuPage(menuPage + 1, true); };
 
   function showMenu() {
     clearTimer(); G = null; hideTip();
@@ -529,6 +586,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
 
   function openLevel(i) {
     clearTimer();
+    menuPage = Math.floor(i / PAGE); store.set('hr_page', menuPage); // coming back to the menu lands on this level's page
     var lv = LV[i], target = lv.g.split('').map(Number);
     G = { idx: i, lv: lv, target: target, tpieces: Sol.piecesOf(target), pieces: [], initial: null,
           phase: 'setup', sel: null, moves: 0, hints: 0, hist: [], t0: 0, elapsed: 0, msg: '', sol: null };
@@ -1004,9 +1062,24 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   renderHaptics();
 
   /* ---------- about: the story behind the name ---------- */
+  var aboutPage = 0, aboutPages = document.querySelectorAll('#about .apage');
+  (function () { // one dot per page; tapping a dot jumps there
+    for (var i = 0; i < aboutPages.length; i++) (function (i) {
+      var d = document.createElement('i'); d.onclick = function () { setAboutPage(i); }; $('aDots').appendChild(d);
+    })(i);
+  })();
+  function setAboutPage(i) {
+    aboutPage = Math.max(0, Math.min(aboutPages.length - 1, i));
+    Array.prototype.forEach.call(aboutPages, function (sec, k) { sec.classList.toggle('hidden', k !== aboutPage); });
+    Array.prototype.forEach.call($('aDots').children, function (d, k) { d.classList.toggle('on', k === aboutPage); });
+    $('aPrev').disabled = aboutPage === 0; $('aNext').disabled = aboutPage === aboutPages.length - 1;
+    $('about').firstElementChild.scrollTop = 0;
+  }
+  $('aPrev').onclick = function () { setAboutPage(aboutPage - 1); };
+  $('aNext').onclick = function () { setAboutPage(aboutPage + 1); };
   function showAbout(on) {
     $('about').classList.toggle('hidden', !on);
-    if (on) $('about').firstElementChild.scrollTop = 0;
+    if (on) setAboutPage(0);
   }
   $('aboutBtn').onclick = function () { showAbout(true); };
   $('aboutClose').onclick = function () { showAbout(false); };

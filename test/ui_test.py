@@ -6,6 +6,11 @@ SHOTS = os.environ.get('HR_SHOTS', '/tmp/hr-shots')
 os.makedirs(SHOTS, exist_ok=True)
 URL = 'file://' + os.path.join(ROOT, 'dist', 'index.html')
 
+def lv(page, idx):
+    """The menu shows 20 levels per page: jump to the page that holds level idx (0-based) and return its button."""
+    page.locator('.pgchip').nth(idx // 20).click()
+    return page.locator('.lv').nth(idx % 20)
+
 def run(level_idx, p, shots=False, haptics_off=False):
     ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
     page = ctx.new_page()
@@ -17,7 +22,7 @@ def run(level_idx, p, shots=False, haptics_off=False):
     page.add_init_script("localStorage.setItem('hr_auto', 'false')")
     page.goto(URL)
     if shots: page.screenshot(path=f'{SHOTS}/1_menu.png')
-    page.locator('.lv').nth(level_idx).click()
+    lv(page, level_idx).click()
     if haptics_off:
         assert page.locator('#hapBtn').is_visible()
         page.click('#hapBtn')
@@ -111,7 +116,7 @@ def features(p):
         assert page.evaluate("() => document.documentElement.dataset.skin") == want
         assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_skin'))") == want
     page.locator('#menu .skin-btn').click()  # blossom, remembered across levels
-    page.locator('.lv').nth(5).click()
+    lv(page, 5).click()
     # auto-place defaults to on: layout is already copied and verified
     n = page.evaluate("() => Solver.piecesOf(LEVELS[5].g.split('').map(Number)).length")
     assert page.locator('#autoBtn').get_attribute('aria-pressed') == 'true'
@@ -121,7 +126,7 @@ def features(p):
     assert page.locator('.piece').count() == 0 and page.evaluate("() => localStorage.getItem('hr_auto')") == 'false'
     page.click('#autoBtn')  # on again: refilled
     assert page.locator('.piece.ok').count() == n
-    page.click('#backBtn'); page.locator('.lv').nth(5).click()
+    page.click('#backBtn'); lv(page, 5).click()
     assert page.locator('.piece.ok').count() == n, 'next level opens auto-placed'
     page.click('#startBtn')
     # hints: tap 1 = explanation + outline, tap 2 = arrow on the move
@@ -161,7 +166,7 @@ def solution_view(p, idx):
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
     page.goto(URL)
-    page.locator('.lv').nth(idx).click()
+    lv(page, idx).click()
     page.click('#startBtn')                       # auto-place is on by default
     assert page.locator('#solBtn').is_visible()
     page.click('#solBtn')
@@ -206,9 +211,9 @@ def solution_view(p, idx):
     assert 'no stars' in page.locator('#winInfo').inner_text()
     page.screenshot(path=f'{SHOTS}/solution_win.png')
     page.click('#menuBtn')
-    assert '👁' in page.locator('.lv').nth(idx).inner_text() and page.locator('#totalStars').inner_text().startswith('0 /')
+    assert '👁' in lv(page, idx).inner_text() and page.locator('#totalStars').inner_text().startswith('0 /')
     # persists: reopening the level and solving again still earns nothing; viewing again skips the confirm
-    page.locator('.lv').nth(idx).click(); page.click('#startBtn'); page.click('#solBtn')
+    lv(page, idx).click(); page.click('#startBtn'); page.click('#solBtn')
     assert page.locator('#solAsk').is_hidden() and page.locator('.solbar').is_visible()
     ctx.close()
     assert not errors, errors
@@ -228,7 +233,7 @@ def thai(p):
     assert page.evaluate("() => document.documentElement.lang") == 'th'
     assert 'วิธีเล่น' in page.locator('.howto').inner_text() and page.locator('#menu .lang-btn').get_attribute('aria-pressed') == 'true'
     page.screenshot(path=f'{SHOTS}/thai_menu.png')
-    page.locator('.lv').nth(5).click()
+    lv(page, 5).click()
     assert has_thai(page.locator('#status').inner_text()) or page.locator('#status').is_hidden()
     page.click('#startBtn')
     assert 'ลากบล็อก' in page.locator('#status').inner_text()
@@ -272,6 +277,40 @@ def thai(p):
     assert not errors, errors
     print('thai hint 2:', thai_body2)
 
+def menu_pages(p):
+    """Level list is paged (20 per page), remembers where you were, and header buttons do not cover the title."""
+    for w in (412, 320):
+        ctx = p.chromium.launch().new_context(viewport={'width': w, 'height': 800}, device_scale_factor=2, has_touch=True, is_mobile=True)
+        page = ctx.new_page(); errors = []
+        page.on('pageerror', lambda e: errors.append(str(e)))
+        page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+        page.goto(URL)
+        h1 = page.locator('#menu h1').bounding_box()
+        for sel in ('#menu .lang-btn', '#aboutBtn', '#menu .skin-btn'):
+            b = page.locator(sel).bounding_box()
+            assert b['y'] + b['height'] <= h1['y'] + 1 or b['x'] + b['width'] <= h1['x'] or b['x'] >= h1['x'] + h1['width'], f'{sel} overlaps the title at {w}px'
+        sw = page.evaluate("() => document.documentElement.scrollWidth")
+        assert sw <= w, f'horizontal overflow {sw} > {w}'
+        if w == 412:
+            assert page.locator('.pgchip').count() == 5 and page.locator('.lv').count() == 20
+            assert page.locator('.lv b').first.inner_text() == '1' and page.locator('.pgchip.on').inner_text() == '1–20'
+            assert page.locator('#pgPrev').is_disabled() and page.locator('#pgNext').inner_text() == '21–40 ›'
+            page.screenshot(path=f'{SHOTS}/menu_page1.png')
+            page.click('#pgNext')
+            assert page.locator('.lv b').first.inner_text() == '21' and page.locator('.pgchip.on').inner_text() == '21–40'
+            page.locator('.pgchip').nth(4).click()
+            assert page.locator('.lv b').first.inner_text() == '81' and page.locator('.lv b').last.inner_text() == '100'
+            assert page.locator('#pgNext').is_disabled() and page.locator('#totalStars').inner_text() == '0 / 300'
+            page.screenshot(path=f'{SHOTS}/menu_page5.png')
+            page.locator('.lv').nth(3).click()            # level 84; back lands on the same page
+            assert 'Level 84' in page.locator('#lvTitle').inner_text()
+            page.click('#backBtn')
+            assert page.locator('.pgchip.on').inner_text() == '81–100'
+            page.reload(); assert page.locator('.pgchip.on').inner_text() == '81–100', 'page remembered across reloads'
+        else:
+            page.screenshot(path=f'{SHOTS}/menu_320.png')
+        ctx.close(); assert not errors, errors
+
 def about(p):
     """? button: 'about this game' panel with the story, in English or Thai; closes three ways."""
     import re
@@ -283,30 +322,42 @@ def about(p):
     assert page.locator('#about').is_hidden()
     page.click('#aboutBtn')
     assert page.locator('#about').is_visible()
-    txt = page.locator('#about').inner_text()
-    for w in ('Cao Cao', 'Guan Yu', 'Huarong Road', 'Klotski', '25,955', '81'): assert w in txt, w
-    page.wait_for_timeout(400)
-    page.screenshot(path=f'{SHOTS}/about_en.png')
-    page.locator('#about .lang-btn').click()      # switch language from inside the panel
+    pages = page.locator('#about .apage'); n = pages.count(); assert n == 4
+    assert page.locator('#aPrev').is_disabled() and page.locator('#aNext').is_enabled()
+    seen_txt = ''
+    for k in range(n):
+        assert page.locator('#about .apage:visible').count() == 1, 'exactly one page visible'
+        seen_txt += page.locator('#about .apage:visible').inner_text()
+        if k == 1: page.wait_for_timeout(400); page.screenshot(path=f'{SHOTS}/about_en.png')
+        if k < n - 1: page.click('#aNext')
+    assert page.locator('#aNext').is_disabled() and page.locator('#aboutClose').is_visible()
+    for w in ('Cao Cao', 'Guan Yu', 'Huarong Road', 'Klotski', '25,955', '81'): assert w in seen_txt, w
+    page.click('#aPrev'); page.click('#aPrev'); page.click('#aPrev'); assert page.locator('#aPrev').is_disabled()
+    page.locator('#aDots i').nth(2).click()     # dots jump straight to a page
+    assert 'Why' in page.locator('#about .apage:visible h4').inner_text() and page.locator('#about .apage:visible').count() == 1
+    page.locator('#aDots i').nth(0).click()
+    page.locator('#about .lang-btn').click()      # switch language from inside the panel; stays on the same page
     th = page.locator('#about').inner_text()
-    assert 'โจโฉ' in th and 'กวนอู' in th and 'เกี่ยวกับเกมนี้' in th and 'Why a puzzle' not in th
+    assert 'โจโฉ' in th and 'กวนอู' in th and 'เกี่ยวกับเกมนี้' in th and 'The story' not in th
     assert page.locator('#about').is_visible(), 'panel stays open when the language changes'
     page.screenshot(path=f'{SHOTS}/about_th.png')
-    page.evaluate("() => document.querySelector('#about .card').scrollTop = 99999")
-    page.wait_for_timeout(100)
+    page.click('#aNext'); page.click('#aNext'); page.click('#aNext')
+    assert 'เกร็ดน่ารู้' in page.locator('#about .apage:visible').inner_text() and '25,955' in page.locator('#about').inner_text()
     page.screenshot(path=f'{SHOTS}/about_th_bottom.png')
-    assert page.locator('#aboutClose').is_visible(), 'close button reachable after scrolling'
+    assert page.locator('#aboutClose').is_visible(), 'close button reachable'
     page.click('#aboutClose'); assert page.locator('#about').is_hidden()
     page.click('#aboutBtn'); page.keyboard.press('Escape'); assert page.locator('#about').is_hidden()
     page.click('#aboutBtn'); page.mouse.click(5, 5); assert page.locator('#about').is_hidden(), 'backdrop tap closes'
     page.locator('#menu .lang-btn').click()      # back to English; panel is English again
-    page.click('#aboutBtn'); assert 'The story' in page.locator('#about').inner_text()
+    page.click('#aboutBtn'); assert 'The story' in page.locator('#about').inner_text() and page.locator('#aPrev').is_disabled()
     ctx.close()
     assert not errors, errors
 
 with sync_playwright() as p:
     features(p)
     print('features: auto-place default, skins, two-step hints OK')
+    menu_pages(p)
+    print('menu pages: 20 per page, remembered, header does not cover the title')
     thai(p)
     about(p)
     print('about panel: story in EN/TH, closes via button, backdrop, Esc')

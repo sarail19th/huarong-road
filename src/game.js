@@ -56,10 +56,27 @@
   function snap() { return G.pieces.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; }); }
 
   /* ---------- menu ---------- */
+  var PAGE = 20, PAGES = Math.ceil(LV.length / PAGE);
+  var menuPage = store.get('hr_page', null);
+  if (typeof menuPage !== 'number') { // first visit: open on the page of the first unfinished level
+    var firstOpen = 0;
+    while (firstOpen < LV.length - 1 && progress[LV[firstOpen].id]) firstOpen++;
+    menuPage = Math.floor(firstOpen / PAGE);
+  }
+  menuPage = Math.max(0, Math.min(PAGES - 1, menuPage));
+  function rangeOf(pg) { return (pg * PAGE + 1) + '–' + Math.min(LV.length, (pg + 1) * PAGE); }
+  function setMenuPage(pg, jump) {
+    menuPage = Math.max(0, Math.min(PAGES - 1, pg)); store.set('hr_page', menuPage);
+    renderMenu(); if (jump) $('pgchips').scrollIntoView({ block: 'start' });
+  }
+
   function renderMenu() {
     var wrap = $('levels'); wrap.innerHTML = '';
     var last = null, row = null, total = 0;
     LV.forEach(function (lv, i) {
+      var pr = progress[lv.id];
+      if (pr) total += pr.stars;
+      if (Math.floor(i / PAGE) !== menuPage) return;
       var gr = gradeOf(lv.par);
       if (gr.name !== last) {
         last = gr.name;
@@ -68,16 +85,28 @@
         wrap.appendChild(h);
         row = document.createElement('div'); row.className = 'lvgrid'; wrap.appendChild(row);
       }
-      var pr = progress[lv.id];
       var b = document.createElement('button');
       b.className = 'lv' + (pr ? ' done' : '');
       b.innerHTML = '<b>' + (i + 1) + '</b><span class="stars">' + (seen[lv.id] ? '👁 ' : '') + stars(pr ? pr.stars : 0) + '</span>';
       b.onclick = function () { openLevel(i); };
       row.appendChild(b);
-      if (pr) total += pr.stars;
     });
     $('totalStars').textContent = total + ' / ' + LV.length * 3;
+    var chips = $('pgchips'); chips.innerHTML = '';
+    for (var pg = 0; pg < PAGES; pg++) (function (pg) {
+      var c = document.createElement('button');
+      c.className = 'pgchip' + (pg === menuPage ? ' on' : ''); c.textContent = rangeOf(pg);
+      c.setAttribute('role', 'tab'); c.setAttribute('aria-selected', pg === menuPage);
+      c.onclick = function () { setMenuPage(pg, false); };
+      chips.appendChild(c);
+    })(pg);
+    var pv = $('pgPrev'), nx = $('pgNext');
+    pv.disabled = menuPage === 0; nx.disabled = menuPage === PAGES - 1;
+    pv.textContent = menuPage > 0 ? '‹ ' + rangeOf(menuPage - 1) : '‹';
+    nx.textContent = menuPage < PAGES - 1 ? rangeOf(menuPage + 1) + ' ›' : '›';
   }
+  $('pgPrev').onclick = function () { setMenuPage(menuPage - 1, true); };
+  $('pgNext').onclick = function () { setMenuPage(menuPage + 1, true); };
 
   function showMenu() {
     clearTimer(); G = null; hideTip();
@@ -92,6 +121,7 @@
 
   function openLevel(i) {
     clearTimer();
+    menuPage = Math.floor(i / PAGE); store.set('hr_page', menuPage); // coming back to the menu lands on this level's page
     var lv = LV[i], target = lv.g.split('').map(Number);
     G = { idx: i, lv: lv, target: target, tpieces: Sol.piecesOf(target), pieces: [], initial: null,
           phase: 'setup', sel: null, moves: 0, hints: 0, hist: [], t0: 0, elapsed: 0, msg: '', sol: null };
@@ -567,9 +597,24 @@
   renderHaptics();
 
   /* ---------- about: the story behind the name ---------- */
+  var aboutPage = 0, aboutPages = document.querySelectorAll('#about .apage');
+  (function () { // one dot per page; tapping a dot jumps there
+    for (var i = 0; i < aboutPages.length; i++) (function (i) {
+      var d = document.createElement('i'); d.onclick = function () { setAboutPage(i); }; $('aDots').appendChild(d);
+    })(i);
+  })();
+  function setAboutPage(i) {
+    aboutPage = Math.max(0, Math.min(aboutPages.length - 1, i));
+    Array.prototype.forEach.call(aboutPages, function (sec, k) { sec.classList.toggle('hidden', k !== aboutPage); });
+    Array.prototype.forEach.call($('aDots').children, function (d, k) { d.classList.toggle('on', k === aboutPage); });
+    $('aPrev').disabled = aboutPage === 0; $('aNext').disabled = aboutPage === aboutPages.length - 1;
+    $('about').firstElementChild.scrollTop = 0;
+  }
+  $('aPrev').onclick = function () { setAboutPage(aboutPage - 1); };
+  $('aNext').onclick = function () { setAboutPage(aboutPage + 1); };
   function showAbout(on) {
     $('about').classList.toggle('hidden', !on);
-    if (on) $('about').firstElementChild.scrollTop = 0;
+    if (on) setAboutPage(0);
   }
   $('aboutBtn').onclick = function () { showAbout(true); };
   $('aboutClose').onclick = function () { showAbout(false); };

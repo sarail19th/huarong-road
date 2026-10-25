@@ -36,9 +36,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 
 /* ---------- menu ---------- */
 .brand{position:relative;text-align:center;margin:8px 0 14px}
-.brand .skin-btn{position:absolute;right:0;top:0}
-.brand .lang-btn{position:absolute;left:0;top:0}
-.brand .about-btn{position:absolute;left:48px;top:0;font-weight:700}
+.brandbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.brandbar .left{display:flex;gap:8px}
+.about-btn{font-weight:700}
 .brand h1{margin:0;font-size:26px;letter-spacing:.5px}
 .brand h1 span{color:var(--yellow)}
 .brand p{margin:4px 0 0;color:var(--muted);font-size:13px}
@@ -161,6 +161,12 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 /* ---------- about ---------- */
 .card.about{max-width:400px;max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);overflow-y:auto;text-align:left;padding:18px 18px 20px;position:relative;-webkit-user-select:text;user-select:text}
 .about .lang-btn{position:absolute;right:14px;top:14px;width:44px;height:36px}
+.apager{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px}
+.apager .btn.sm{margin:0;padding:8px 12px}
+.apager .dots{display:flex;gap:8px}
+.apager .dots i{width:9px;height:9px;border-radius:50%;background:var(--line);display:block}
+.apager .dots i.on{background:var(--yellow)}
+.about .row{margin-top:12px}
 .about h2{margin:0 52px 0 0}
 .about .zh{margin:2px 0 6px;color:var(--yellow);font-size:13px;letter-spacing:.5px}
 .about h4{margin:14px 0 4px;font-size:14px;color:var(--yellow)}
@@ -175,3 +181,10 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 .about .sw.V{background:var(--pV);height:26px}
 .about .sw.S{background:var(--pS)}
 .about b{color:var(--text)}
+
+/* ---------- level pages ---------- */
+.pgchips{display:flex;gap:6px;margin:4px 0 2px}
+.pgchip{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 0;font-size:12.5px;font-weight:600;color:var(--muted)}
+.pgchip.on{color:var(--yellow);border-color:var(--yellow)}
+.pgnav{margin-top:18px;gap:10px}
+.pgnav .btn{font-size:13px;color:var(--muted)}
