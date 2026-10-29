@@ -199,6 +199,8 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 @keyframes spin{to{transform:rotate(360deg)}}
 .ver{margin:22px 0 0;text-align:center;color:var(--muted);font-size:11.5px}
 .ver b{font-weight:600;letter-spacing:.5px}
+.src{margin:4px 0 0;text-align:center;font-size:11.5px}
+.src a{color:var(--muted);text-decoration:underline}
 </style>
 
 
@@ -237,6 +239,7 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
   <div id="levels"></div>
   <div class="row pgnav"><button class="btn" id="pgPrev"></button><button class="btn" id="pgNext"></button></div>
   <p class="ver"><span data-th="เวอร์ชัน">Version</span> <b id="verId"></b></p>
+  <p class="src"><a href="https://github.com/sarail19th/huarong-road" target="_blank" rel="noopener noreferrer" data-th="ซอร์สโค้ดบน GitHub">Source on GitHub</a></p>
 </section>
 
 <section id="game" class="screen hidden">
@@ -496,7 +499,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   var muted = store.get('hr_muted', false);
   var haptics = store.get('hr_haptics', true);
   var autoPlace = store.get('hr_auto', true);
-  var BUILD = 'f6d2b18'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = '7a7728d'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [
     { id: 'classic', name: 'Classic', theme: '#0d1117' },

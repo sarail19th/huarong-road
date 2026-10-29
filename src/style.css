@@ -198,3 +198,5 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 @keyframes spin{to{transform:rotate(360deg)}}
 .ver{margin:22px 0 0;text-align:center;color:var(--muted);font-size:11.5px}
 .ver b{font-weight:600;letter-spacing:.5px}
+.src{margin:4px 0 0;text-align:center;font-size:11.5px}
+.src a{color:var(--muted);text-decoration:underline}
