@@ -524,7 +524,18 @@ def about(p):
     page.locator('#aDots i').nth(2).click()     # dots jump straight to a page
     assert 'Why' in page.locator('#about .apage:visible h4').inner_text() and page.locator('#about .apage:visible').count() == 1
     page.locator('#aDots i').nth(0).click()
+    sw = lambda c: page.locator(f'#about .sw.{c}').bounding_box()
+    page.locator('#aDots i').nth(1).click()
+    h, v = sw('H'), sw('V'); assert h['width'] > h['height'] and v['height'] > v['width'], 'wide block swatch is wide, tall block swatch is tall'
+    page.locator('#aDots i').nth(0).click()
     page.locator('#about .lang-btn').click()      # switch language from inside the panel; stays on the same page
+    assert 'ศึกผาแดง' in page.locator('#about').inner_text() and 'เซ็กเพ็ก' not in page.locator('#about').inner_text(), 'Red Cliffs is ศึกผาแดง in Thai'
+    assert page.evaluate("() => getComputedStyle(document.querySelector('#about .apage p')).textAlign") == 'justify'
+    for _ in range(3):                                      # proper names are kept whole across all pages
+        for nm in page.locator('#about .apage:visible .nw').all():
+            r = nm.evaluate("e => e.getClientRects().length"); assert r == 1, ('name split over lines', nm.inner_text())
+        page.click('#aNext')
+    for _ in range(3): page.click('#aPrev')
     th = page.locator('#about').inner_text()
     assert 'โจโฉ' in th and 'กวนอู' in th and 'เกี่ยวกับเกมนี้' in th and 'The story' not in th
     assert page.locator('#about').is_visible(), 'panel stays open when the language changes'

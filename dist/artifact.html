@@ -246,14 +246,20 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 .about .zh{margin:2px 0 6px;color:var(--yellow);font-size:13px;letter-spacing:.5px}
 .about h4{margin:14px 0 4px;font-size:14px;color:var(--yellow)}
 .about p{font-size:13.5px;line-height:1.55}
+/* justified text; names stay in one piece (.nw) and words are never cut mid-way */
+.about p,.about ul.facts li{text-align:justify;overflow-wrap:normal;word-break:normal;hyphens:manual}
+html[lang=th] .about p,html[lang=th] .about ul.facts li,html[lang=th] .about ul.cast li>span{text-justify:inter-character} /* Thai has few spaces: spread between characters, never inside English text */
+.about p.note{text-align:left}
+.nw{white-space:nowrap}
 .about p.note{color:var(--muted);font-size:12.5px;font-style:italic}
 .about ul{margin:6px 0 0;padding-left:0;list-style:none;font-size:13.5px;line-height:1.5;color:#c9d2de}
 .about ul.facts{padding-left:18px;list-style:disc}
 .about ul.facts li{margin:0 0 7px}
-.about ul.cast li{display:flex;align-items:center;gap:10px;margin:0 0 6px}
-.about .sw{flex:none;width:18px;height:18px;border-radius:5px}
-.about .sw.R{background:var(--pR);width:26px;height:26px}
-.about .sw.V{background:var(--pV);height:26px}
+.about ul.cast li{display:grid;grid-template-columns:30px 1fr;align-items:center;gap:10px;margin:0 0 6px}
+.about .sw{justify-self:center;width:18px;height:18px;border-radius:5px}
+.about .sw.R{background:var(--pR);width:28px;height:28px}
+.about .sw.V{background:var(--pV);width:14px;height:28px}   /* tall block: narrow and high */
+.about .sw.H{background:var(--pV);width:28px;height:14px}   /* wide block: broad and low */
 .about .sw.S{background:var(--pS)}
 .about b{color:var(--text)}
 
@@ -425,24 +431,24 @@ body.notimer #timeStat{display:none}
 
     <section class="apage">
     <h4 data-th="เรื่องราว">The story</h4>
-    <p data-th="ในปี ค.ศ. 208 <b>โจโฉ</b> (Cao Cao) พ่ายแพ้ในศึกเซ็กเพ็ก (Red Cliffs) และพาทหารที่เหลือหนีกลับ ในวรรณกรรม<i>สามก๊ก</i> ทางรอดเดียวคือ<b>เส้นทางฮัวหยง (Huarong)</b> อันแคบ และผู้ที่ดักรออยู่คือ<b>กวนอู</b> พี่น้องร่วมสาบานของเล่าปี่ศัตรูของโจโฉ แต่โจโฉเคยปฏิบัติต่อกวนอูด้วยน้ำใจอย่างมาก กวนอูจึงต้องเลือกระหว่างหน้าที่กับคุณธรรม และสุดท้ายก็เปิดทางให้โจโฉหนีไป">In 208 AD the warlord <b>Cao Cao</b> lost the Battle of Red Cliffs and fled with what was left of his army. In the classic novel <i>Romance of the Three Kingdoms</i>, the only way home was the narrow <b>Huarong Road</b> — and waiting there to stop him was <b>Guan Yu</b>, sworn brother of his enemy Liu Bei. But Cao Cao had once treated Guan Yu with great kindness. Torn between duty and honour, Guan Yu stepped aside and let him escape.</p>
+    <p data-th="ในปี ค.ศ. 208 <b>โจโฉ</b> (<span class='nw'>Cao Cao</span>) พ่ายแพ้ใน<span class='nw'>ศึกผาแดง</span> (<span class='nw'>Red Cliffs</span>) และพาทหารที่เหลือหนีกลับ ในวรรณกรรม<i>สามก๊ก</i> ทางรอดเดียวคือ<b>เส้นทาง<span class='nw'>ฮัวหยง</span> (Huarong)</b> อันแคบ และผู้ที่ดักรออยู่คือ<b>กวนอู</b> พี่น้องร่วมสาบานของ<span class='nw'>เล่าปี่</span>ศัตรูของ<span class='nw'>โจโฉ</span> แต่<span class='nw'>โจโฉ</span>เคยปฏิบัติต่อ<span class='nw'>กวนอู</span>ด้วยน้ำใจอย่างมาก <span class='nw'>กวนอู</span>จึงต้องเลือกระหว่างหน้าที่กับคุณธรรม และสุดท้ายก็เปิดทางให้<span class='nw'>โจโฉ</span>หนีไป">In 208 AD the warlord <b>Cao Cao</b> lost the Battle of <span class='nw'>Red Cliffs</span> and fled with what was left of his army. In the classic novel <i>Romance of the Three Kingdoms</i>, the only way home was the narrow <b>Huarong Road</b> — and waiting there to stop him was <b>Guan Yu</b>, sworn brother of his enemy <span class='nw'>Liu Bei</span>. But <span class='nw'>Cao Cao</span> had once treated <span class='nw'>Guan Yu</span> with great kindness. Torn between duty and honour, <span class='nw'>Guan Yu</span> stepped aside and let him escape.</p>
     <p class="note" data-th="ฉากนี้มาจากนิยาย ไม่ได้มาจากบันทึกประวัติศาสตร์">That scene comes from the novel, not from the history books.</p>
 
     </section>
     <section class="apage hidden">
     <h4 data-th="ทำไมถึงเป็นปริศนา">Why a puzzle?</h4>
-    <p data-th="ปริศนานี้เปลี่ยนการหนีครั้งนั้นให้เป็นเกม บล็อกแดงใหญ่คือโจโฉ บล็อกอื่น ๆ คือแม่ทัพและทหารที่ขวางทางอยู่ และทางออกด้านล่างคือเส้นทางหนี">The puzzle turns that escape into a game. The big red block is Cao Cao, every other block is a general or soldier standing in his way, and the gap at the bottom is the road out. In the classic layout:</p>
+    <p data-th="ปริศนานี้เปลี่ยนการหนีครั้งนั้นให้เป็นเกม บล็อกแดงใหญ่คือ<span class='nw'>โจโฉ</span> บล็อกอื่น ๆ คือแม่ทัพและทหารที่ขวางทางอยู่ และทางออกด้านล่างคือเส้นทางหนี">The puzzle turns that escape into a game. The big red block is <span class='nw'>Cao Cao</span>, every other block is a general or soldier standing in his way, and the gap at the bottom is the road out. In the classic layout:</p>
     <ul class="cast">
-      <li><i class="sw R"></i><span data-th="<b>บล็อกแดงใหญ่</b> = โจโฉ"><b>Big red block</b> = Cao Cao</span></li>
-      <li><i class="sw V"></i><span data-th="<b>บล็อกนอน</b> = กวนอู ผู้เฝ้าทาง"><b>Wide block</b> = Guan Yu, who guards the road</span></li>
-      <li><i class="sw V"></i><span data-th="<b>บล็อกตั้ง</b> = แม่ทัพ เตียวหุย (Zhang Fei) จูล่ง (Zhao Yun) ม้าเฉียว (Ma Chao) และฮองตง (Huang Zhong)"><b>Tall blocks</b> = the generals Zhang Fei, Zhao Yun, Ma Chao and Huang Zhong</span></li>
+      <li><i class="sw R"></i><span data-th="<b>บล็อกแดงใหญ่</b> = <span class='nw'>โจโฉ</span>"><b>Big red block</b> = Cao Cao</span></li>
+      <li><i class="sw H"></i><span data-th="<b>บล็อกนอน</b> = <span class='nw'>กวนอู</span> ผู้เฝ้าทาง"><b>Wide block</b> = <span class='nw'>Guan Yu</span>, who guards the road</span></li>
+      <li><i class="sw V"></i><span data-th="<b>บล็อกตั้ง</b> = แม่ทัพ <span class='nw'>เตียวหุย</span> (<span class='nw'>Zhang Fei</span>) <span class='nw'>จูล่ง</span> (<span class='nw'>Zhao Yun</span>) <span class='nw'>ม้าเฉียว</span> (<span class='nw'>Ma Chao</span>) และ<span class='nw'>ฮองตง</span> (<span class='nw'>Huang Zhong</span>)"><b>Tall blocks</b> = the generals <span class='nw'>Zhang Fei</span>, <span class='nw'>Zhao Yun</span>, <span class='nw'>Ma Chao</span> and Huang Zhong</span></li>
       <li><i class="sw S"></i><span data-th="<b>บล็อกเล็ก</b> = ทหาร"><b>Small squares</b> = soldiers</span></li>
     </ul>
 
     </section>
     <section class="apage hidden">
     <h4 data-th="ทำไมถึงชื่อ “Road”">Why “Road”?</h4>
-    <p data-th="華容道 (Huáróng Dào) แปลตรงตัวว่า “เส้นทางฮัวหยง” <i>Huarong</i> เป็นชื่อสถานที่จริง (ปัจจุบันคืออำเภอฮัวหยง มณฑลหูหนาน ประเทศจีน) ส่วน <i>dào</i> แปลว่าถนนหรือเส้นทาง ในโลกตะวันตกปริศนาแบบนี้เรียกว่า <b>Klotski</b> (มาจากคำโปแลนด์ <i>klocki</i> แปลว่า “ก้อนบล็อก”) และในฝรั่งเศสเรียกว่า <i>L’Âne Rouge</i> หรือ “ลาแดง”">華容道 (Huáróng Dào) simply means “Huarong Road”: <i>Huarong</i> is a real place (today Huarong County in Hunan, China) and <i>dào</i> means road or path. In the West the same kind of puzzle is called <b>Klotski</b> (from the Polish <i>klocki</i>, “blocks”), and in France <i>L’Âne Rouge</i> — “the Red Donkey”.</p>
+    <p data-th="華容道 (Huáróng Dào) แปลตรงตัวว่า “เส้นทาง<span class='nw'>ฮัวหยง</span>” <i>Huarong</i> เป็นชื่อสถานที่จริง (ปัจจุบันคืออำเภอ<span class='nw'>ฮัวหยง</span> มณฑล<span class='nw'>หูหนาน</span> ประเทศจีน) ส่วน <i>dào</i> แปลว่าถนนหรือเส้นทาง ในโลกตะวันตกปริศนาแบบนี้เรียกว่า <b>Klotski</b> (มาจากคำโปแลนด์ <i>klocki</i> แปลว่า “ก้อนบล็อก”) และในฝรั่งเศสเรียกว่า <i>L’Âne Rouge</i> หรือ “ลาแดง”">華容道 (Huáróng Dào) simply means “Huarong Road”: <i>Huarong</i> is a real place (today Huarong County in Hunan, China) and <i>dào</i> means road or path. In the West the same kind of puzzle is called <b>Klotski</b> (from the Polish <i>klocki</i>, “blocks”), and in France <i>L’Âne Rouge</i> — “the Red Donkey”.</p>
 
     </section>
     <section class="apage hidden">
@@ -450,8 +456,8 @@ body.notimer #timeStat{display:none}
     <ul class="facts">
       <li data-th="รูปแบบเริ่มต้นสุดคลาสสิกชื่อ <b>เหิงเตาลี่หม่า</b> (橫刀立馬 แปลว่า “ดาบพาดขวาง ม้ายืนตรง”) แก้ได้เร็วสุดใน 81 ครั้งหากบล็อกเลี้ยวมุมได้ในหนึ่งครั้ง และ 90 ครั้งในเกมนี้ที่หนึ่งครั้งคือการเลื่อนตรงหนึ่งเส้น">The classic starting layout, <b>Heng Dao Li Ma</b> (橫刀立馬, “sabre laid across, horse standing”), takes at least 81 moves if a block may turn corners in one move — and 90 here, where a move is one straight slide.</li>
       <li data-th="จากรูปแบบนั้นไปถึงตำแหน่งอื่นได้เพียง <b>25,955</b> แบบเท่านั้น แต่เส้นทางสั้นที่สุดซ่อนอยู่ในนั้น">From that start only <b>25,955</b> different positions can ever be reached — and the shortest way out is hidden somewhere among them.</li>
-      <li data-th="ทุกด่านในเกมนี้ถูกตรวจด้วยโปรแกรมแก้ปริศนา ค่า par คือจำนวนครั้งที่น้อยที่สุดจริง ๆ ดังนั้นได้ 3 ดาวหมายถึงเดินได้สมบูรณ์แบบ">Every level here is checked by a solver, so <b>par</b> is the true minimum — three stars means you played it perfectly.</li>
-      <li data-th="ไม่มีใครรู้แน่ชัดว่าใครคิดปริศนาบล็อกเลื่อนนี้เป็นคนแรก เรื่องสามก๊กเป็นธีมที่ถูกผูกเข้ามา และปริศนาบล็อกเลื่อนคล้ายกันก็เป็นที่รู้จักในโลกตะวันตกตั้งแต่ต้นคริสต์ศตวรรษที่ 1900">Nobody knows for sure who first made a sliding-block puzzle. The Three Kingdoms story is the theme it was given, and similar puzzles were known in the West from the early 1900s.</li>
+      <li data-th="ทุกด่านในเกมนี้ถูกตรวจด้วยโปรแกรมแก้ปริศนา ค่า par คือจำนวนครั้งที่น้อยที่สุดจริง ๆ ดังนั้นได้ 3 ดาวหมายถึงเดินได้สมบูรณ์แบบ">Every level here is checked by a solver, so <b>par</b> is the true minimum — three stars means you played it perfectly.</li>
+      <li data-th="ไม่มีใครรู้แน่ชัดว่าใครคิดปริศนาบล็อกเลื่อนนี้เป็นคนแรก เรื่อง<span class='nw'>สามก๊ก</span>เป็นธีมที่ถูกผูกเข้ามา และปริศนาบล็อกเลื่อนคล้ายกันก็เป็นที่รู้จักในโลกตะวันตกตั้งแต่ต้นคริสต์ศตวรรษที่ 1900">Nobody knows for sure who first made a sliding-block puzzle. The Three Kingdoms story is the theme it was given, and similar puzzles were known in the West from the early 1900s.</li>
     </ul>
     </section>
     <div class="apager"><button class="btn sm" id="aPrev" data-th="‹ ก่อนหน้า">‹ Back</button><span class="dots" id="aDots"></span><button class="btn sm" id="aNext" data-th="ถัดไป ›">Next ›</button></div>
@@ -657,7 +663,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   var haptics = store.get('hr_haptics', true);
   var timerOn = store.get('hr_timer', true); // off = no-stress mode: the clock is hidden (time is still tracked quietly)
   var autoPlace = store.get('hr_auto', true);
-  var BUILD = '5843db9'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = '78434b5'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
     { id: 'classic', name: 'Classic', theme: '#0d1117' },

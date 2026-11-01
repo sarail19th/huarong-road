@@ -245,14 +245,20 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 .about .zh{margin:2px 0 6px;color:var(--yellow);font-size:13px;letter-spacing:.5px}
 .about h4{margin:14px 0 4px;font-size:14px;color:var(--yellow)}
 .about p{font-size:13.5px;line-height:1.55}
+/* justified text; names stay in one piece (.nw) and words are never cut mid-way */
+.about p,.about ul.facts li{text-align:justify;overflow-wrap:normal;word-break:normal;hyphens:manual}
+html[lang=th] .about p,html[lang=th] .about ul.facts li,html[lang=th] .about ul.cast li>span{text-justify:inter-character} /* Thai has few spaces: spread between characters, never inside English text */
+.about p.note{text-align:left}
+.nw{white-space:nowrap}
 .about p.note{color:var(--muted);font-size:12.5px;font-style:italic}
 .about ul{margin:6px 0 0;padding-left:0;list-style:none;font-size:13.5px;line-height:1.5;color:#c9d2de}
 .about ul.facts{padding-left:18px;list-style:disc}
 .about ul.facts li{margin:0 0 7px}
-.about ul.cast li{display:flex;align-items:center;gap:10px;margin:0 0 6px}
-.about .sw{flex:none;width:18px;height:18px;border-radius:5px}
-.about .sw.R{background:var(--pR);width:26px;height:26px}
-.about .sw.V{background:var(--pV);height:26px}
+.about ul.cast li{display:grid;grid-template-columns:30px 1fr;align-items:center;gap:10px;margin:0 0 6px}
+.about .sw{justify-self:center;width:18px;height:18px;border-radius:5px}
+.about .sw.R{background:var(--pR);width:28px;height:28px}
+.about .sw.V{background:var(--pV);width:14px;height:28px}   /* tall block: narrow and high */
+.about .sw.H{background:var(--pV);width:28px;height:14px}   /* wide block: broad and low */
 .about .sw.S{background:var(--pS)}
 .about b{color:var(--text)}
 
