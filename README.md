@@ -6,3 +6,5 @@ No ads, no tracking, no network calls. Hobby project.
 
 Play: open the published page and use your browser's "Add to Home screen".
 Developers: see `CLAUDE.md` for layout and commands.
+
+License: MIT, see `LICENSE`.
