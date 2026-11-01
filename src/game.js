@@ -69,15 +69,50 @@
   function fmt(ms) { var s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
   function stars(n) { return '★★★'.slice(0, n) + '☆☆☆'.slice(0, 3 - n); }
   function gradeOf(par) {
-    if (par <= 8) return { name: 'Starter', hint: 'learn the basics' };
-    if (par <= 20) return { name: 'Easy', hint: 'a few clever slides' };
-    if (par <= 40) return { name: 'Medium', hint: 'plan ahead' };
-    if (par <= 65) return { name: 'Hard', hint: 'think in sequences' };
-    if (par <= 90) return { name: 'Expert', hint: 'serious puzzling' };
-    return { name: 'Master', hint: 'legendary layouts' };
+    if (par <= 8) return { name: L('Starter', 'เริ่มต้น'), hint: L('learn the basics', 'เรียนรู้พื้นฐาน') };
+    if (par <= 20) return { name: L('Easy', 'ง่าย'), hint: L('a few clever slides', 'เลื่อนอย่างมีชั้นเชิงไม่กี่ครั้ง') };
+    if (par <= 40) return { name: L('Medium', 'ปานกลาง'), hint: L('plan ahead', 'วางแผนล่วงหน้า') };
+    if (par <= 65) return { name: L('Hard', 'ยาก'), hint: L('think in sequences', 'คิดเป็นลำดับขั้น') };
+    if (par <= 90) return { name: L('Expert', 'เชี่ยวชาญ'), hint: L('serious puzzling', 'ปริศนาจริงจัง') };
+    return { name: L('Master', 'ปรมาจารย์'), hint: L('legendary layouts', 'รูปแบบระดับตำนาน') };
   }
+  function levelTitle(i) { return L('Level ', 'ด่าน ') + (i + 1) + ' · ' + gradeOf(LV[i].par).name; }
   function gridOf() { return Sol.fromPieces(G.pieces); }
   function snap() { return G.pieces.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; }); }
+
+  /* ---------- dialogs: focus moves in on open and back on close; Esc closes; Tab stays inside ---------- */
+  var dlgs = []; // open overlays, newest last: { id, back }
+  function openDlg(id, focusSel) {
+    var o = $(id);
+    if (!dlgs.some(function (d) { return d.id === id; })) dlgs.push({ id: id, back: document.activeElement });
+    o.classList.remove('hidden');
+    var f = (focusSel && o.querySelector(focusSel)) || o.querySelector('.card');
+    if (f) try { f.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function closeDlg(id) {
+    $(id).classList.add('hidden');
+    for (var i = dlgs.length - 1; i >= 0; i--) if (dlgs[i].id === id) {
+      var back = dlgs[i].back; dlgs.splice(i, 1);
+      if (back && back.focus && document.body.contains(back) && back.offsetParent !== null) try { back.focus({ preventScroll: true }); } catch (e) {}
+      break;
+    }
+  }
+  function focusables(root) {
+    return Array.prototype.filter.call(root.querySelectorAll('button,textarea,input:not([type=file]),a[href]'), function (el) { return !el.disabled && el.offsetParent !== null; });
+  }
+  document.addEventListener('keydown', function (e) {
+    var top = dlgs[dlgs.length - 1]; if (!top) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      if (top.id === 'win') return; // the win card needs a real choice
+      if (top.id === 'about') showAbout(false); else if (top.id === 'settings') showSettings(false); else closeDlg(top.id);
+    } else if (e.key === 'Tab') {
+      var f = focusables($(top.id)); if (!f.length) return;
+      var i = f.indexOf(document.activeElement);
+      if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && (i === -1 || i === f.length - 1)) { e.preventDefault(); f[0].focus(); }
+    }
+  });
 
   /* ---------- menu ---------- */
   var PAGE = 20, PAGES = Math.ceil(LV.length / PAGE);
@@ -134,7 +169,7 @@
 
   function showMenu() {
     clearTimer(); G = null; hideTip();
-    $('game').classList.add('hidden'); $('win').classList.add('hidden');
+    $('game').classList.add('hidden'); closeDlg('win');
     $('menu').classList.remove('hidden');
     renderMenu(); window.scrollTo(0, 0);
   }
@@ -150,15 +185,23 @@
     G = { idx: i, lv: lv, target: target, tpieces: Sol.piecesOf(target), pieces: [], initial: null, dc: {}, trend: null,
           phase: 'setup', sel: null, moves: 0, hints: 0, hist: [], redo: [], t0: 0, elapsed: 0, msg: '', sol: null };
     clearBoard();
-    $('menu').classList.add('hidden'); $('win').classList.add('hidden'); $('game').classList.remove('hidden');
+    $('menu').classList.add('hidden'); closeDlg('win'); $('game').classList.remove('hidden');
     document.body.dataset.phase = 'setup';
-    $('lvTitle').textContent = 'Level ' + (i + 1) + ' · ' + gradeOf(lv.par).name;
+    $('lvTitle').textContent = levelTitle(i);
+    renderBest();
     $('par').textContent = lv.par; $('moves').textContent = '0'; $('time').textContent = '0:00';
     G.sel = firstAvailable();
     hideTip(); renderAuto();
     if (autoPlace || autoStart) placeAll();
     layout(); renderAll(); window.scrollTo(0, 0);
     if (autoStart) startPlay();
+  }
+
+  // Best result for the open level (fewest moves ever), shown as a 4th stat once the level has been cleared
+  function renderBest() {
+    var pr = G && progress[G.lv.id];
+    $('bestStat').classList.toggle('hidden', !pr);
+    if (pr) $('best').textContent = pr.moves;
   }
 
   function remaining(t) {
@@ -312,14 +355,17 @@
   }
   function renderAuto() {
     var b = $('autoBtn'); b.classList.toggle('on', autoPlace); b.setAttribute('aria-pressed', autoPlace);
+    setSwitch($('autoPlaceBtn'), autoPlace);
   }
   // Toggle: on = every level opens with the layout already copied; turning it on also fills this board, off clears it for manual placement
-  $('autoBtn').onclick = function () {
-    if (!G || G.phase !== 'setup') return;
+  // Same setting from two places: the key on the setup screen and the switch in Settings
+  function toggleAutoPlace() {
     autoPlace = !autoPlace; store.set('hr_auto', autoPlace); renderAuto();
+    if (!G || G.phase !== 'setup') return;
     if (autoPlace) placeAll(); else { G.pieces = []; G.sel = firstAvailable(); }
     renderAll();
-  };
+  }
+  $('autoBtn').onclick = function () { if (G && G.phase === 'setup') toggleAutoPlace(); };
   $('clearBtn').onclick = function () { G.pieces = []; G.sel = firstAvailable(); renderAll(); };
   $('startBtn').onclick = function () { if (!$('startBtn').disabled) startPlay(); };
 
@@ -432,10 +478,10 @@
     if (!G || G.phase !== 'play') return;
     if (!G.moves) return doRestart();
     $('rsBody').textContent = L('Your ' + G.moves + ' move' + (G.moves > 1 ? 's' : '') + ' and the clock will be reset.', 'ทั้ง ' + G.moves + ' ครั้งที่เดินและเวลาจะถูกรีเซ็ต');
-    $('rsAsk').classList.remove('hidden');
+    openDlg('rsAsk', '#rsNo');
   };
-  $('rsNo').onclick = function () { $('rsAsk').classList.add('hidden'); };
-  $('rsYes').onclick = function () { $('rsAsk').classList.add('hidden'); doRestart(); };
+  $('rsNo').onclick = function () { closeDlg('rsAsk'); };
+  $('rsYes').onclick = function () { closeDlg('rsAsk'); doRestart(); };
   /* ---------- hints: explain what to focus on, where and why ---------- */
   var KIND = { R: 'big red square', V: 'tall block', H: 'wide block', S: 'small square' };
   var KIND_TH = { R: 'สี่เหลี่ยมแดงใหญ่', V: 'บล็อกตั้ง', H: 'บล็อกนอน', S: 'บล็อกเล็ก' };
@@ -596,11 +642,11 @@
 
   function askSolution() {
     if (!G || G.phase !== 'play') return;
-    if (seen[G.lv.id]) openSolution(); else $('solAsk').classList.remove('hidden');
+    if (seen[G.lv.id]) openSolution(); else openDlg('solAsk', '#solNo');
   }
   $('solBtn').onclick = askSolution;
-  $('solNo').onclick = function () { $('solAsk').classList.add('hidden'); };
-  $('solYes').onclick = function () { $('solAsk').classList.add('hidden'); openSolution(); };
+  $('solNo').onclick = function () { closeDlg('solAsk'); };
+  $('solYes').onclick = function () { closeDlg('solAsk'); openSolution(); };
 
   function openSolution() {
     if (!G || G.phase !== 'play') return;
@@ -693,21 +739,34 @@
     }, 250);
     setTimeout(function () {
       $('winStars').textContent = stars(st);
+      var best = progress[G.lv.id], bestLine = '';
+      if (prev && G.moves < prev.moves) bestLine = L('New best! ', 'สถิติใหม่! ') + L('(was ' + prev.moves + ')', '(เดิม ' + prev.moves + ')');
+      else if (prev) bestLine = 'Best <b>' + best.moves + '</b>' + (timerOn ? ' · ' + fmt(best.time) : '');
       $('winInfo').innerHTML = 'Moves <b>' + G.moves + '</b> (par ' + par + ')' + (timerOn ? ' · Time <b>' + fmt(G.elapsed) + '</b>' : '') +
-        (G.hints ? ' · Hints ' + G.hints : '') + (seen[G.lv.id] ? '<br>' + L('Solution viewed — no stars for this level', 'ดูเฉลยแล้ว — ด่านนี้ไม่ได้ดาว') : '');
+        (G.hints ? ' · ' + L('Hints ', 'คำใบ้ ') + G.hints : '') + (bestLine ? '<span class="best">' + bestLine + '</span>' : '') +
+        (seen[G.lv.id] ? '<br>' + L('Solution viewed — no stars for this level', 'ดูเฉลยแล้ว — ด่านนี้ไม่ได้ดาว') : '');
+      renderBest();
       $('nextBtn').classList.toggle('hidden', G.idx + 1 >= LV.length);
-      $('win').classList.remove('hidden');
+      openDlg('win', G.idx + 1 < LV.length ? '#nextBtn' : '#menuBtn');
     }, 950);
   }
   $('nextBtn').onclick = function () { openLevel(G.idx + 1); };
-  $('replayBtn').onclick = function () { $('win').classList.add('hidden'); doRestart(); };
+  $('replayBtn').onclick = function () { closeDlg('win'); doRestart(); };
   $('menuBtn').onclick = showMenu;
   $('backBtn').onclick = showMenu;
   // Sound and vibration are switches in the Settings panel (aria-pressed = on)
   function setSwitch(btn, on, icon) {
     btn.setAttribute('aria-pressed', on); btn.setAttribute('aria-checked', on);
     if (icon) btn.querySelector('use').setAttribute('href', '#i-' + icon);
+    renderSwitchText(btn);
   }
+  // Every switch spells out its state next to the pill: On / Off (Thai: เปิด / ปิด)
+  function renderSwitchText(btn) {
+    var t = btn.querySelector('.st'); if (!t) return;
+    var on = btn.getAttribute('aria-pressed') === 'true';
+    t.textContent = on ? L('On', 'เปิด') : L('Off', 'ปิด'); t.classList.toggle('on', on);
+  }
+  $('autoPlaceBtn').onclick = toggleAutoPlace;
   function renderSound() { setSwitch($('muteBtn'), !muted, muted ? 'volx' : 'vol'); }
   $('muteBtn').onclick = function () { muted = !muted; store.set('hr_muted', muted); renderSound(); beep(660, 0.08); };
   renderSound();
@@ -727,6 +786,7 @@
   function renderTimer() { setSwitch($('timerBtn'), timerOn); document.body.classList.toggle('notimer', !timerOn); }
   $('timerBtn').onclick = function () { timerOn = !timerOn; store.set('hr_timer', timerOn); renderTimer(); };
   renderTimer();
+  renderAuto();
 
   // "How to play" folds away for players who know the game; the choice is remembered (open on first launch)
   var howOpen = store.get('hr_howto', true);
@@ -751,13 +811,11 @@
   $('aPrev').onclick = function () { setAboutPage(aboutPage - 1); };
   $('aNext').onclick = function () { setAboutPage(aboutPage + 1); };
   function showAbout(on) {
-    $('about').classList.toggle('hidden', !on);
-    if (on) setAboutPage(0);
+    if (on) { setAboutPage(0); openDlg('about'); } else closeDlg('about');
   }
   $('aboutBtn').onclick = function () { showAbout(true); };
   $('aboutClose').onclick = function () { showAbout(false); };
   $('about').addEventListener('click', function (e) { if (e.target === this) showAbout(false); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { showAbout(false); showSettings(false); } });
 
   /* ---------- language: instructions, hints and solution in English or Thai ---------- */
   // Static text carries its Thai copy in data-th; the English original is stashed in data-en on first switch.
@@ -771,7 +829,10 @@
       b.setAttribute('aria-pressed', lang === 'th');
       b.setAttribute('aria-label', lang === 'th' ? 'ภาษา: ไทย (แตะเพื่อเปลี่ยนเป็น English)' : 'Language: English (tap for Thai)');
     });
+    renderMenu();
+    Array.prototype.forEach.call(document.querySelectorAll('.setrow[role=switch]'), renderSwitchText);
     if (!G) return;
+    $('lvTitle').textContent = levelTitle(G.idx);
     if (G.msg) G.msg = '';
     renderStatus();
     if (G.phase === 'play' && G.hint && !$('tip').classList.contains('hidden')) showHint(G.hint);
@@ -810,8 +871,62 @@
   });
   renderSkinOpts();
 
+  /* ---------- progress backup: a code or a small file, works offline; restoring merges and never loses anything ---------- */
+  function backupCode() {
+    var data = { v: 1, at: new Date().toISOString().slice(0, 10), progress: progress, seen: seen };
+    return 'HR1.' + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  }
+  function readBackup(text) {
+    text = String(text || '').trim();
+    var json = text.indexOf('HR1.') === 0 ? decodeURIComponent(escape(atob(text.slice(4).replace(/\s+/g, '')))) : text;
+    var d = JSON.parse(json);
+    if (!d || typeof d.progress !== 'object') throw new Error('bad');
+    return d;
+  }
+  function bkSay(msg, err) { var m = $('bkMsg'); m.textContent = msg; m.classList.toggle('err', !!err); }
+  function restoreFrom(text) {
+    var d;
+    try { d = readBackup(text); } catch (e) { bkSay(L('That is not a valid backup code.', 'รหัสสำรองไม่ถูกต้อง'), true); return; }
+    var levels = 0;
+    Object.keys(d.progress).forEach(function (id) {
+      var a = d.progress[id], b = progress[id];
+      if (!a || typeof a.stars !== 'number') return;
+      levels++;
+      progress[id] = b ? { stars: Math.max(a.stars, b.stars), moves: Math.min(a.moves, b.moves), time: Math.min(a.time, b.time) } : a;
+    });
+    Object.keys(d.seen || {}).forEach(function (id) { seen[id] = 1; });
+    store.set('hr_progress', progress); store.set('hr_seen', seen);
+    renderMenu(); $('bkOut').value = backupCode(); $('bkIn').value = '';
+    var total = Object.keys(progress).reduce(function (t, id) { return t + progress[id].stars; }, 0);
+    bkSay(L('Restored ' + levels + ' levels · you now have ' + total + ' stars', 'กู้คืนแล้ว ' + levels + ' ด่าน · ตอนนี้มี ' + total + ' ดาว'));
+  }
+  $('backupBtn').onclick = function () {
+    showSettings(false); $('bkOut').value = backupCode(); $('bkIn').value = ''; bkSay('');
+    openDlg('backup');
+  };
+  $('bkClose').onclick = function () { closeDlg('backup'); };
+  $('backup').addEventListener('click', function (e) { if (e.target === this) closeDlg('backup'); });
+  $('bkCopy').onclick = function () {
+    var t = $('bkOut'), ok = function () { bkSay(L('Code copied', 'คัดลอกรหัสแล้ว')); };
+    t.select();
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t.value).then(ok, function () { try { document.execCommand('copy'); ok(); } catch (e) {} });
+    else { try { document.execCommand('copy'); ok(); } catch (e) { bkSay(L('Select the code and copy it', 'เลือกรหัสแล้วคัดลอก'), true); } }
+  };
+  $('bkSave').onclick = function () {
+    var a = document.createElement('a'), url = URL.createObjectURL(new Blob([$('bkOut').value], { type: 'text/plain' }));
+    a.href = url; a.download = 'huarong-road-backup-' + new Date().toISOString().slice(0, 10) + '.txt';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    bkSay(L('Backup file saved', 'บันทึกไฟล์สำรองแล้ว'));
+  };
+  $('bkOpen').onclick = function () { $('bkFile').value = ''; $('bkFile').click(); };
+  $('bkFile').onchange = function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    var r = new FileReader(); r.onload = function () { restoreFrom(r.result); }; r.readAsText(f);
+  };
+  $('bkRestore').onclick = function () { restoreFrom($('bkIn').value); };
+
   /* ---------- settings panel: skin, sound, vibration, language ---------- */
-  function showSettings(on) { $('settings').classList.toggle('hidden', !on); }
+  function showSettings(on) { if (on) openDlg('settings'); else closeDlg('settings'); }
   Array.prototype.forEach.call(document.querySelectorAll('.settings-btn'), function (b) { b.onclick = function () { showSettings(true); }; });
   $('setClose').onclick = function () { showSettings(false); };
   $('settings').addEventListener('click', function (e) { if (e.target === this) showSettings(false); });

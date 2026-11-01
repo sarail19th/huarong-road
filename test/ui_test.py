@@ -151,8 +151,9 @@ def features(p):
     head1, body1 = page.locator('#tipHead').inner_text(), page.locator('#tipBody').inner_text()
     assert page.locator('.piece[data-focus]').count() >= 1 and page.locator('.piece[data-hint]').count() == 0
     assert page.evaluate("() => getComputedStyle(document.querySelector('#tipHead .step')).float") == 'none', 'step label must not float into the text'
-    sb = page.locator('#tipHead .step').bounding_box(); hb = page.locator('#tipHead').bounding_box(); bb = page.locator('#tipBody').bounding_box()
-    assert sb['y'] <= hb['y'] + 2 and bb['y'] >= hb['y'] + hb['height'] - 2, 'step line above the headline; body starts below it'
+    # measured in one go: the tip scrolls smoothly into view, so separate reads could straddle the scroll
+    sb, hb, bb = page.evaluate("() => ['#tipHead .step', '#tipHead', '#tipBody'].map(q => { const r = document.querySelector(q).getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; })")
+    assert sb['y'] <= hb['y'] + 2 and bb['y'] >= hb['y'] + hb['height'] - 2, ('step line above the headline; body starts below it', sb, hb, bb)
     assert bb['x'] <= hb['x'] + 2, 'body text starts at the left edge, not pushed in by a float'
     page.screenshot(path=f'{SHOTS}/blossom_hint1.png')
     page.click('#hintBtn')
@@ -777,6 +778,124 @@ def autostart(p):
     ctx.close(); assert not errors, errors
 
 
+def solve_on_board(page, idx, extra=0):
+    """Play level idx to the win using the optimal line; extra > 0 first wastes that many moves (one block out and back)."""
+    sol = page.evaluate("(i) => Solver.solve(LEVELS[i].g.split('').map(Number))", idx)
+    def drag(m):
+        bx = page.locator('#board').bounding_box(); cs = (bx['width'] - 20) / 4; d = {'R': (2, 2), 'V': (1, 2), 'H': (2, 1), 'S': (1, 1)}[m['t']]
+        sx = bx['x'] + 10 + (m['c'] + d[0] / 2) * cs; sy = bx['y'] + 10 + (m['r'] + d[1] / 2) * cs
+        page.mouse.move(sx, sy); page.mouse.down()
+        for i in range(1, 7): page.mouse.move(sx + m['dc'] * m['k'] * cs * i / 6, sy + m['dr'] * m['k'] * cs * i / 6)
+        page.mouse.up(); page.wait_for_timeout(230)
+    if extra:
+        m = sol[0]; back = dict(m, r=m['r'] + m['dr'] * m['k'], c=m['c'] + m['dc'] * m['k'], dr=-m['dr'], dc=-m['dc'])
+        for _ in range(extra // 2): drag(m); drag(back)
+    for m in sol: drag(m)
+    page.wait_for_selector('#win:not(.hidden)', timeout=5000)
+
+def polish(p):
+    """Thai covers every action/message, dialogs behave with the keyboard, progress backup round-trips, best score shows."""
+    import re, tempfile
+    ctx = launch(p).new_context(viewport={'width': 390, 'height': 820}, has_touch=True, is_mobile=True, accept_downloads=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.goto(URL)
+    # --- 1. Thai: only brand names and agreed game terms stay English
+    ALLOW = {'Huarong', 'Road', 'Time', 'Moves', 'Par', 'par', 'Best', 'Undo', 'Redo', 'EXIT', 'LED', 'Source', 'GitHub', 'Icon', 'credits', 'on'}
+    scan = """() => { const out = []; const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      while (w.nextNode()) { const n = w.currentNode, e = n.parentElement, t = n.textContent;
+        if (!e || e.closest('svg,script,style,.hidden,#verId') || !e.getBoundingClientRect().width) continue;
+        (t.match(/[A-Za-z]{3,}/g) || []).forEach(x => out.push(x)); } return out; }"""
+    def english_left(where):
+        left = sorted(set(page.evaluate(scan)) - ALLOW); assert not left, (where, left)
+    toggle_lang(page); english_left('menu')
+    lv(page, 0).click(); english_left('setup')
+    assert page.locator('#lvTitle').inner_text().startswith('ด่าน 1 · เริ่มต้น')
+    page.click('#startBtn'); english_left('play')
+    solve_on_board(page, 0); english_left('win card')
+    assert page.locator('#winTitle').inner_text() == 'ผ่านด่าน!' and page.locator('#nextBtn').inner_text() == 'ด่านถัดไป'
+    # --- 2. dialogs: focus moves in, Esc closes (not the win card), Tab stays inside, focus comes back
+    assert page.evaluate("() => !!document.activeElement.closest('#win')"), 'focus moves into the win card'
+    page.keyboard.press('Escape'); assert page.locator('#win').is_visible(), 'Esc does not dismiss the win card'
+    page.click('#replayBtn'); toggle_lang(page)
+    solm = page.evaluate("() => Solver.solve(LEVELS[0].g.split('').map(Number))")[0]
+    page.click('#solBtn'); assert page.evaluate("() => document.activeElement.id") == 'solNo', 'safe choice focused'
+    for _ in range(5): page.keyboard.press('Tab')
+    assert page.evaluate("() => !!document.activeElement.closest('#solAsk')"), 'Tab stays inside the dialog'
+    page.keyboard.press('Escape'); assert page.locator('#solAsk').is_hidden(), 'Esc closes the solution confirm'
+    assert page.evaluate("() => document.activeElement.id") == 'solBtn', 'focus returns to the button that opened it'
+    page.locator('#game .settings-btn').click(); assert page.evaluate("() => !!document.activeElement.closest('#settings')")
+    page.keyboard.press('Escape'); assert page.locator('#settings').is_hidden()
+    page.click('#backBtn'); page.click('#aboutBtn'); page.keyboard.press('Escape'); assert page.locator('#about').is_hidden()
+    # --- 5. best score: a slower clear, then a better one
+    lv(page, 1).click(); page.click('#startBtn')
+    assert page.locator('#bestStat').is_hidden(), 'no best before the first clear'
+    par = int(page.locator('#par').inner_text())
+    solve_on_board(page, 1, extra=2)
+    assert 'Best' not in page.locator('#winInfo').inner_text(), 'first clear: no best line yet'
+    assert page.locator('#bestStat').is_visible() and page.locator('#best').inner_text() == str(par + 2)
+    page.click('#replayBtn'); solve_on_board(page, 1)
+    assert 'New best!' in page.locator('#winInfo').inner_text() and f'(was {par + 2})' in page.locator('#winInfo').inner_text()
+    assert page.locator('#best').inner_text() == str(par)
+    page.click('#replayBtn'); solve_on_board(page, 1, extra=2)
+    assert f'Best {par}' in page.locator('#winInfo').inner_text().replace('\n', ' '), page.locator('#winInfo').inner_text()
+    page.screenshot(path=f'{SHOTS}/win_best.png')
+    page.click('#menuBtn')
+    # --- 4. backup: save code + file, wipe, restore from code and from file, bad code is refused
+    stars_before = page.locator('#totalStars').inner_text()
+    settings(page); page.click('#backupBtn'); assert page.locator('#backup').is_visible() and page.locator('#settings').is_hidden()
+    code = page.locator('#bkOut').input_value(); assert code.startswith('HR1.') and len(code) > 20
+    with page.expect_download() as dl: page.click('#bkSave')
+    path = dl.value.path(); assert dl.value.suggested_filename.startswith('huarong-road-backup-') and open(path).read() == code
+    page.screenshot(path=f'{SHOTS}/backup.png')
+    page.click('#bkClose')
+    page.evaluate("() => { localStorage.removeItem('hr_progress'); localStorage.removeItem('hr_seen'); }"); page.reload()
+    assert page.locator('#totalStars').inner_text().startswith('0 /'), 'progress wiped'
+    settings(page); page.click('#backupBtn')
+    page.fill('#bkIn', 'not a code'); page.click('#bkRestore')
+    assert 'err' in page.locator('#bkMsg').get_attribute('class') and page.locator('#totalStars').inner_text().startswith('0 /')
+    page.fill('#bkIn', code); page.click('#bkRestore')
+    assert 'Restored 2 levels' in page.locator('#bkMsg').inner_text(), page.locator('#bkMsg').inner_text()
+    page.click('#bkClose'); assert page.locator('#totalStars').inner_text() == stars_before, 'stars back from the code'
+    page.evaluate("() => localStorage.removeItem('hr_progress')"); page.reload()
+    settings(page); page.click('#backupBtn')
+    with page.expect_file_chooser() as fc: page.click('#bkOpen')
+    fc.value.set_files(path); page.wait_for_timeout(300)
+    assert 'Restored' in page.locator('#bkMsg').inner_text(); page.click('#bkClose')
+    assert page.locator('#totalStars').inner_text() == stars_before, 'stars back from the file'
+    lv(page, 1).click(); assert page.locator('#best').inner_text() == str(par), 'best score restored too'
+    ctx.close(); assert not errors, errors
+
+
+def toggles(p):
+    """Auto-place is also a Settings switch (default on, synced with the setup key); every switch shows On/Off in words."""
+    ctx = launch(p).new_context(viewport={'width': 360, 'height': 780}, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.goto(URL)
+    settings(page)
+    sw = page.locator('#settings .setrow[role=switch]'); n = sw.count(); assert n >= 5
+    for i in range(n):
+        b = sw.nth(i); want = 'On' if b.get_attribute('aria-pressed') == 'true' else 'Off'
+        if b.is_visible(): assert b.locator('.st').inner_text() == want, (b.get_attribute('id'), want)
+    assert page.locator('#autoPlaceBtn').get_attribute('aria-pressed') == 'true', 'Auto-place on by default'
+    assert page.locator('#autoStartBtn .st').inner_text() == 'Off' and page.locator('#timerBtn .st').inner_text() == 'On'
+    page.click('#autoPlaceBtn'); assert page.locator('#autoPlaceBtn .st').inner_text() == 'Off'
+    assert page.evaluate("() => localStorage.getItem('hr_auto')") == 'false'
+    page.screenshot(path=f'{SHOTS}/settings_toggles.png')
+    page.click('#setClose'); lv(page, 2).click()
+    assert page.locator('.piece').count() == 0 and page.locator('#autoBtn').get_attribute('aria-pressed') == 'false', 'off: empty board, key agrees'
+    page.click('#autoBtn')                                       # setup key turns it back on and the Settings switch follows
+    assert page.locator('.piece').count() > 0
+    settings(page); assert page.locator('#autoPlaceBtn').get_attribute('aria-pressed') == 'true'
+    page.click('#autoPlaceBtn'); page.click('#setClose'); assert page.locator('.piece').count() == 0, 'switching off in Settings during setup clears the board'
+    settings(page); page.click('#autoPlaceBtn'); page.click('#setClose'); assert page.locator('.piece').count() > 0
+    toggle_lang(page); settings(page)
+    assert page.locator('#autoPlaceBtn .st').inner_text() == 'เปิด' and page.locator('#autoStartBtn .st').inner_text() == 'ปิด'
+    ctx.close(); assert not errors, errors
+
+
 with sync_playwright() as p:
     if os.environ.get('HR_ONLY'):
         globals()[os.environ['HR_ONLY']](p); print('ONLY', os.environ['HR_ONLY'], 'OK'); sys.exit(0)
@@ -784,6 +903,10 @@ with sync_playwright() as p:
     controls(p)
     sound(p)
     autostart(p)
+    polish(p)
+    toggles(p)
+    print('toggles: Auto-place switch synced with the setup key, On/Off words on every switch')
+    print('polish: Thai covers actions, dialogs keyboard-safe, backup round-trips, best score')
     print('auto-start: skips setup, Next/reload keep it, off restores setup')
     print('sound: context wakes on first tap, audible level, mute silences')
     skins_timer(p)

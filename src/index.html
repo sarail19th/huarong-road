@@ -28,6 +28,8 @@
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></symbol>
   <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
   <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></symbol>
   <symbol id="i-help" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
@@ -45,7 +47,7 @@
       <h1>Huarong <span>Road</span></h1>
       <button class="icon-btn settings-btn" aria-label="Settings" title="Settings"><svg class="ico" aria-hidden="true"><use href="#i-gear"/></svg></button>
     </div>
-    <p class="tagline">Sliding-block puzzle · 100 levels</p>
+    <p class="tagline" data-th="ปริศนาบล็อกเลื่อน · 100 ด่าน">Sliding-block puzzle · 100 levels</p>
   </div>
   <div class="howto" id="howto">
     <button class="howhead" id="howToggle" aria-expanded="true" aria-controls="howBody"><b data-th="วิธีเล่น">How to play</b><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
@@ -61,7 +63,7 @@
     </ol>
     </div>
   </div>
-  <div class="total"><span class="lbl"><svg class="ico star" aria-hidden="true"><use href="#i-star"/></svg>Stars collected</span><b id="totalStars">0 / 0</b></div>
+  <div class="total"><span class="lbl"><svg class="ico star" aria-hidden="true"><use href="#i-star"/></svg><span data-th="ดาวที่สะสม">Stars collected</span></span><b id="totalStars">0 / 0</b></div>
   <div class="pgchips" id="pgchips" role="tablist" aria-label="Level pages"></div>
   <div id="levels"></div>
   <div class="row pgnav"><button class="btn" id="pgPrev"></button><button class="btn" id="pgNext"></button></div>
@@ -80,14 +82,15 @@
     <div class="stat" id="timeStat"><small>Time</small><b id="time">0:00</b></div>
     <div class="stat"><small>Moves</small><b id="moves">0</b></div>
     <div class="stat"><small>Par</small><b id="par">0</b></div>
+    <div class="stat hidden" id="bestStat"><small>Best</small><b id="best">–</b></div>
   </div>
 
   <div class="device">
     <div class="topbar">
       <div class="led" id="led" aria-label="Target layout"></div>
       <div class="keys">
-        <button class="key toggle only-setup" id="autoBtn" aria-pressed="true">Auto-place</button>
-        <button class="key only-setup" id="clearBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg><span>Clear</span></button>
+        <button class="key toggle only-setup" id="autoBtn" aria-pressed="true" data-th="วางอัตโนมัติ">Auto-place</button>
+        <button class="key only-setup" id="clearBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg><span data-th="ล้าง">Clear</span></button>
         <div class="grp only-play" role="group" aria-label="Undo and redo">
           <button class="tool" id="undoBtn" aria-label="Undo" disabled><svg class="ico" aria-hidden="true"><use href="#i-undo"/></svg><span>Undo</span></button>
           <button class="tool" id="redoBtn" aria-label="Redo" disabled><svg class="ico flip" aria-hidden="true"><use href="#i-undo"/></svg><span>Redo</span></button>
@@ -114,13 +117,13 @@
     <div class="row"><button class="btn sm" id="solBack" data-th="กลับไปเล่น">Back to puzzle</button></div>
   </div>
   <div class="tray only-setup" id="tray"></div>
-  <div class="row only-setup"><button class="btn go" id="startBtn" disabled>Start puzzle</button></div>
+  <div class="row only-setup"><button class="btn go" id="startBtn" disabled data-th="เริ่มเล่น">Start puzzle</button></div>
 </section>
 
 <div class="toast hidden" id="toast"></div>
 
 <div class="overlay hidden" id="about">
-  <div class="card about" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+  <div class="card about" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" tabindex="-1">
     <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Language: English (tap for Thai)" title="English / Thai"><span class="en">EN</span><span class="th">TH</span></button>
     <h2 id="aboutTitle" data-th="เกี่ยวกับเกมนี้">About this game</h2>
     <p class="zh">華容道 · Huáróng Dào</p>
@@ -162,7 +165,7 @@
 </div>
 
 <div class="overlay hidden" id="settings">
-  <div class="card settings" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+  <div class="card settings" role="dialog" aria-modal="true" aria-labelledby="setTitle" tabindex="-1">
     <h2 id="setTitle" data-th="ตั้งค่า">Settings</h2>
     <div class="setrow">
       <span class="lbl"><svg class="ico" aria-hidden="true"><use href="#i-globe"/></svg><span data-th="ภาษา">Language</span></span>
@@ -172,17 +175,35 @@
       <span class="lbl"><svg class="ico" aria-hidden="true"><use href="#i-palette"/></svg><span data-th="ธีม">Skin</span></span>
       <div class="skopts" id="skopts"></div>
     </div>
-    <button class="setrow" id="muteBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-vol"/></svg><span class="lbl" data-th="เสียง">Sound</span><i class="pill"></i></button>
-    <button class="setrow" id="hapBtn" role="switch" aria-checked="true" aria-pressed="true" aria-label="Vibration"><svg class="ico" aria-hidden="true"><use href="#i-vib"/></svg><span class="lbl" data-th="การสั่น">Vibration</span><i class="pill"></i></button>
-    <button class="setrow" id="autoStartBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span class="lbl two"><span data-th="เริ่มเกมอัตโนมัติ">Auto-start</span><small class="sub" data-th="ข้ามขั้นตอนตั้งค่า วางบล็อกและเริ่มเล่นทันที">Skip setup: place the blocks and start at once</small></span><i class="pill"></i></button>
-    <button class="setrow" id="timerBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-timer"/></svg><span class="lbl two"><span data-th="จับเวลา">Timer</span><small class="sub" data-th="ปิดเพื่อเล่นแบบไม่กดดัน">Turn off for no-stress play</small></span><i class="pill"></i></button>
+    <button class="setrow" id="muteBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-vol"/></svg><span class="lbl" data-th="เสียง">Sound</span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+    <button class="setrow" id="hapBtn" role="switch" aria-checked="true" aria-pressed="true" aria-label="Vibration"><svg class="ico" aria-hidden="true"><use href="#i-vib"/></svg><span class="lbl" data-th="การสั่น">Vibration</span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+    <button class="setrow" id="autoPlaceBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg><span class="lbl two"><span data-th="วางอัตโนมัติ">Auto-place</span><small class="sub" data-th="วางบล็อกตามรูปแบบของด่านให้เลย">Fill the board with the level's layout</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+    <button class="setrow" id="autoStartBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span class="lbl two"><span data-th="เริ่มเกมอัตโนมัติ">Auto-start</span><small class="sub" data-th="ข้ามขั้นตอนตั้งค่า วางบล็อกและเริ่มเล่นทันที">Skip setup: place the blocks and start at once</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+    <button class="setrow" id="timerBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-timer"/></svg><span class="lbl two"><span data-th="จับเวลา">Timer</span><small class="sub" data-th="ปิดเพื่อเล่นแบบไม่กดดัน">Turn off for no-stress play</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+    <button class="setrow" id="backupBtn"><svg class="ico" aria-hidden="true"><use href="#i-save"/></svg><span class="lbl two"><span data-th="สำรองความคืบหน้า">Back up progress</span><small class="sub" data-th="บันทึกหรือกู้คืนดาวของคุณ">Save or restore your stars</small></span><svg class="ico chev side" aria-hidden="true"><use href="#i-chev"/></svg></button>
     <div class="row"><button class="btn go" id="setClose" data-th="เสร็จสิ้น">Done</button></div>
   </div>
 </div>
 
+<div class="overlay hidden" id="backup">
+  <div class="card settings backup" role="dialog" aria-modal="true" aria-labelledby="bkTitle" tabindex="-1">
+    <h2 id="bkTitle" data-th="สำรองความคืบหน้า">Back up progress</h2>
+    <p class="bknote" data-th="ดาวของคุณเก็บไว้ในเครื่องนี้เท่านั้น บันทึกรหัสหรือไฟล์สำรองไว้ แล้วนำมากู้คืนที่นี่หรือในเครื่องอื่นได้ ใช้ได้แม้ไม่มีอินเทอร์เน็ต">Your stars are stored only on this device. Save a backup code or file, then restore it here or on another phone. Works offline.</p>
+    <h4 data-th="บันทึก">Save</h4>
+    <textarea id="bkOut" rows="3" readonly aria-label="Backup code"></textarea>
+    <div class="row"><button class="btn" id="bkCopy" data-th="คัดลอกรหัส">Copy code</button><button class="btn" id="bkSave" data-th="บันทึกเป็นไฟล์">Save file</button></div>
+    <h4 data-th="กู้คืน">Restore</h4>
+    <textarea id="bkIn" rows="3" aria-label="Paste a backup code" placeholder="HR1.…"></textarea>
+    <div class="row"><button class="btn" id="bkOpen" data-th="เปิดไฟล์">Open file</button><button class="btn go" id="bkRestore" data-th="กู้คืน">Restore</button></div>
+    <input type="file" id="bkFile" accept=".txt,.json,text/plain,application/json" hidden>
+    <p class="bkmsg" id="bkMsg" role="status"></p>
+    <div class="row"><button class="btn" id="bkClose" data-th="เสร็จสิ้น">Done</button></div>
+  </div>
+</div>
+
 <div class="overlay hidden" id="rsAsk">
-  <div class="card">
-    <h2 data-th="เริ่มด่านนี้ใหม่?">Restart this level?</h2>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="rsTitle" tabindex="-1">
+    <h2 id="rsTitle" data-th="เริ่มด่านนี้ใหม่?">Restart this level?</h2>
     <p id="rsBody"></p>
     <div class="row">
       <button class="btn" id="rsNo" data-th="ไม่เป็นไร">Keep playing</button>
@@ -192,8 +213,8 @@
 </div>
 
 <div class="overlay hidden" id="solAsk">
-  <div class="card">
-    <h2 data-th="ดูเฉลยไหม?">Show the solution?</h2>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="solAskTitle" tabindex="-1">
+    <h2 id="solAskTitle" data-th="ดูเฉลยไหม?">Show the solution?</h2>
     <p data-th="เมื่อดูเฉลยแล้ว ด่านนี้จะ<b>ไม่ได้ดาว</b>">Once you have seen the solution, this level will <b>not earn any stars</b>.</p>
     <div class="row">
       <button class="btn" id="solNo" data-th="ลองต่อ">Keep trying</button>
@@ -203,14 +224,14 @@
 </div>
 
 <div class="overlay hidden" id="win">
-  <div class="card">
-    <h2>Cleared!</h2>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="winTitle" tabindex="-1">
+    <h2 id="winTitle" data-th="ผ่านด่าน!">Cleared!</h2>
     <div class="big" id="winStars">★★★</div>
     <p id="winInfo"></p>
     <div class="row">
-      <button class="btn" id="menuBtn">Levels</button>
-      <button class="btn" id="replayBtn">Replay</button>
-      <button class="btn go" id="nextBtn">Next</button>
+      <button class="btn" id="menuBtn" data-th="ด่าน">Levels</button>
+      <button class="btn" id="replayBtn" data-th="เล่นซ้ำ">Replay</button>
+      <button class="btn go" id="nextBtn" data-th="ด่านถัดไป">Next</button>
     </div>
   </div>
 </div>
