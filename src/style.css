@@ -225,6 +225,8 @@ html:not([lang=th]) .lang-btn .en,html[lang=th] .lang-btn .th{background:var(--y
 body[data-phase=setup] .only-play,body[data-phase=solution] .only-play{display:none!important}
 body[data-phase=play] .only-setup,body[data-phase=won] .only-setup,body[data-phase=solution] .only-setup{display:none!important}
 body:not([data-phase=solution]) .only-sol{display:none!important}
+body[data-phase=design] .only-play,body[data-phase=design] .only-setup:not(.only-design),body[data-phase=design] .stats{display:none!important}
+body:not([data-phase=design]) .only-design:not(.only-setup){display:none!important}
 
 .overlay{position:fixed;inset:0;background:rgba(5,7,10,.72);display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:24px 22px;width:100%;max-width:340px;text-align:center;animation:pop .25s ease-out}
@@ -357,3 +359,28 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
 .dwin{margin-top:6px}
 .streakbig{font-size:17px;margin:6px 0 8px}
 .dwin .next{color:var(--muted)!important;font-size:13px}
+
+/* ---------- design stage ---------- */
+.dscard{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 10px 10px 14px;margin-bottom:10px}
+.dsinfo{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dsinfo b{display:flex;align-items:center;gap:8px;font-size:14px}
+.dsinfo b .ico{width:18px;height:18px;color:var(--yellow)}
+.dsinfo span{color:var(--muted);font-size:12.5px}
+.dscard .btn{flex:none;padding:9px 18px;font-size:13.5px}
+.dspanel{margin:4px 2px 10px}
+.dscheck{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--muted);border-radius:12px;padding:9px 12px;margin-bottom:10px;font-size:13.5px;line-height:1.45;display:flex;flex-direction:column;gap:2px}
+.dscheck span{color:var(--muted);font-size:12.5px}
+.dscheck.ok{border-left-color:var(--green)}
+.dscheck.ok b{color:var(--green)}
+.dscheck.bad{border-left-color:var(--amber)}
+.dscheck.bad b{color:var(--amber)}
+.dspanel .row .btn{font-size:14px}
+.dslisth{display:flex;align-items:baseline;gap:8px;margin:16px 2px 8px;font-size:14px}
+.dslisth small{color:var(--muted);font-weight:400;font-size:12px}
+.dsrow{display:flex;gap:6px;margin-bottom:6px}
+.dsrow .dsplay{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:600;font-size:14px}
+.dsrow .dsplay small{color:var(--muted);font-weight:400;font-size:12px}
+.dsrow .icon-btn{height:auto;min-height:44px;width:44px}
+.dsrow .icon-btn.armed{background:#c0303a;border-color:#c0303a;color:#fff;width:auto;padding:0 10px;font-size:12px;font-weight:700}
+.dsempty{color:var(--muted);font-size:13px;margin:0 2px}
+.tray button small{white-space:nowrap}

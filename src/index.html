@@ -30,6 +30,7 @@
   <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
   <symbol id="i-save" viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/></symbol>
   <symbol id="i-grid" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></symbol>
   <symbol id="i-help" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
@@ -54,6 +55,10 @@
     <div class="dbody"><div class="led dled" id="dLed" aria-hidden="true"></div><div class="dinfo"><b id="dTitle"></b><span id="dGrade"></span><span class="dnote" id="dNote"></span></div></div>
     <div class="week" id="dWeek"></div>
     <button class="btn go" id="dPlay" disabled></button>
+  </div>
+  <div class="dscard" id="dsCard">
+    <div class="dsinfo"><b><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg><span data-th="ออกแบบด่าน">Design stage</span></b><span id="dsCount"></span></div>
+    <button class="btn" id="dsOpen" data-th="เปิด">Open</button>
   </div>
   <div class="howto" id="howto">
     <button class="howhead" id="howToggle" aria-expanded="true" aria-controls="howBody"><b data-th="วิธีเล่น">How to play</b><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
@@ -96,7 +101,7 @@
       <div class="led" id="led" aria-label="Target layout"></div>
       <div class="keys">
         <button class="key toggle only-setup" id="autoBtn" aria-pressed="true" data-th="วางอัตโนมัติ">Auto-place</button>
-        <button class="key only-setup" id="clearBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg><span data-th="ล้าง">Clear</span></button>
+        <button class="key only-setup only-design" id="clearBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg><span data-th="ล้าง">Clear</span></button>
         <div class="grp only-play" role="group" aria-label="Undo and redo">
           <button class="tool" id="undoBtn" aria-label="Undo" disabled><svg class="ico" aria-hidden="true"><use href="#i-undo"/></svg><span>Undo</span></button>
           <button class="tool" id="redoBtn" aria-label="Redo" disabled><svg class="ico flip" aria-hidden="true"><use href="#i-undo"/></svg><span>Redo</span></button>
@@ -122,7 +127,13 @@
     </div>
     <div class="row"><button class="btn sm" id="solBack" data-th="กลับไปเล่น">Back to puzzle</button></div>
   </div>
-  <div class="tray only-setup" id="tray"></div>
+  <div class="tray only-setup only-design" id="tray"></div>
+  <div class="dspanel only-design">
+    <div class="dscheck" id="dsCheck"><b id="dsHead"></b><span id="dsBody"></span></div>
+    <div class="row"><button class="btn" id="dsTest" data-th="ทดลองเล่น">Test play</button><button class="btn go" id="dsSave" data-th="บันทึกด่าน">Save stage</button></div>
+    <h4 class="dslisth"><span data-th="ด่านของฉัน">My stages</span> <small id="dsListCount"></small></h4>
+    <div id="dsList"></div>
+  </div>
   <div class="row only-setup"><button class="btn go" id="startBtn" disabled data-th="เริ่มเล่น">Start puzzle</button></div>
 </section>
 
@@ -236,7 +247,7 @@
     <p id="winInfo"></p>
     <div class="dwin hidden" id="dWin"><div class="streakbig" id="dWinStreak"></div><div class="week" id="dWinWeek"></div><p class="next" id="dNext"></p></div>
     <div class="row">
-      <button class="btn" id="menuBtn" data-th="ด่าน">Levels</button>
+      <button class="btn" id="menuBtn">Levels</button>
       <button class="btn" id="replayBtn" data-th="เล่นซ้ำ">Replay</button>
       <button class="btn go" id="nextBtn" data-th="ด่านถัดไป">Next</button>
     </div>

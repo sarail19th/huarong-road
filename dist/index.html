@@ -235,6 +235,8 @@ html:not([lang=th]) .lang-btn .en,html[lang=th] .lang-btn .th{background:var(--y
 body[data-phase=setup] .only-play,body[data-phase=solution] .only-play{display:none!important}
 body[data-phase=play] .only-setup,body[data-phase=won] .only-setup,body[data-phase=solution] .only-setup{display:none!important}
 body:not([data-phase=solution]) .only-sol{display:none!important}
+body[data-phase=design] .only-play,body[data-phase=design] .only-setup:not(.only-design),body[data-phase=design] .stats{display:none!important}
+body:not([data-phase=design]) .only-design:not(.only-setup){display:none!important}
 
 .overlay{position:fixed;inset:0;background:rgba(5,7,10,.72);display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:24px 22px;width:100%;max-width:340px;text-align:center;animation:pop .25s ease-out}
@@ -367,6 +369,31 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
 .dwin{margin-top:6px}
 .streakbig{font-size:17px;margin:6px 0 8px}
 .dwin .next{color:var(--muted)!important;font-size:13px}
+
+/* ---------- design stage ---------- */
+.dscard{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 10px 10px 14px;margin-bottom:10px}
+.dsinfo{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dsinfo b{display:flex;align-items:center;gap:8px;font-size:14px}
+.dsinfo b .ico{width:18px;height:18px;color:var(--yellow)}
+.dsinfo span{color:var(--muted);font-size:12.5px}
+.dscard .btn{flex:none;padding:9px 18px;font-size:13.5px}
+.dspanel{margin:4px 2px 10px}
+.dscheck{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--muted);border-radius:12px;padding:9px 12px;margin-bottom:10px;font-size:13.5px;line-height:1.45;display:flex;flex-direction:column;gap:2px}
+.dscheck span{color:var(--muted);font-size:12.5px}
+.dscheck.ok{border-left-color:var(--green)}
+.dscheck.ok b{color:var(--green)}
+.dscheck.bad{border-left-color:var(--amber)}
+.dscheck.bad b{color:var(--amber)}
+.dspanel .row .btn{font-size:14px}
+.dslisth{display:flex;align-items:baseline;gap:8px;margin:16px 2px 8px;font-size:14px}
+.dslisth small{color:var(--muted);font-weight:400;font-size:12px}
+.dsrow{display:flex;gap:6px;margin-bottom:6px}
+.dsrow .dsplay{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:600;font-size:14px}
+.dsrow .dsplay small{color:var(--muted);font-weight:400;font-size:12px}
+.dsrow .icon-btn{height:auto;min-height:44px;width:44px}
+.dsrow .icon-btn.armed{background:#c0303a;border-color:#c0303a;color:#fff;width:auto;padding:0 10px;font-size:12px;font-weight:700}
+.dsempty{color:var(--muted);font-size:13px;margin:0 2px}
+.tray button small{white-space:nowrap}
 </style>
 </head>
 <body data-phase="setup">
@@ -389,6 +416,7 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
   <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
   <symbol id="i-save" viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/></symbol>
   <symbol id="i-grid" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></symbol>
   <symbol id="i-help" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
@@ -413,6 +441,10 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
     <div class="dbody"><div class="led dled" id="dLed" aria-hidden="true"></div><div class="dinfo"><b id="dTitle"></b><span id="dGrade"></span><span class="dnote" id="dNote"></span></div></div>
     <div class="week" id="dWeek"></div>
     <button class="btn go" id="dPlay" disabled></button>
+  </div>
+  <div class="dscard" id="dsCard">
+    <div class="dsinfo"><b><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg><span data-th="ออกแบบด่าน">Design stage</span></b><span id="dsCount"></span></div>
+    <button class="btn" id="dsOpen" data-th="เปิด">Open</button>
   </div>
   <div class="howto" id="howto">
     <button class="howhead" id="howToggle" aria-expanded="true" aria-controls="howBody"><b data-th="วิธีเล่น">How to play</b><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
@@ -455,7 +487,7 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
       <div class="led" id="led" aria-label="Target layout"></div>
       <div class="keys">
         <button class="key toggle only-setup" id="autoBtn" aria-pressed="true" data-th="วางอัตโนมัติ">Auto-place</button>
-        <button class="key only-setup" id="clearBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg><span data-th="ล้าง">Clear</span></button>
+        <button class="key only-setup only-design" id="clearBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg><span data-th="ล้าง">Clear</span></button>
         <div class="grp only-play" role="group" aria-label="Undo and redo">
           <button class="tool" id="undoBtn" aria-label="Undo" disabled><svg class="ico" aria-hidden="true"><use href="#i-undo"/></svg><span>Undo</span></button>
           <button class="tool" id="redoBtn" aria-label="Redo" disabled><svg class="ico flip" aria-hidden="true"><use href="#i-undo"/></svg><span>Redo</span></button>
@@ -481,7 +513,13 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
     </div>
     <div class="row"><button class="btn sm" id="solBack" data-th="กลับไปเล่น">Back to puzzle</button></div>
   </div>
-  <div class="tray only-setup" id="tray"></div>
+  <div class="tray only-setup only-design" id="tray"></div>
+  <div class="dspanel only-design">
+    <div class="dscheck" id="dsCheck"><b id="dsHead"></b><span id="dsBody"></span></div>
+    <div class="row"><button class="btn" id="dsTest" data-th="ทดลองเล่น">Test play</button><button class="btn go" id="dsSave" data-th="บันทึกด่าน">Save stage</button></div>
+    <h4 class="dslisth"><span data-th="ด่านของฉัน">My stages</span> <small id="dsListCount"></small></h4>
+    <div id="dsList"></div>
+  </div>
   <div class="row only-setup"><button class="btn go" id="startBtn" disabled data-th="เริ่มเล่น">Start puzzle</button></div>
 </section>
 
@@ -595,7 +633,7 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
     <p id="winInfo"></p>
     <div class="dwin hidden" id="dWin"><div class="streakbig" id="dWinStreak"></div><div class="week" id="dWinWeek"></div><p class="next" id="dNext"></p></div>
     <div class="row">
-      <button class="btn" id="menuBtn" data-th="ด่าน">Levels</button>
+      <button class="btn" id="menuBtn">Levels</button>
       <button class="btn" id="replayBtn" data-th="เล่นซ้ำ">Replay</button>
       <button class="btn go" id="nextBtn" data-th="ด่านถัดไป">Next</button>
     </div>
@@ -847,7 +885,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   var timerOn = store.get('hr_timer', true); // off = no-stress mode: the clock is hidden (time is still tracked quietly)
   var autoPlace = store.get('hr_auto', true);
   var autoStart = store.get('hr_autostart', false); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = 'f93bd24'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = 'b82e724'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
@@ -908,6 +946,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   }
   function levelTitle(lv, i) {
     if (lv.daily) return L('Daily #', 'รายวัน #') + lv.number + ' · ' + dayLabel(lv.key);
+    if (lv.design) return lv.n ? L('Stage ', 'ด่านออกแบบ ') + lv.n + ' · ' + gradeOf(lv.par).name : L('Test play', 'ทดลองเล่น') + ' · ' + gradeOf(lv.par).name;
     return L('Level ', 'ด่าน ') + (i + 1) + ' · ' + gradeOf(lv.par).name;
   }
   function gridOf() { return Sol.fromPieces(G.pieces); }
@@ -984,6 +1023,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
       row.appendChild(b);
     });
     $('totalStars').textContent = total + ' / ' + LV.length * 3;
+    renderDsCard();
     var chips = $('pgchips'); chips.innerHTML = '';
     for (var pg = 0; pg < PAGES; pg++) (function (pg) {
       var c = document.createElement('button');
@@ -1063,17 +1103,189 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     renderDaily();
     if (dailyBusy === key) return;
     dailyBusy = key;
-    var done = function (lv) { dailyBusy = null; dailyLv = lv; store.set('hr_daily_lv', lv); renderDaily(); };
-    var inline = function () { setTimeout(function () { done(Daily.generate(key)); }, 30); };
+    job({ type: 'daily', key: key }, function (lv) { dailyBusy = null; dailyLv = lv; store.set('hr_daily_lv', lv); renderDaily(); });
+  }
+  // Heavy searches run in a Web Worker built from the inlined solver + daily scripts; if workers are unavailable they
+  // run on the main thread after a short delay instead. Results arrive through the callback either way.
+  var worker = null, jobs = {}, jobSeq = 0;
+  function runInline(m) { return m.type === 'daily' ? Daily.generate(m.key) : Sol.solve(m.g); }
+  function job(m, cb) {
+    var id = ++jobSeq, inline = function () { setTimeout(function () { cb(runInline(m)); }, 30); };
     try {
-      var src = $('srcSolver').textContent + ';\n' + $('srcDaily').textContent + ';\nonmessage=function(e){postMessage(Daily.generate(e.data));};';
-      var url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' })), w = new Worker(url);
-      w.onmessage = function (e) { w.terminate(); URL.revokeObjectURL(url); done(e.data); };
-      w.onerror = function (e) { if (e && e.preventDefault) e.preventDefault(); w.terminate(); inline(); };
-      w.postMessage(key);
-    } catch (e) { inline(); }
+      if (!worker) {
+        var src = $('srcSolver').textContent + ';\n' + $('srcDaily').textContent +
+          ';\nonmessage=function(e){var m=e.data;postMessage({id:m.id,r:m.type==="daily"?Daily.generate(m.key):Solver.solve(m.g)});};';
+        worker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+        worker.onmessage = function (e) { var j = jobs[e.data.id]; delete jobs[e.data.id]; if (j) j.cb(e.data.r); };
+        worker.onerror = function (e) { // fall back for everything still waiting
+          if (e && e.preventDefault) e.preventDefault();
+          var pend = jobs; jobs = {}; worker = null;
+          Object.keys(pend).forEach(function (k) { var j = pend[k]; setTimeout(function () { j.cb(runInline(j.m)); }, 30); });
+        };
+      }
+      jobs[id] = { m: m, cb: cb }; m.id = id; worker.postMessage(m);
+    } catch (e) { delete jobs[id]; inline(); }
   }
   $('dPlay').onclick = function () { if (dailyLv && dailyLv.key === Daily.dateKey()) openLevel(dailyLv); else loadDaily(); };
+
+  /* ---------- design stage: build your own layout, checked by the solver, saved on this device ---------- */
+  // Rules: exactly one big red block, exactly two empty cells, any mix of the other blocks. A layout that equals
+  // one of the 100 levels (or its mirror image) cannot be saved. Par = true optimum; grade from par like the levels.
+  var MAX_STAGES = 50;
+  var designs = store.get('hr_designs', []);               // [{ n, g, par, at }]
+  var levelKeys = {};
+  LV.forEach(function (lv, i) { levelKeys[lv.g] = i; });
+  function mirrorKey(g) {
+    return Sol.fromPieces(Sol.piecesOf(g).map(function (p) { return { t: p.t, r: p.r, c: W - p.c - DIM[p.t].w }; })).join('');
+  }
+  function stageLv(d) { return { id: 's' + d.n, n: d.n, par: d.par, g: d.g, design: true }; }
+  function saveDesigns() { store.set('hr_designs', designs); }
+
+  function openDesign(n, pieces) {
+    clearTimer();
+    G = { idx: -1, lv: { id: 'draft', par: 0, g: '', design: true }, target: null, tpieces: [], pieces: [], initial: null, dc: {}, trend: null,
+          phase: 'design', sel: 'R', moves: 0, hints: 0, hist: [], redo: [], t0: 0, elapsed: 0, msg: '', sol: null, editing: n || null, check: null };
+    var d = n && designs.filter(function (x) { return x.n === n; })[0];
+    var src = pieces || (d ? Sol.piecesOf(d.g.split('').map(Number)) : null);
+    if (src) G.pieces = src.map(function (p) { return { id: ++uid, t: p.t, r: p.r, c: p.c }; });
+    if (G.pieces.some(function (p) { return p.t === 'R'; })) G.sel = 'S';
+    clearBoard();
+    $('menu').classList.add('hidden'); closeDlg('win'); $('game').classList.remove('hidden');
+    document.body.dataset.phase = 'design';
+    $('lvTitle').textContent = G.editing ? L('Edit stage ', 'แก้ไขด่าน ') + G.editing : L('Design stage', 'ออกแบบด่าน');
+    hideTip(); layout(); renderAll(); designCheck(); renderStages(); window.scrollTo(0, 0);
+  }
+  function renderDesignTray() {
+    var counts = { R: 0, V: 0, H: 0, S: 0 };
+    G.pieces.forEach(function (p) { counts[p.t]++; });
+    var names = { R: L('Red', 'แดง'), V: L('Tall', 'ตั้ง'), H: L('Wide', 'นอน'), S: L('Small', 'เล็ก') };
+    $('tray').classList.remove('hidden');
+    $('tray').innerHTML = TYPES.map(function (t) {
+      var d = DIM[t], off = t === 'R' && counts.R >= 1;
+      return '<button data-t="' + t + '" class="' + (G.sel === t ? 'sel' : '') + '"' + (off ? ' disabled' : '') + '>' +
+        '<span class="mini m' + t + '" style="width:' + d.w * 15 + 'px;height:' + d.h * 15 + 'px"></span>' +
+        '<small>' + names[t] + ' ×' + counts[t] + '</small></button>';
+    }).join('');
+  }
+  function designTap(e, board) {
+    var pe = e.target.closest('.piece');
+    if (pe) { // tap a block to take it off
+      var id = +pe.dataset.id, gone = G.pieces.filter(function (p) { return p.id === id; })[0];
+      G.pieces = G.pieces.filter(function (p) { return p.id !== id; });
+      if (gone && gone.t === 'R') G.sel = 'R';
+      beep(380, 0.05); designChanged(); return;
+    }
+    if (!G.sel) return;
+    var rect = board.getBoundingClientRect(), d = DIM[G.sel];
+    var c0 = Math.floor((e.clientX - rect.left - PAD) / cell), r0 = Math.floor((e.clientY - rect.top - PAD) / cell);
+    var c = Math.max(0, Math.min(W - d.w, c0)), r = Math.max(0, Math.min(H - d.h, r0));
+    if (overlaps(r, c, d)) { say(L('That space is already taken', 'ช่องนี้มีบล็อกอยู่แล้ว')); buzz(20); return; }
+    var empty = 20 - G.pieces.reduce(function (n, p) { return n + DIM[p.t].w * DIM[p.t].h; }, 0);
+    if (empty - d.w * d.h < 2) { say(L('Leave 2 cells empty so blocks can move', 'ต้องเหลือช่องว่าง 2 ช่องเพื่อให้บล็อกเลื่อนได้')); buzz(20); return; }
+    G.pieces.push({ id: ++uid, t: G.sel, r: r, c: c });
+    if (G.sel === 'R') G.sel = 'S';
+    beep(660, 0.05); designChanged();
+  }
+  function designChanged() { G.msg = ''; renderAll(); designCheck(); }
+  function setCheck(cls, head, body) {
+    var b = $('dsCheck'); b.className = 'dscheck ' + (cls || '');
+    $('dsHead').textContent = head; $('dsBody').textContent = body || '';
+  }
+  // Live check after every change: rules first, then "is it one of the levels?", then the solver (in the worker)
+  function designCheck() {
+    var g = gridOf(), key = g.join(''), nR = G.pieces.filter(function (p) { return p.t === 'R'; }).length;
+    var empty = g.filter(function (v) { return v === 0; }).length, chk = { key: key, ok: false, par: 0, save: false };
+    G.check = chk;
+    if (!nR) setCheck('', L('Place the big red block', 'วางบล็อกแดงใหญ่'), L('Every stage has exactly one, plus any mix of other blocks.', 'ทุกด่านมีบล็อกแดงใหญ่ 1 ก้อน และบล็อกอื่นแบบไหนก็ได้'));
+    else if (empty > 2) setCheck('', L('Fill ' + (empty - 2) + ' more cell' + (empty - 2 > 1 ? 's' : ''), 'วางเพิ่มอีก ' + (empty - 2) + ' ช่อง'), L('Exactly 2 cells stay empty so blocks can slide.', 'ต้องเหลือช่องว่างพอดี 2 ช่องเพื่อให้บล็อกเลื่อนได้'));
+    else if (Sol.isGoal(g)) setCheck('bad', L('Red is already at the exit', 'บล็อกแดงอยู่ที่ทางออกแล้ว'), L('Move it away so there is something to solve.', 'ย้ายออกจากทางออก เพื่อให้มีอะไรให้แก้'));
+    else {
+      var lvl = levelKeys[key], mir = levelKeys[mirrorKey(g)], same = designs.filter(function (x) { return x.g === key; })[0];
+      if (lvl !== undefined || mir !== undefined) {
+        var i = lvl !== undefined ? lvl : mir;
+        chk.ok = true; chk.par = LV[i].par;
+        setCheck('bad', lvl !== undefined ? L('Same as Level ' + (i + 1), 'เหมือนกับด่าน ' + (i + 1)) : L('Mirror image of Level ' + (i + 1), 'เป็นภาพสะท้อนของด่าน ' + (i + 1)),
+          L('Change at least one block to make it your own (you can still test it).', 'เปลี่ยนอย่างน้อย 1 บล็อกเพื่อให้เป็นด่านของคุณ (ยังทดลองเล่นได้)'));
+      } else if (same && same.n !== G.editing) {
+        chk.ok = true; chk.par = same.par;
+        setCheck('bad', L('Already saved as Stage ' + same.n, 'บันทึกไว้แล้วเป็นด่าน ' + same.n), L('Change a block to make a new one.', 'เปลี่ยนบล็อกเพื่อสร้างด่านใหม่'));
+      } else {
+        setCheck('', L('Checking…', 'กำลังตรวจ…'), L('Looking for the shortest solution', 'กำลังหาทางแก้ที่สั้นที่สุด'));
+        job({ type: 'solve', g: g }, function (sol) {
+          if (!G || G.phase !== 'design' || G.check !== chk) return;   // the layout changed meanwhile
+          if (!sol) { setCheck('bad', L('✗ No solution', '✗ ไม่มีทางแก้'), L('Red can never reach the exit from here. Move a block or two.', 'บล็อกแดงไปถึงทางออกไม่ได้เลย ลองย้ายบล็อกสักหนึ่งหรือสองก้อน')); renderDesignButtons(); return; }
+          chk.ok = true; chk.par = sol.length; chk.save = !same || same.g !== key || same.n !== G.editing;
+          if (same && same.n === G.editing) chk.save = false;
+          var gr = gradeOf(chk.par).name;
+          setCheck('ok', L('✓ Solvable · minimum ' + chk.par + ' moves', '✓ แก้ได้ · อย่างน้อย ' + chk.par + ' ครั้ง'),
+            L('Grade: ' + gr + ' · 3 stars at ≤ ' + chk.par + ' moves', 'ระดับ: ' + gr + ' · 3 ดาวเมื่อเดิน ≤ ' + chk.par + ' ครั้ง') + (chk.save ? '' : L(' · saved', ' · บันทึกแล้ว')));
+          renderDesignButtons();
+        });
+      }
+    }
+    renderDesignButtons();
+  }
+  function renderDesignButtons() {
+    var c = G.check || {}, full = !G.editing && designs.length >= MAX_STAGES;
+    $('dsTest').disabled = !c.ok;
+    $('dsSave').disabled = !c.save || full;
+    $('dsSave').textContent = G.editing ? L('Save changes', 'บันทึกการแก้ไข') : full ? L('50 stages max', 'เต็ม 50 ด่านแล้ว') : L('Save stage', 'บันทึกด่าน');
+  }
+  $('dsTest').onclick = function () {
+    var c = G.check; if (!c || !c.ok) return;
+    // only an unchanged saved stage plays (and records stars) as that stage; anything else is an unrecorded draft
+    var saved = G.editing && designs.filter(function (d) { return d.n === G.editing && d.g === c.key; })[0];
+    openLevel(saved ? stageLv(saved) : { id: 'draft', n: null, edit: G.editing, par: c.par, g: c.key, design: true });
+  };
+  $('dsSave').onclick = function () {
+    var c = G.check; if (!c || !c.save) return;
+    if (G.editing) {
+      designs.forEach(function (d) { if (d.n === G.editing) { d.g = c.key; d.par = c.par; d.at = Date.now(); } });
+      delete progress['s' + G.editing]; delete seen['s' + G.editing]; store.set('hr_progress', progress); store.set('hr_seen', seen);
+      say(L('Stage ' + G.editing + ' updated', 'อัปเดตด่าน ' + G.editing + ' แล้ว'));
+    } else {
+      if (designs.length >= MAX_STAGES) return;
+      var n = designs.reduce(function (m, d) { return Math.max(m, d.n); }, 0) + 1;
+      designs.push({ n: n, g: c.key, par: c.par, at: Date.now() });
+      G.editing = n; $('lvTitle').textContent = L('Edit stage ', 'แก้ไขด่าน ') + n;
+      say(L('Saved as Stage ' + n, 'บันทึกเป็นด่าน ' + n + ' แล้ว'));
+    }
+    saveDesigns(); beep(880, 0.12); buzz(30); c.save = false; renderDesignButtons(); renderStages();
+    setCheck('ok', $('dsHead').textContent, $('dsBody').textContent.replace(L(' · saved', ' · บันทึกแล้ว'), '') + L(' · saved', ' · บันทึกแล้ว'));
+  };
+  function renderStages() {
+    $('dsListCount').textContent = designs.length + ' / ' + MAX_STAGES;
+    var box = $('dsList');
+    if (!designs.length) { box.innerHTML = '<p class="dsempty">' + L('Nothing saved yet. Build a layout above and tap Save stage.', 'ยังไม่มีด่านที่บันทึกไว้ สร้างด้านบนแล้วแตะบันทึกด่าน') + '</p>'; return; }
+    box.innerHTML = designs.slice().sort(function (a, b) { return b.n - a.n; }).map(function (d) {
+      var pr = progress['s' + d.n];
+      return '<div class="dsrow"><button class="dsplay" data-play="' + d.n + '">' + L('Stage ', 'ด่าน ') + d.n +
+        '<small>' + gradeOf(d.par).name + ' · par ' + d.par + ' · ' + stars(pr ? pr.stars : 0) + '</small></button>' +
+        '<button class="icon-btn" data-edit="' + d.n + '" aria-label="' + L('Edit stage ', 'แก้ไขด่าน ') + d.n + '"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button>' +
+        '<button class="icon-btn" data-del="' + d.n + '" aria-label="' + L('Delete stage ', 'ลบด่าน ') + d.n + '"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></div>';
+    }).join('');
+  }
+  $('dsList').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.play) { var d = designs.filter(function (x) { return x.n === +b.dataset.play; })[0]; if (d) openLevel(stageLv(d)); return; }
+    if (b.dataset.edit) { openDesign(+b.dataset.edit); return; }
+    if (b.dataset.del) { // two taps: the first arms the button, the second deletes
+      var n = +b.dataset.del;
+      if (!b.classList.contains('armed')) {
+        b.classList.add('armed'); b.textContent = L('Delete?', 'ลบ?');
+        setTimeout(function () { if (document.body.contains(b)) renderStages(); }, 3000); return;
+      }
+      designs = designs.filter(function (x) { return x.n !== n; }); saveDesigns();
+      delete progress['s' + n]; delete seen['s' + n]; store.set('hr_progress', progress); store.set('hr_seen', seen);
+      if (G && G.editing === n) { G.editing = null; $('lvTitle').textContent = L('Design stage', 'ออกแบบด่าน'); designCheck(); }
+      renderStages(); renderDsCard();
+    }
+  });
+  function renderDsCard() {
+    $('dsCount').textContent = designs.length ? L(designs.length + ' saved · build your own puzzle', 'บันทึกไว้ ' + designs.length + ' ด่าน · สร้างปริศนาของคุณเอง')
+      : L('Build your own puzzle', 'สร้างปริศนาของคุณเอง');
+  }
+  $('dsOpen').onclick = function () { openDesign(null); };
 
   /* ---------- level lifecycle ---------- */
   function clearBoard() { els.forEach(function (el) { el.remove(); }); els.clear(); }
@@ -1095,9 +1307,9 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     $('par').textContent = lv.par; $('moves').textContent = '0'; $('time').textContent = '0:00';
     G.sel = firstAvailable();
     hideTip(); renderAuto();
-    if (autoPlace || autoStart) placeAll();
+    if (autoPlace || autoStart || lv.design) placeAll();
     layout(); renderAll(); window.scrollTo(0, 0);
-    if (autoStart) startPlay();
+    if (autoStart || lv.design) startPlay();
   }
 
   // Best result for the open level (fewest moves ever), shown as a 4th stat once the level has been cleared
@@ -1171,7 +1383,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
       el.style.height = (d.h * cell - 2 * GAP) + 'px';
       el.style.transform = 'translate(' + (PAD + p.c * cell + GAP) + 'px,' + (PAD + p.r * cell + GAP) + 'px)';
       el.style.opacity = '';
-      var v = verified(p), setup = G.phase === 'setup';
+      var setup = G.phase === 'setup', v = setup && verified(p);
       el.classList.toggle('ok', setup && v);
       el.classList.toggle('bad', setup && !v);
       el.removeAttribute('data-hint'); el.removeAttribute('data-focus');
@@ -1180,6 +1392,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   }
 
   function renderTray() {
+    if (G.phase === 'design') { renderDesignTray(); return; }
     if (G.phase !== 'setup') return;
     // nothing left to place (always the case with auto-place) -> hide the tray so Start stays on screen
     $('tray').classList.toggle('hidden', !firstAvailable());
@@ -1212,6 +1425,8 @@ if(typeof module!=="undefined")module.exports=LEVELS;
       if (G.msg) s.classList.add('warn'); else if (tr && tr.cls) s.classList.add(tr.cls);
     } else if (G.phase === 'solution') {
       s.textContent = '';
+    } else if (G.phase === 'design') {
+      s.classList.toggle('hidden', !G.msg); s.textContent = G.msg || ''; if (G.msg) s.classList.add('warn');
     }
   }
 
@@ -1227,6 +1442,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   }
 
   $('board').addEventListener('click', function (e) {
+    if (G && G.phase === 'design') { designTap(e, this); return; }
     if (!G || G.phase !== 'setup') return;
     var pe = e.target.closest('.piece');
     if (pe) {
@@ -1269,7 +1485,10 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     renderAll();
   }
   $('autoBtn').onclick = function () { if (G && G.phase === 'setup') toggleAutoPlace(); };
-  $('clearBtn').onclick = function () { G.pieces = []; G.sel = firstAvailable(); renderAll(); };
+  $('clearBtn').onclick = function () {
+    if (G && G.phase === 'design') { G.pieces = []; G.sel = 'R'; designChanged(); return; }
+    G.pieces = []; G.sel = firstAvailable(); renderAll();
+  };
   $('startBtn').onclick = function () { if (!$('startBtn').disabled) startPlay(); };
 
   function startPlay() {
@@ -1555,7 +1774,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     if (!G || G.phase !== 'play') return;
     var steps = Sol.solve(Sol.fromPieces(G.initial));
     if (!steps) { say(L('No solution found for this layout', 'ไม่พบเฉลยสำหรับรูปแบบนี้')); return; }
-    seen[G.lv.id] = 1; store.set('hr_seen', seen);
+    if (G.lv.id !== 'draft') { seen[G.lv.id] = 1; store.set('hr_seen', seen); }
     // freeze the player's attempt, show the start position again and walk it from there
     G.sol = { steps: steps, i: 0, stash: { pieces: snap(), hist: G.hist, redo: G.redo, moves: G.moves }, pausedAt: Date.now() };
     clearTimer(); hideTip();
@@ -1627,13 +1846,13 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     G.phase = 'won'; document.body.dataset.phase = 'won'; clearTimer(); renderCtl();
     G.elapsed = Date.now() - G.t0;
     var par = G.lv.par, st = seen[G.lv.id] ? 0 : G.moves <= par ? 3 : G.moves <= Math.ceil(par * 1.4) ? 2 : 1;
-    var prev = progress[G.lv.id];
-    progress[G.lv.id] = {
+    var prev = progress[G.lv.id], rec = G.lv.id !== 'draft';
+    var cur = {
       stars: Math.max(st, prev ? prev.stars : 0),
       moves: Math.min(G.moves, prev ? prev.moves : 1e9),
       time: Math.min(G.elapsed, prev ? prev.time : 1e12)
     };
-    store.set('hr_progress', progress);
+    if (rec) { progress[G.lv.id] = cur; store.set('hr_progress', progress); }
     var red = G.pieces.filter(function (p) { return p.t === 'R'; })[0], el = els.get(red.id);
     setTimeout(function () {
       el.style.transform = 'translate(' + (PAD + red.c * cell + GAP) + 'px,' + (PAD + (red.r + 2) * cell + GAP) + 'px)';
@@ -1642,14 +1861,15 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     }, 250);
     setTimeout(function () {
       $('winStars').textContent = stars(st);
-      var best = progress[G.lv.id], bestLine = '';
+      var best = cur, bestLine = '';
       if (prev && G.moves < prev.moves) bestLine = L('New best! ', 'สถิติใหม่! ') + L('(was ' + prev.moves + ')', '(เดิม ' + prev.moves + ')');
       else if (prev) bestLine = 'Best <b>' + best.moves + '</b>' + (timerOn ? ' · ' + fmt(best.time) : '');
       $('winInfo').innerHTML = 'Moves <b>' + G.moves + '</b> (par ' + par + ')' + (timerOn ? ' · Time <b>' + fmt(G.elapsed) + '</b>' : '') +
         (G.hints ? ' · ' + L('Hints ', 'คำใบ้ ') + G.hints : '') + (bestLine ? '<span class="best">' + bestLine + '</span>' : '') +
         (seen[G.lv.id] ? '<br>' + L('Solution viewed — no stars for this level', 'ดูเฉลยแล้ว — ด่านนี้ไม่ได้ดาว') : '');
       renderBest();
-      var daily = !!G.lv.daily, hasNext = !daily && G.idx + 1 < LV.length;
+      var daily = !!G.lv.daily, hasNext = G.idx >= 0 && G.idx + 1 < LV.length;
+      $('menuBtn').textContent = G.lv.design ? L('Edit', 'แก้ไข') : L('Levels', 'ด่าน');
       $('winTitle').textContent = daily ? L('Daily solved!', 'ผ่านปริศนารายวัน!') : L('Cleared!', 'ผ่านด่าน!');
       $('dWin').classList.toggle('hidden', !daily);
       if (daily) {
@@ -1663,8 +1883,10 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   }
   $('nextBtn').onclick = function () { openLevel(G.idx + 1); };
   $('replayBtn').onclick = function () { closeDlg('win'); doRestart(); };
-  $('menuBtn').onclick = showMenu;
-  $('backBtn').onclick = showMenu;
+  // From a design's test play (or its win card) go back to the editor with that layout; otherwise to the menu
+  function leave() { if (G && G.lv && G.lv.design) openDesign(G.lv.n || G.lv.edit || null, G.initial); else showMenu(); }
+  $('menuBtn').onclick = leave;
+  $('backBtn').onclick = function () { if (G && G.phase === 'design') showMenu(); else leave(); };
   // Sound and vibration are switches in the Settings panel (aria-pressed = on)
   function setSwitch(btn, on, icon) {
     btn.setAttribute('aria-pressed', on); btn.setAttribute('aria-checked', on);
@@ -1743,6 +1965,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     renderMenu(); renderDaily();
     Array.prototype.forEach.call(document.querySelectorAll('.setrow[role=switch]'), renderSwitchText);
     if (!G) return;
+    if (G.phase === 'design') { $('lvTitle').textContent = G.editing ? L('Edit stage ', 'แก้ไขด่าน ') + G.editing : L('Design stage', 'ออกแบบด่าน'); renderAll(); designCheck(); renderStages(); return; }
     $('lvTitle').textContent = levelTitle(G.lv, G.idx);
     if (G.msg) G.msg = '';
     renderStatus();
@@ -1784,7 +2007,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
 
   /* ---------- progress backup: a code or a small file, works offline; restoring merges and never loses anything ---------- */
   function backupCode() {
-    var data = { v: 1, at: new Date().toISOString().slice(0, 10), progress: progress, seen: seen };
+    var data = { v: 1, at: new Date().toISOString().slice(0, 10), progress: progress, seen: seen, designs: designs };
     return 'HR1.' + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   }
   function readBackup(text) {
@@ -1798,6 +2021,17 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   function restoreFrom(text) {
     var d;
     try { d = readBackup(text); } catch (e) { bkSay(L('That is not a valid backup code.', 'รหัสสำรองไม่ถูกต้อง'), true); return; }
+    (d.designs || []).forEach(function (x) {
+      if (!x || typeof x.g !== 'string' || designs.some(function (y) { return y.g === x.g; }) || designs.length >= MAX_STAGES) return;
+      var n = x.n;
+      if (designs.some(function (y) { return y.n === n; })) { // number taken: give it a new one and move its record along
+        var nn = designs.reduce(function (m, y) { return Math.max(m, y.n); }, 0) + 1;
+        if (d.progress['s' + n]) { d.progress['s' + nn] = d.progress['s' + n]; delete d.progress['s' + n]; }
+        n = nn;
+      }
+      designs.push({ n: n, g: x.g, par: x.par, at: x.at || Date.now() });
+    });
+    saveDesigns();
     var levels = 0;
     Object.keys(d.progress).forEach(function (id) {
       var a = d.progress[id], b = progress[id];

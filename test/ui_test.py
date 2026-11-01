@@ -1,4 +1,4 @@
-import json, sys, os
+import json, sys, os, re
 from playwright.sync_api import sync_playwright
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -950,6 +950,88 @@ def daily(p):
     ctx.close(); assert not errors, errors
 
 
+def design(p):
+    """Design stage: 1 red + exactly 2 empty cells, any other blocks; level/mirror duplicates blocked; solver checks it,
+    grades it by par; save (max 50), test play records stars, edit, two-tap delete; kept in backups; Thai."""
+    ctx = launch(p).new_context(viewport={'width': 390, 'height': 900}, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.goto(URL)
+    assert 'Build your own puzzle' in page.inner_text('#dsCard')
+    page.click('#dsOpen'); assert page.evaluate("() => document.body.dataset.phase") == 'design'
+    assert page.inner_text('#lvTitle') == 'Design stage' and page.locator('.stats').is_hidden() and page.locator('#undoBtn').is_hidden()
+    def tap(r, c):
+        bx = page.locator('#board').bounding_box(); cs = (bx['width'] - 20) / 4
+        page.mouse.click(bx['x'] + 10 + (c + .5) * cs, bx['y'] + 10 + (r + .5) * cs)
+    def build(pieces):
+        page.click('#clearBtn')
+        for t, r, c in pieces: page.click(f'#tray button[data-t={t}]'); tap(r, c)
+        page.wait_for_function("() => !/Checking/.test(document.getElementById('dsHead').textContent)", timeout=15000)
+    head = lambda: page.inner_text('#dsHead')
+    assert head() == 'Place the big red block' and page.locator('#dsSave').is_disabled() and page.locator('#dsTest').is_disabled()
+    page.click('#tray button[data-t=R]'); tap(0, 1)
+    assert page.locator('#tray button[data-t=R]').is_disabled(), 'only one red block'
+    assert head() == 'Fill 14 more cells'
+    # not allowed to cover more than 18 cells
+    build([('R', 0, 1), ('V', 0, 0), ('V', 0, 3), ('V', 2, 0), ('H', 2, 1), ('V', 2, 3), ('S', 3, 1), ('S', 3, 2), ('S', 4, 0), ('S', 4, 3)])
+    page.click('#tray button[data-t=S]'); tap(4, 1)
+    assert 'Leave 2 cells empty' in page.inner_text('#status'), 'a third empty cell cannot be filled'
+    assert head() == 'Same as Level 86' and page.locator('#dsSave').is_disabled() and page.locator('#dsTest').is_enabled(), 'the classic is level 86'
+    mir = page.evaluate("() => Solver.piecesOf(LEVELS[9].g.split('').map(Number)).map(p => [p.t, p.r, 4 - p.c - ({R:2,V:1,H:2,S:1})[p.t]])")
+    build([tuple(x) for x in sorted(mir, key=lambda x: x[0] != 'R')])
+    assert head() in ('Mirror image of Level 10', 'Same as Level 10'), head()
+    build([('R', 0, 0), ('H', 0, 2), ('H', 1, 2), ('H', 2, 0), ('H', 2, 2), ('H', 3, 0), ('H', 3, 2), ('H', 4, 0)])
+    assert head() == '✗ No solution' and page.locator('#dsSave').is_disabled() and page.locator('#dsTest').is_disabled()
+    build([('R', 0, 1), ('V', 0, 0), ('V', 0, 3), ('V', 2, 0), ('H', 2, 1), ('V', 2, 3), ('S', 3, 1), ('S', 3, 2), ('S', 4, 0), ('S', 4, 1)])
+    assert head().startswith('✓ Solvable · minimum ') and 'Grade: ' in page.inner_text('#dsBody'), head()
+    par = int(re.search(r'minimum (\d+)', head()).group(1))
+    page.screenshot(path=f'{SHOTS}/design.png', full_page=True)
+    page.click('#dsSave')
+    assert 'Saved as Stage 1' in page.inner_text('#status') and page.inner_text('#lvTitle') == 'Edit stage 1'
+    assert page.locator('#dsSave').is_disabled() and page.locator('.dsrow').count() == 1 and '1 / 50' in page.inner_text('#dsListCount')
+    stored = page.evaluate("() => JSON.parse(localStorage.getItem('hr_designs'))"); assert stored[0]['n'] == 1 and stored[0]['par'] == par
+    # play the saved stage from the list (opens straight into play), win records stars for that stage
+    page.click('.dsrow .dsplay')
+    assert page.evaluate("() => document.body.dataset.phase") == 'play' and page.inner_text('#lvTitle').startswith('Stage 1 · ')
+    g = page.evaluate("() => JSON.parse(localStorage.getItem('hr_designs'))[0].g")
+    for m in page.evaluate("(g) => Solver.solve(g.split('').map(Number))", g):
+        bx = page.locator('#board').bounding_box(); cs = (bx['width'] - 20) / 4; d = {'R': (2, 2), 'V': (1, 2), 'H': (2, 1), 'S': (1, 1)}[m['t']]
+        sx = bx['x'] + 10 + (m['c'] + d[0] / 2) * cs; sy = bx['y'] + 10 + (m['r'] + d[1] / 2) * cs
+        page.mouse.move(sx, sy); page.mouse.down()
+        for i in range(1, 7): page.mouse.move(sx + m['dc'] * m['k'] * cs * i / 6, sy + m['dr'] * m['k'] * cs * i / 6)
+        page.mouse.up(); page.wait_for_timeout(120)
+    page.wait_for_selector('#win:not(.hidden)', timeout=5000)
+    assert page.inner_text('#menuBtn') == 'Edit' and page.locator('#nextBtn').is_hidden()
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_progress'))['s1'].stars") == 3
+    page.click('#menuBtn'); assert page.evaluate("() => document.body.dataset.phase") == 'design' and '★★★' in page.inner_text('#dsList')
+    # an unsaved draft never records anything
+    build([('R', 0, 1), ('V', 0, 0), ('V', 0, 3), ('V', 2, 0), ('H', 2, 1), ('V', 2, 3), ('S', 3, 1), ('S', 3, 2), ('S', 4, 3), ('S', 4, 2)])
+    keys0 = page.evaluate("() => Object.keys(JSON.parse(localStorage.getItem('hr_progress') || '{}')).sort().join()")
+    page.click('#dsTest'); assert page.inner_text('#lvTitle').startswith('Test play')
+    page.click('#solBtn'); page.click('#solYes'); page.click('#solBack')
+    assert page.evaluate("() => Object.keys(JSON.parse(localStorage.getItem('hr_seen') || '{}')).join()") == '', 'a draft leaves no solution mark'
+    page.click('#backBtn'); assert page.evaluate("() => document.body.dataset.phase") == 'design'
+    # cap: 50 stages
+    page.evaluate("() => { var d = JSON.parse(localStorage.getItem('hr_designs')); for (var i = 2; i <= 50; i++) d.push({ n: i, g: d[0].g.slice(0, 18) + ('0' + i).slice(-2), par: 5, at: 0 }); localStorage.setItem('hr_designs', JSON.stringify(d)); }")
+    page.reload(); page.click('#dsOpen')
+    build([('R', 0, 1), ('V', 0, 0), ('V', 0, 3), ('V', 2, 0), ('H', 2, 1), ('V', 2, 3), ('S', 3, 1), ('S', 3, 2), ('S', 4, 3), ('S', 4, 2)])
+    assert page.locator('#dsSave').is_disabled() and page.inner_text('#dsSave') == '50 stages max' and '50 / 50' in page.inner_text('#dsListCount')
+    # two-tap delete
+    first = page.locator('.dsrow [data-del]').first; first.click(); assert page.locator('.dsrow [data-del].armed').count() == 1
+    page.locator('.dsrow [data-del].armed').click(); assert '49 / 50' in page.inner_text('#dsListCount')
+    # Thai
+    toggle_lang(page); assert page.inner_text('#lvTitle') in ('ออกแบบด่าน',) and 'บันทึกด่าน' in page.inner_text('#dsSave') + 'บันทึกด่าน'
+    toggle_lang(page)
+    # backup carries designs
+    page.click('#backBtn'); settings(page); page.click('#backupBtn'); code = page.locator('#bkOut').input_value(); page.click('#bkClose')
+    page.evaluate("() => { localStorage.removeItem('hr_designs'); localStorage.removeItem('hr_progress'); }"); page.reload()
+    assert 'Build your own puzzle' == page.inner_text('#dsCount')
+    settings(page); page.click('#backupBtn'); page.fill('#bkIn', code); page.click('#bkRestore'); page.click('#bkClose')
+    assert page.inner_text('#dsCount').startswith('49 saved')
+    ctx.close(); assert not errors, errors
+
+
 with sync_playwright() as p:
     if os.environ.get('HR_ONLY'):
         globals()[os.environ['HR_ONLY']](p); print('ONLY', os.environ['HR_ONLY'], 'OK'); sys.exit(0)
@@ -960,6 +1042,8 @@ with sync_playwright() as p:
     polish(p)
     toggles(p)
     daily(p)
+    design(p)
+    print('design stage: rules, duplicates, solver + grade, save/play/edit/delete, 50 cap, backup')
     print('daily: generated from the date, playable, streak + week row, day rollover, in backups')
     print('toggles: Auto-place switch synced with the setup key, On/Off words on every switch')
     print('polish: Thai covers actions, dialogs keyboard-safe, backup round-trips, best score')
