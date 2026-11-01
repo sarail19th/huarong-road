@@ -470,7 +470,7 @@ def menu_pages(p):
         page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
         page.goto(URL)
         h1 = page.locator('#menu h1').bounding_box()
-        for sel in ('#menu .settings-btn', '#aboutBtn', '#refreshBtn'):
+        for sel in ('#menu .settings-btn', '#aboutBtn'):
             b = page.locator(sel).bounding_box()
             assert b['y'] + b['height'] <= h1['y'] + 1 or b['x'] + b['width'] <= h1['x'] or b['x'] >= h1['x'] + h1['width'], f'{sel} overlaps the title at {w}px'
         sw = page.evaluate("() => document.documentElement.scrollWidth")
@@ -546,13 +546,17 @@ def controls(p):
     page.add_init_script("window.__vib = []; navigator.vibrate = function (ms) { window.__vib.push(ms); return true; };")
     page.goto(URL)
     # consistency: the gear is top-right on the menu and in the game, and the update button is not a lookalike of Restart
-    mg = page.locator('#menu .settings-btn').bounding_box(); ub = page.locator('#refreshBtn').bounding_box()
-    assert mg['x'] > ub['x'] + ub['width'] and abs((mg['x'] + mg['width']) - 344) <= 2, 'menu gear sits at the top right'
+    mg = page.locator('#menu .settings-btn').bounding_box()
+    assert abs((mg['x'] + mg['width']) - 344) <= 2, 'menu gear sits at the top right'
+    assert page.locator('.ver #refreshBtn').count() == 1, 'update button sits next to the version label'
+    vb = page.locator('#verId').bounding_box(); rb0 = page.locator('#refreshBtn').bounding_box()
+    assert abs((vb['y'] + vb['height'] / 2) - (rb0['y'] + rb0['height'] / 2)) < 12 and rb0['x'] > vb['x'], 'same line, right of the version'
     assert page.locator('#refreshBtn use').get_attribute('href') != page.locator('#restartBtn use').get_attribute('href'), 'update icon differs from restart icon'
     page.screenshot(path=f'{SHOTS}/menu_header.png')
     lv(page, 5).click()
     gg = page.locator('#game .settings-btn').bounding_box()
     assert abs((gg['x'] + gg['width']) - (mg['x'] + mg['width'])) <= 1 and abs(gg['y'] - mg['y']) <= 8, 'game gear is in the same corner as the menu gear'
+    settings(page); assert page.evaluate("() => document.querySelector('#settings .setrow .lbl').textContent.trim()") == 'Language', 'language is the first row'; page.click('#setClose')
     # game bar no longer carries skin / sound / vibration / language buttons: only the gear
     for sel in ('#game .skin-btn', '#game .lang-btn', '#game #muteBtn', '#game #hapBtn'): assert page.locator(sel).count() == 0 or page.locator(sel).is_hidden(), sel
     page.click('#startBtn')
