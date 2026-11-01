@@ -322,8 +322,8 @@ def lang_switch(p):
         assert lit('th', '#game') == want_th and (page.locator('#hintBtn').inner_text() == 'คำใบ้') == want_th
         assert ('Drag blocks' in page.locator('#status').inner_text()) != want_th
     page.screenshot(path=f'{SHOTS}/lang_switch_360.png')
-    gb = page.locator('#game .settings-btn').bounding_box(); rb = page.locator('#restartBtn').bounding_box(); title = page.locator('#lvTitle').bounding_box()
-    assert rb['x'] >= title['x'] and gb['x'] > rb['x'] + rb['width'] - 1, 'restart + gear sit right of the title, not overlapping'
+    gb = page.locator('#game .settings-btn').bounding_box(); title = page.locator('#lvTitle').bounding_box()
+    assert gb['x'] >= title['x'] + 20, 'gear sits right of the title'
     assert page.evaluate("() => document.documentElement.scrollWidth") <= 360
     ctx.close(); assert not errors, errors
 
@@ -601,8 +601,10 @@ def controls(p):
     # grouping: undo+redo share a pill, hint+solution share a pill, restart is far from undo
     assert page.locator('.grp:has(#undoBtn):has(#redoBtn)').count() == 1 and page.locator('.grp:has(#hintBtn):has(#solBtn)').count() == 1
     u, r = box('#undoBtn'), box('#restartBtn')
-    far = abs((u['x'] + u['width'] / 2) - (r['x'] + r['width'] / 2)) + abs((u['y'] + u['height'] / 2) - (r['y'] + r['height'] / 2))
-    assert far > 150, f'restart too close to undo ({far:.0f}px)'
+    lb = box('#led')
+    assert r['x'] >= lb['x'] + lb['width'] and r['x'] - (lb['x'] + lb['width']) <= 20, 'restart sits right next to the LED'
+    assert u['x'] - (r['x'] + r['width']) >= 48, f"restart keeps a thumb-width gap from undo ({u['x'] - (r['x'] + r['width']):.0f}px)"
+    assert page.locator('.hud #restartBtn').count() == 0, 'restart left the top bar'
     for sel in ('#undoBtn', '#redoBtn', '#hintBtn', '#solBtn', '#restartBtn'):
         b = box(sel); assert b['height'] >= 40 and b['width'] >= 40, f'{sel} touch target {b}'
     assert page.evaluate("() => document.documentElement.scrollWidth") <= 360
@@ -1032,6 +1034,53 @@ def design(p):
     ctx.close(); assert not errors, errors
 
 
+def resets_motion(p):
+    """Per-level reset (only with a record; confirm shows it), reset-all behind a tick box, reduce-motion switch."""
+    ctx = launch(p).new_context(viewport={'width': 360, 'height': 780}, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.add_init_script("""if (!sessionStorage.getItem('seed')) { sessionStorage.setItem('seed', 1);
+      localStorage.setItem('hr_progress', JSON.stringify({ '1': { stars: 3, moves: 2, time: 1000 }, '15': { stars: 2, moves: 14, time: 60000 }, 'd2026-11-01': { stars: 3, moves: 9, time: 1 } }));
+      localStorage.setItem('hr_seen', JSON.stringify({ '15': 1 })); }""")
+    page.goto(URL)
+    lv(page, 1).click(); assert page.locator('#recLine').is_hidden(), 'no record, no reset link'
+    page.click('#backBtn'); lv(page, 14).click()
+    assert page.locator('#recLine').is_visible() and 'solution viewed' in page.inner_text('#recText') and 'Best 14' in page.inner_text('#recText')
+    page.click('#recReset'); assert page.locator('#rcAsk').is_visible() and '★★☆' in page.inner_text('#rcBody')
+    page.click('#rcNo'); assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_progress'))['15'].stars") == 2, 'Keep it keeps it'
+    page.click('#recReset'); page.click('#rcYes')
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_progress'))['15']") is None
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_seen'))['15']") is None, 'solution lock lifted'
+    assert page.locator('#recLine').is_hidden() and page.locator('#bestStat').is_hidden()
+    page.click('#backBtn'); assert page.inner_text('#totalStars').startswith('3 /')
+    # reset all: in Settings, needs the tick, keeps designs + settings
+    page.evaluate("() => localStorage.setItem('hr_designs', JSON.stringify([{ n: 1, g: LEVELS[5].g.replace(/9/, '9'), par: 4, at: 0 }]))")
+    settings(page); assert page.locator('#settings .setrow').last.get_attribute('id') == 'resetAllBtn', 'reset-all is the last row'
+    page.click('#resetAllBtn'); assert page.locator('#raAsk').is_visible() and page.locator('#settings').is_hidden()
+    assert '3 level stars and 1 daily' in page.inner_text('#raSum') and page.locator('#raYes').is_disabled()
+    page.keyboard.press('Escape'); assert page.locator('#raAsk').is_hidden() and page.inner_text('#totalStars').startswith('3 /')
+    settings(page); page.click('#resetAllBtn'); page.check('#raCheck'); assert page.locator('#raYes').is_enabled()
+    page.screenshot(path=f'{SHOTS}/reset_all.png')
+    page.click('#raYes')
+    assert page.inner_text('#totalStars').startswith('0 /') and page.evaluate("() => localStorage.getItem('hr_progress')") == '{}'
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_designs')).length") == 1, 'designs kept'
+    assert page.evaluate("() => localStorage.getItem('hr_lang')") in (None, '"en"'), 'settings untouched'
+    # reduce motion: default follows the phone, the switch overrides; animations really stop
+    assert page.evaluate("() => document.documentElement.dataset.motion") == ''
+    settings(page); assert page.locator('#motionBtn .st').inner_text() == 'Off'
+    page.click('#motionBtn'); assert page.evaluate("() => document.documentElement.dataset.motion") == 'reduce' and page.locator('#motionBtn .st').inner_text() == 'On'
+    page.click('#setClose'); lv(page, 5).click(); page.click('#startBtn'); page.click('#hintBtn')
+    assert page.evaluate("() => getComputedStyle(document.querySelector('.piece[data-focus]')).animationName") == 'none', 'hint does not pulse'
+    assert page.evaluate("() => getComputedStyle(document.querySelector('.piece')).transitionDuration") == '0s', 'blocks move instantly'
+    page.reload(); assert page.evaluate("() => document.documentElement.dataset.motion") == 'reduce', 'remembered'
+    ctx.close()
+    ctx2 = launch(p).new_context(viewport={'width': 360, 'height': 780}, reduced_motion='reduce')
+    pg2 = ctx2.new_page(); pg2.goto(URL)
+    assert pg2.evaluate("() => document.documentElement.dataset.motion") == 'reduce', "follows the phone's setting by default"
+    ctx2.close(); assert not errors, errors
+
+
 with sync_playwright() as p:
     if os.environ.get('HR_ONLY'):
         globals()[os.environ['HR_ONLY']](p); print('ONLY', os.environ['HR_ONLY'], 'OK'); sys.exit(0)
@@ -1043,6 +1092,8 @@ with sync_playwright() as p:
     toggles(p)
     daily(p)
     design(p)
+    resets_motion(p)
+    print('resets + motion: per-level reset with record, reset-all behind a tick, reduce motion')
     print('design stage: rules, duplicates, solver + grade, save/play/edit/delete, 50 cap, backup')
     print('daily: generated from the date, playable, streak + week row, day rollover, in backups')
     print('toggles: Auto-place switch synced with the setup key, On/Off words on every switch')

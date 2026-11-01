@@ -16,7 +16,12 @@
   var haptics = store.get('hr_haptics', true);
   var timerOn = store.get('hr_timer', true); // off = no-stress mode: the clock is hidden (time is still tracked quietly)
   var autoPlace = store.get('hr_auto', true);
-  var autoStart = store.get('hr_autostart', false); // on = opening a level skips the setup phase and starts playing at once
+  var autoStart = store.get('hr_autostart', false);
+  // Reduce motion: follows the phone's "remove animations" setting until the player flips the switch in Settings
+  var motionPref = store.get('hr_motion', null);
+  function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
+  function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
+  applyMotion(); // on = opening a level skips the setup phase and starts playing at once
   var BUILD = '__BUILD__'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
@@ -285,7 +290,7 @@
     $('menu').classList.add('hidden'); closeDlg('win'); $('game').classList.remove('hidden');
     document.body.dataset.phase = 'design';
     $('lvTitle').textContent = G.editing ? L('Edit stage ', 'แก้ไขด่าน ') + G.editing : L('Design stage', 'ออกแบบด่าน');
-    hideTip(); layout(); renderAll(); designCheck(); renderStages(); window.scrollTo(0, 0);
+    hideTip(); renderRecord(); $('bestStat').classList.add('hidden'); layout(); renderAll(); designCheck(); renderStages(); window.scrollTo(0, 0);
   }
   function renderDesignTray() {
     var counts = { R: 0, V: 0, H: 0, S: 0 };
@@ -449,7 +454,32 @@
     var pr = G && progress[G.lv.id];
     $('bestStat').classList.toggle('hidden', !pr);
     if (pr) $('best').textContent = pr.moves;
+    renderRecord();
   }
+  function recordText(id) {
+    var pr = progress[id], parts = [];
+    if (pr) parts.push(stars(pr.stars), 'Best ' + pr.moves);
+    if (seen[id]) parts.push(L('solution viewed', 'ดูเฉลยแล้ว'));
+    return parts.join(' · ');
+  }
+  // The reset link shows only when there is something to reset: stars/best, or the solution-viewed lock
+  function renderRecord() {
+    var id = G && G.lv && G.lv.id, can = !!id && id !== 'draft' && !G.lv.daily && G.phase !== 'design' && (progress[id] || seen[id]);
+    $('recLine').classList.toggle('hidden', !can);
+    if (can) $('recText').textContent = L('Your record: ', 'สถิติของคุณ: ') + recordText(id);
+  }
+  $('recReset').onclick = function () {
+    if (!G) return;
+    $('rcBody').innerHTML = L('Current record: <b>' + recordText(G.lv.id) + '</b><br>Stars, best score and the solution mark for this level are cleared, so you can earn 3 stars again.',
+      'สถิติปัจจุบัน: <b>' + recordText(G.lv.id) + '</b><br>ดาว สถิติที่ดีที่สุด และเครื่องหมายดูเฉลยของด่านนี้จะถูกลบ เพื่อให้คุณเล่นเอา 3 ดาวได้อีกครั้ง');
+    openDlg('rcAsk', '#rcNo');
+  };
+  $('rcNo').onclick = function () { closeDlg('rcAsk'); };
+  $('rcYes').onclick = function () {
+    closeDlg('rcAsk'); if (!G) return;
+    delete progress[G.lv.id]; delete seen[G.lv.id]; store.set('hr_progress', progress); store.set('hr_seen', seen);
+    renderBest(); toast(L('Record cleared — go for 3 stars', 'ลบสถิติแล้ว — ลุ้น 3 ดาวได้เลย'));
+  };
 
   function remaining(t) {
     var need = 0, have = 0;
@@ -873,7 +903,7 @@
     $('tipHead').innerHTML = '<span class="step">' + L(i.left + ' move' + (i.left > 1 ? 's' : '') + ' to go · hint ' + h.tier + '/2', 'เหลืออีก ' + i.left + ' ครั้ง · คำใบ้ ' + h.tier + '/2') + '</span>' + t.head;
     $('tipBody').textContent = t.body; $('tipWhy').textContent = t.why;
     $('tip').classList.remove('hidden');
-    try { $('tip').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
+    try { $('tip').scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' }); } catch (e) {}
   }
   function hideTip() { if (G) G.hint = null; $('tip').classList.add('hidden'); }
 
@@ -906,14 +936,14 @@
     if (!G || G.phase !== 'play') return;
     var steps = Sol.solve(Sol.fromPieces(G.initial));
     if (!steps) { say(L('No solution found for this layout', 'ไม่พบเฉลยสำหรับรูปแบบนี้')); return; }
-    if (G.lv.id !== 'draft') { seen[G.lv.id] = 1; store.set('hr_seen', seen); }
+    if (G.lv.id !== 'draft') { seen[G.lv.id] = 1; store.set('hr_seen', seen); renderRecord(); }
     // freeze the player's attempt, show the start position again and walk it from there
     G.sol = { steps: steps, i: 0, stash: { pieces: snap(), hist: G.hist, redo: G.redo, moves: G.moves }, pausedAt: Date.now() };
     clearTimer(); hideTip();
     G.pieces = G.initial.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; });
     G.phase = 'solution'; document.body.dataset.phase = 'solution';
     clearBoard(); renderAll(); renderSol();
-    try { $('solHead').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
+    try { $('solHead').scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' }); } catch (e) {}
   }
 
   function renderSol() {
@@ -1032,6 +1062,8 @@
     t.textContent = on ? L('On', 'เปิด') : L('Off', 'ปิด'); t.classList.toggle('on', on);
   }
   $('autoPlaceBtn').onclick = toggleAutoPlace;
+  function renderMotion() { setSwitch($('motionBtn'), reduced()); }
+  $('motionBtn').onclick = function () { motionPref = !reduced(); store.set('hr_motion', motionPref); applyMotion(); renderMotion(); };
   function renderSound() { setSwitch($('muteBtn'), !muted, muted ? 'volx' : 'vol'); }
   $('muteBtn').onclick = function () { muted = !muted; store.set('hr_muted', muted); renderSound(); beep(660, 0.08); };
   renderSound();
@@ -1052,6 +1084,7 @@
   $('timerBtn').onclick = function () { timerOn = !timerOn; store.set('hr_timer', timerOn); renderTimer(); };
   renderTimer();
   renderAuto();
+  renderMotion();
 
   // "How to play" folds away for players who know the game; the choice is remembered (open on first launch)
   var howOpen = store.get('hr_howto', true);
@@ -1201,6 +1234,25 @@
     var r = new FileReader(); r.onload = function () { restoreFrom(r.result); }; r.readAsText(f);
   };
   $('bkRestore').onclick = function () { restoreFrom($('bkIn').value); };
+
+  /* ---------- reset all progress: Settings -> bottom row -> dialog that needs a tick before it works ---------- */
+  $('resetAllBtn').onclick = function () {
+    showSettings(false);
+    var lvStars = 0, dailies = 0;
+    Object.keys(progress).forEach(function (k) { if (k.charAt(0) === 'd') dailies++; else if (/^\d+$/.test(k)) lvStars += progress[k].stars; });
+    $('raSum').textContent = L('You have ' + lvStars + ' level stars and ' + dailies + ' daily solves.', 'ตอนนี้คุณมีดาว ' + lvStars + ' ดวง และผ่านปริศนารายวัน ' + dailies + ' วัน');
+    $('raCheck').checked = false; $('raYes').disabled = true;
+    openDlg('raAsk', '#raNo');
+  };
+  $('raCheck').onchange = function () { $('raYes').disabled = !this.checked; };
+  $('raNo').onclick = function () { closeDlg('raAsk'); };
+  $('raBackup').onclick = function () { closeDlg('raAsk'); $('backupBtn').onclick(); };
+  $('raYes').onclick = function () {
+    if (!$('raCheck').checked) return;
+    progress = {}; seen = {}; store.set('hr_progress', progress); store.set('hr_seen', seen);
+    closeDlg('raAsk'); renderMenu(); renderDaily(); if (G) renderBest();
+    toast(L('All progress reset', 'รีเซ็ตความคืบหน้าทั้งหมดแล้ว'));
+  };
 
   /* ---------- settings panel: skin, sound, vibration, language ---------- */
   function showSettings(on) { if (on) openDlg('settings'); else closeDlg('settings'); }

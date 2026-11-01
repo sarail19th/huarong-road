@@ -394,6 +394,24 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
 .dsrow .icon-btn.armed{background:#c0303a;border-color:#c0303a;color:#fff;width:auto;padding:0 10px;font-size:12px;font-weight:700}
 .dsempty{color:var(--muted);font-size:13px;margin:0 2px}
 .tray button small{white-space:nowrap}
+
+/* ---------- restart beside the LED ---------- */
+.ledside{display:flex;align-items:center;gap:12px}
+
+/* ---------- per-level record + reset ---------- */
+.recline{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-4px 2px 10px;font-size:12.5px;color:var(--muted)}
+.linkbtn{white-space:nowrap;flex:none;background:none;padding:6px 2px;font-size:12.5px;font-weight:600;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.setrow.danger,.setrow.danger .lbl .ico,.setrow.danger>.ico{color:#ff6a6f}
+.setrow.danger{margin-top:14px;border-color:rgba(255,106,111,.35)}
+.rawarn{color:var(--amber)!important;font-weight:600}
+#raBackup{margin:6px auto 4px;display:block}
+.raok{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 0 0;font-size:13.5px;color:var(--text);-webkit-user-select:none;user-select:none}
+.raok input{width:20px;height:20px;accent-color:#c0303a}
+.btn.danger:disabled{background:#3a2a2c;border-color:#3a2a2c;color:#8a6f72}
+
+/* ---------- reduced motion: no pulsing, glowing or sliding; blocks jump straight to place ---------- */
+html[data-motion=reduce] *,html[data-motion=reduce] *::before,html[data-motion=reduce] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+html[data-motion=reduce] .piece[data-hint]{filter:brightness(1.2)}
 </style>
 </head>
 <body data-phase="setup">
@@ -417,6 +435,8 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
   <symbol id="i-save" viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/></symbol>
   <symbol id="i-grid" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></symbol>
   <symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
+  <symbol id="i-motion" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 8h9M3 12h13M3 16h9"/><path d="M18 6l3 3-3 3" opacity=".9"/></g></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.95 8.95 0 0 0 13 21a9 9 0 0 0 0-18z"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></symbol>
   <symbol id="i-help" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
@@ -472,7 +492,6 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
   <div class="hud">
     <button class="icon-btn" id="backBtn" aria-label="Back" title="Back"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg></button>
     <div class="title" id="lvTitle"></div>
-    <button class="icon-btn danger only-play" id="restartBtn" aria-label="Restart level" title="Restart level"><svg class="ico" aria-hidden="true"><use href="#i-replay"/></svg></button>
     <button class="icon-btn settings-btn" aria-label="Settings" title="Settings"><svg class="ico" aria-hidden="true"><use href="#i-gear"/></svg></button>
   </div>
   <div class="stats">
@@ -481,10 +500,13 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
     <div class="stat"><small>Par</small><b id="par">0</b></div>
     <div class="stat hidden" id="bestStat"><small>Best</small><b id="best">–</b></div>
   </div>
+  <div class="recline hidden" id="recLine"><span id="recText"></span><button class="linkbtn" id="recReset" data-th="รีเซ็ตสถิติด่านนี้">Reset record</button></div>
 
   <div class="device">
     <div class="topbar">
-      <div class="led" id="led" aria-label="Target layout"></div>
+      <div class="ledside"><div class="led" id="led" aria-label="Target layout"></div>
+      <button class="icon-btn danger only-play" id="restartBtn" aria-label="Restart level" title="Restart level"><svg class="ico" aria-hidden="true"><use href="#i-replay"/></svg></button>
+      </div>
       <div class="keys">
         <button class="key toggle only-setup" id="autoBtn" aria-pressed="true" data-th="วางอัตโนมัติ">Auto-place</button>
         <button class="key only-setup only-design" id="clearBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg><span data-th="ล้าง">Clear</span></button>
@@ -583,7 +605,9 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
     <button class="setrow" id="autoPlaceBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg><span class="lbl two"><span data-th="วางอัตโนมัติ">Auto-place</span><small class="sub" data-th="วางบล็อกตามรูปแบบของด่านให้เลย">Fill the board with the level's layout</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
     <button class="setrow" id="autoStartBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span class="lbl two"><span data-th="เริ่มเกมอัตโนมัติ">Auto-start</span><small class="sub" data-th="ข้ามขั้นตอนตั้งค่า วางบล็อกและเริ่มเล่นทันที">Skip setup: place the blocks and start at once</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
     <button class="setrow" id="timerBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-timer"/></svg><span class="lbl two"><span data-th="จับเวลา">Timer</span><small class="sub" data-th="ปิดเพื่อเล่นแบบไม่กดดัน">Turn off for no-stress play</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+    <button class="setrow" id="motionBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-motion"/></svg><span class="lbl two"><span data-th="ลดการเคลื่อนไหว">Reduce motion</span><small class="sub" data-th="ไม่มีแสงกะพริบหรือภาพเคลื่อนไหว บล็อกย้ายทันที">No pulsing or sliding effects; blocks move instantly</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
     <button class="setrow" id="backupBtn"><svg class="ico" aria-hidden="true"><use href="#i-save"/></svg><span class="lbl two"><span data-th="สำรองความคืบหน้า">Back up progress</span><small class="sub" data-th="บันทึกหรือกู้คืนดาวของคุณ">Save or restore your stars</small></span><svg class="ico chev side" aria-hidden="true"><use href="#i-chev"/></svg></button>
+    <button class="setrow danger" id="resetAllBtn"><svg class="ico" aria-hidden="true"><use href="#i-reset"/></svg><span class="lbl two"><span data-th="รีเซ็ตเกมทั้งหมด">Reset all progress</span><small class="sub" data-th="ลบดาว สถิติ และวันต่อเนื่องทั้งหมด">Clears every star, best score and streak</small></span><svg class="ico chev side" aria-hidden="true"><use href="#i-chev"/></svg></button>
     <div class="row"><button class="btn go" id="setClose" data-th="เสร็จสิ้น">Done</button></div>
   </div>
 </div>
@@ -601,6 +625,31 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
     <input type="file" id="bkFile" accept=".txt,.json,text/plain,application/json" hidden>
     <p class="bkmsg" id="bkMsg" role="status"></p>
     <div class="row"><button class="btn" id="bkClose" data-th="เสร็จสิ้น">Done</button></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="rcAsk">
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="rcTitle" tabindex="-1">
+    <h2 id="rcTitle" data-th="รีเซ็ตสถิติด่านนี้?">Reset this level’s record?</h2>
+    <p id="rcBody"></p>
+    <div class="row">
+      <button class="btn" id="rcNo" data-th="ไม่เป็นไร">Keep it</button>
+      <button class="btn danger" id="rcYes" data-th="รีเซ็ต">Reset</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="raAsk">
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="raTitle" tabindex="-1">
+    <h2 id="raTitle" data-th="รีเซ็ตเกมทั้งหมด?">Reset all progress?</h2>
+    <p data-th="จะลบดาวทั้งหมด สถิติที่ดีที่สุด เครื่องหมายดูเฉลย และวันต่อเนื่องของปริศนารายวัน<br>ด่านที่คุณออกแบบและการตั้งค่าจะยังอยู่">This clears every star, best score, solution-viewed mark and your daily streak.<br>Your designed stages and settings stay.</p>
+    <p class="rawarn" id="raSum"></p>
+    <button class="btn sm" id="raBackup" data-th="สำรองข้อมูลก่อน">Back up first</button>
+    <label class="raok"><input type="checkbox" id="raCheck"> <span data-th="ฉันเข้าใจว่าย้อนกลับไม่ได้">I understand this can’t be undone</span></label>
+    <div class="row">
+      <button class="btn" id="raNo" data-th="ยกเลิก">Cancel</button>
+      <button class="btn danger" id="raYes" disabled data-th="รีเซ็ตทั้งหมด">Reset all</button>
+    </div>
   </div>
 </div>
 
@@ -884,8 +933,13 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   var haptics = store.get('hr_haptics', true);
   var timerOn = store.get('hr_timer', true); // off = no-stress mode: the clock is hidden (time is still tracked quietly)
   var autoPlace = store.get('hr_auto', true);
-  var autoStart = store.get('hr_autostart', false); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = 'b82e724'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var autoStart = store.get('hr_autostart', false);
+  // Reduce motion: follows the phone's "remove animations" setting until the player flips the switch in Settings
+  var motionPref = store.get('hr_motion', null);
+  function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
+  function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
+  applyMotion(); // on = opening a level skips the setup phase and starts playing at once
+  var BUILD = 'fb69c8b'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
@@ -1153,7 +1207,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     $('menu').classList.add('hidden'); closeDlg('win'); $('game').classList.remove('hidden');
     document.body.dataset.phase = 'design';
     $('lvTitle').textContent = G.editing ? L('Edit stage ', 'แก้ไขด่าน ') + G.editing : L('Design stage', 'ออกแบบด่าน');
-    hideTip(); layout(); renderAll(); designCheck(); renderStages(); window.scrollTo(0, 0);
+    hideTip(); renderRecord(); $('bestStat').classList.add('hidden'); layout(); renderAll(); designCheck(); renderStages(); window.scrollTo(0, 0);
   }
   function renderDesignTray() {
     var counts = { R: 0, V: 0, H: 0, S: 0 };
@@ -1317,7 +1371,32 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     var pr = G && progress[G.lv.id];
     $('bestStat').classList.toggle('hidden', !pr);
     if (pr) $('best').textContent = pr.moves;
+    renderRecord();
   }
+  function recordText(id) {
+    var pr = progress[id], parts = [];
+    if (pr) parts.push(stars(pr.stars), 'Best ' + pr.moves);
+    if (seen[id]) parts.push(L('solution viewed', 'ดูเฉลยแล้ว'));
+    return parts.join(' · ');
+  }
+  // The reset link shows only when there is something to reset: stars/best, or the solution-viewed lock
+  function renderRecord() {
+    var id = G && G.lv && G.lv.id, can = !!id && id !== 'draft' && !G.lv.daily && G.phase !== 'design' && (progress[id] || seen[id]);
+    $('recLine').classList.toggle('hidden', !can);
+    if (can) $('recText').textContent = L('Your record: ', 'สถิติของคุณ: ') + recordText(id);
+  }
+  $('recReset').onclick = function () {
+    if (!G) return;
+    $('rcBody').innerHTML = L('Current record: <b>' + recordText(G.lv.id) + '</b><br>Stars, best score and the solution mark for this level are cleared, so you can earn 3 stars again.',
+      'สถิติปัจจุบัน: <b>' + recordText(G.lv.id) + '</b><br>ดาว สถิติที่ดีที่สุด และเครื่องหมายดูเฉลยของด่านนี้จะถูกลบ เพื่อให้คุณเล่นเอา 3 ดาวได้อีกครั้ง');
+    openDlg('rcAsk', '#rcNo');
+  };
+  $('rcNo').onclick = function () { closeDlg('rcAsk'); };
+  $('rcYes').onclick = function () {
+    closeDlg('rcAsk'); if (!G) return;
+    delete progress[G.lv.id]; delete seen[G.lv.id]; store.set('hr_progress', progress); store.set('hr_seen', seen);
+    renderBest(); toast(L('Record cleared — go for 3 stars', 'ลบสถิติแล้ว — ลุ้น 3 ดาวได้เลย'));
+  };
 
   function remaining(t) {
     var need = 0, have = 0;
@@ -1741,7 +1820,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     $('tipHead').innerHTML = '<span class="step">' + L(i.left + ' move' + (i.left > 1 ? 's' : '') + ' to go · hint ' + h.tier + '/2', 'เหลืออีก ' + i.left + ' ครั้ง · คำใบ้ ' + h.tier + '/2') + '</span>' + t.head;
     $('tipBody').textContent = t.body; $('tipWhy').textContent = t.why;
     $('tip').classList.remove('hidden');
-    try { $('tip').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
+    try { $('tip').scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' }); } catch (e) {}
   }
   function hideTip() { if (G) G.hint = null; $('tip').classList.add('hidden'); }
 
@@ -1774,14 +1853,14 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     if (!G || G.phase !== 'play') return;
     var steps = Sol.solve(Sol.fromPieces(G.initial));
     if (!steps) { say(L('No solution found for this layout', 'ไม่พบเฉลยสำหรับรูปแบบนี้')); return; }
-    if (G.lv.id !== 'draft') { seen[G.lv.id] = 1; store.set('hr_seen', seen); }
+    if (G.lv.id !== 'draft') { seen[G.lv.id] = 1; store.set('hr_seen', seen); renderRecord(); }
     // freeze the player's attempt, show the start position again and walk it from there
     G.sol = { steps: steps, i: 0, stash: { pieces: snap(), hist: G.hist, redo: G.redo, moves: G.moves }, pausedAt: Date.now() };
     clearTimer(); hideTip();
     G.pieces = G.initial.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; });
     G.phase = 'solution'; document.body.dataset.phase = 'solution';
     clearBoard(); renderAll(); renderSol();
-    try { $('solHead').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
+    try { $('solHead').scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' }); } catch (e) {}
   }
 
   function renderSol() {
@@ -1900,6 +1979,8 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     t.textContent = on ? L('On', 'เปิด') : L('Off', 'ปิด'); t.classList.toggle('on', on);
   }
   $('autoPlaceBtn').onclick = toggleAutoPlace;
+  function renderMotion() { setSwitch($('motionBtn'), reduced()); }
+  $('motionBtn').onclick = function () { motionPref = !reduced(); store.set('hr_motion', motionPref); applyMotion(); renderMotion(); };
   function renderSound() { setSwitch($('muteBtn'), !muted, muted ? 'volx' : 'vol'); }
   $('muteBtn').onclick = function () { muted = !muted; store.set('hr_muted', muted); renderSound(); beep(660, 0.08); };
   renderSound();
@@ -1920,6 +2001,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   $('timerBtn').onclick = function () { timerOn = !timerOn; store.set('hr_timer', timerOn); renderTimer(); };
   renderTimer();
   renderAuto();
+  renderMotion();
 
   // "How to play" folds away for players who know the game; the choice is remembered (open on first launch)
   var howOpen = store.get('hr_howto', true);
@@ -2069,6 +2151,25 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     var r = new FileReader(); r.onload = function () { restoreFrom(r.result); }; r.readAsText(f);
   };
   $('bkRestore').onclick = function () { restoreFrom($('bkIn').value); };
+
+  /* ---------- reset all progress: Settings -> bottom row -> dialog that needs a tick before it works ---------- */
+  $('resetAllBtn').onclick = function () {
+    showSettings(false);
+    var lvStars = 0, dailies = 0;
+    Object.keys(progress).forEach(function (k) { if (k.charAt(0) === 'd') dailies++; else if (/^\d+$/.test(k)) lvStars += progress[k].stars; });
+    $('raSum').textContent = L('You have ' + lvStars + ' level stars and ' + dailies + ' daily solves.', 'ตอนนี้คุณมีดาว ' + lvStars + ' ดวง และผ่านปริศนารายวัน ' + dailies + ' วัน');
+    $('raCheck').checked = false; $('raYes').disabled = true;
+    openDlg('raAsk', '#raNo');
+  };
+  $('raCheck').onchange = function () { $('raYes').disabled = !this.checked; };
+  $('raNo').onclick = function () { closeDlg('raAsk'); };
+  $('raBackup').onclick = function () { closeDlg('raAsk'); $('backupBtn').onclick(); };
+  $('raYes').onclick = function () {
+    if (!$('raCheck').checked) return;
+    progress = {}; seen = {}; store.set('hr_progress', progress); store.set('hr_seen', seen);
+    closeDlg('raAsk'); renderMenu(); renderDaily(); if (G) renderBest();
+    toast(L('All progress reset', 'รีเซ็ตความคืบหน้าทั้งหมดแล้ว'));
+  };
 
   /* ---------- settings panel: skin, sound, vibration, language ---------- */
   function showSettings(on) { if (on) openDlg('settings'); else closeDlg('settings'); }

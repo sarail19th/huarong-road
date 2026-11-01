@@ -31,6 +31,8 @@
   <symbol id="i-save" viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/></symbol>
   <symbol id="i-grid" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></symbol>
   <symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
+  <symbol id="i-motion" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 8h9M3 12h13M3 16h9"/><path d="M18 6l3 3-3 3" opacity=".9"/></g></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.95 8.95 0 0 0 13 21a9 9 0 0 0 0-18z"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></symbol>
   <symbol id="i-help" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
@@ -86,7 +88,6 @@
   <div class="hud">
     <button class="icon-btn" id="backBtn" aria-label="Back" title="Back"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg></button>
     <div class="title" id="lvTitle"></div>
-    <button class="icon-btn danger only-play" id="restartBtn" aria-label="Restart level" title="Restart level"><svg class="ico" aria-hidden="true"><use href="#i-replay"/></svg></button>
     <button class="icon-btn settings-btn" aria-label="Settings" title="Settings"><svg class="ico" aria-hidden="true"><use href="#i-gear"/></svg></button>
   </div>
   <div class="stats">
@@ -95,10 +96,13 @@
     <div class="stat"><small>Par</small><b id="par">0</b></div>
     <div class="stat hidden" id="bestStat"><small>Best</small><b id="best">–</b></div>
   </div>
+  <div class="recline hidden" id="recLine"><span id="recText"></span><button class="linkbtn" id="recReset" data-th="รีเซ็ตสถิติด่านนี้">Reset record</button></div>
 
   <div class="device">
     <div class="topbar">
-      <div class="led" id="led" aria-label="Target layout"></div>
+      <div class="ledside"><div class="led" id="led" aria-label="Target layout"></div>
+      <button class="icon-btn danger only-play" id="restartBtn" aria-label="Restart level" title="Restart level"><svg class="ico" aria-hidden="true"><use href="#i-replay"/></svg></button>
+      </div>
       <div class="keys">
         <button class="key toggle only-setup" id="autoBtn" aria-pressed="true" data-th="วางอัตโนมัติ">Auto-place</button>
         <button class="key only-setup only-design" id="clearBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg><span data-th="ล้าง">Clear</span></button>
@@ -197,7 +201,9 @@
     <button class="setrow" id="autoPlaceBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg><span class="lbl two"><span data-th="วางอัตโนมัติ">Auto-place</span><small class="sub" data-th="วางบล็อกตามรูปแบบของด่านให้เลย">Fill the board with the level's layout</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
     <button class="setrow" id="autoStartBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span class="lbl two"><span data-th="เริ่มเกมอัตโนมัติ">Auto-start</span><small class="sub" data-th="ข้ามขั้นตอนตั้งค่า วางบล็อกและเริ่มเล่นทันที">Skip setup: place the blocks and start at once</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
     <button class="setrow" id="timerBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-timer"/></svg><span class="lbl two"><span data-th="จับเวลา">Timer</span><small class="sub" data-th="ปิดเพื่อเล่นแบบไม่กดดัน">Turn off for no-stress play</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+    <button class="setrow" id="motionBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-motion"/></svg><span class="lbl two"><span data-th="ลดการเคลื่อนไหว">Reduce motion</span><small class="sub" data-th="ไม่มีแสงกะพริบหรือภาพเคลื่อนไหว บล็อกย้ายทันที">No pulsing or sliding effects; blocks move instantly</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
     <button class="setrow" id="backupBtn"><svg class="ico" aria-hidden="true"><use href="#i-save"/></svg><span class="lbl two"><span data-th="สำรองความคืบหน้า">Back up progress</span><small class="sub" data-th="บันทึกหรือกู้คืนดาวของคุณ">Save or restore your stars</small></span><svg class="ico chev side" aria-hidden="true"><use href="#i-chev"/></svg></button>
+    <button class="setrow danger" id="resetAllBtn"><svg class="ico" aria-hidden="true"><use href="#i-reset"/></svg><span class="lbl two"><span data-th="รีเซ็ตเกมทั้งหมด">Reset all progress</span><small class="sub" data-th="ลบดาว สถิติ และวันต่อเนื่องทั้งหมด">Clears every star, best score and streak</small></span><svg class="ico chev side" aria-hidden="true"><use href="#i-chev"/></svg></button>
     <div class="row"><button class="btn go" id="setClose" data-th="เสร็จสิ้น">Done</button></div>
   </div>
 </div>
@@ -215,6 +221,31 @@
     <input type="file" id="bkFile" accept=".txt,.json,text/plain,application/json" hidden>
     <p class="bkmsg" id="bkMsg" role="status"></p>
     <div class="row"><button class="btn" id="bkClose" data-th="เสร็จสิ้น">Done</button></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="rcAsk">
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="rcTitle" tabindex="-1">
+    <h2 id="rcTitle" data-th="รีเซ็ตสถิติด่านนี้?">Reset this level’s record?</h2>
+    <p id="rcBody"></p>
+    <div class="row">
+      <button class="btn" id="rcNo" data-th="ไม่เป็นไร">Keep it</button>
+      <button class="btn danger" id="rcYes" data-th="รีเซ็ต">Reset</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="raAsk">
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="raTitle" tabindex="-1">
+    <h2 id="raTitle" data-th="รีเซ็ตเกมทั้งหมด?">Reset all progress?</h2>
+    <p data-th="จะลบดาวทั้งหมด สถิติที่ดีที่สุด เครื่องหมายดูเฉลย และวันต่อเนื่องของปริศนารายวัน<br>ด่านที่คุณออกแบบและการตั้งค่าจะยังอยู่">This clears every star, best score, solution-viewed mark and your daily streak.<br>Your designed stages and settings stay.</p>
+    <p class="rawarn" id="raSum"></p>
+    <button class="btn sm" id="raBackup" data-th="สำรองข้อมูลก่อน">Back up first</button>
+    <label class="raok"><input type="checkbox" id="raCheck"> <span data-th="ฉันเข้าใจว่าย้อนกลับไม่ได้">I understand this can’t be undone</span></label>
+    <div class="row">
+      <button class="btn" id="raNo" data-th="ยกเลิก">Cancel</button>
+      <button class="btn danger" id="raYes" disabled data-th="รีเซ็ตทั้งหมด">Reset all</button>
+    </div>
   </div>
 </div>
 

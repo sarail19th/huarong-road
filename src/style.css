@@ -384,3 +384,21 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
 .dsrow .icon-btn.armed{background:#c0303a;border-color:#c0303a;color:#fff;width:auto;padding:0 10px;font-size:12px;font-weight:700}
 .dsempty{color:var(--muted);font-size:13px;margin:0 2px}
 .tray button small{white-space:nowrap}
+
+/* ---------- restart beside the LED ---------- */
+.ledside{display:flex;align-items:center;gap:12px}
+
+/* ---------- per-level record + reset ---------- */
+.recline{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-4px 2px 10px;font-size:12.5px;color:var(--muted)}
+.linkbtn{white-space:nowrap;flex:none;background:none;padding:6px 2px;font-size:12.5px;font-weight:600;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.setrow.danger,.setrow.danger .lbl .ico,.setrow.danger>.ico{color:#ff6a6f}
+.setrow.danger{margin-top:14px;border-color:rgba(255,106,111,.35)}
+.rawarn{color:var(--amber)!important;font-weight:600}
+#raBackup{margin:6px auto 4px;display:block}
+.raok{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 0 0;font-size:13.5px;color:var(--text);-webkit-user-select:none;user-select:none}
+.raok input{width:20px;height:20px;accent-color:#c0303a}
+.btn.danger:disabled{background:#3a2a2c;border-color:#3a2a2c;color:#8a6f72}
+
+/* ---------- reduced motion: no pulsing, glowing or sliding; blocks jump straight to place ---------- */
+html[data-motion=reduce] *,html[data-motion=reduce] *::before,html[data-motion=reduce] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+html[data-motion=reduce] .piece[data-hint]{filter:brightness(1.2)}
