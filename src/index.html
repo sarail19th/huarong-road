@@ -188,22 +188,42 @@
 <div class="overlay hidden" id="settings">
   <div class="card settings" role="dialog" aria-modal="true" aria-labelledby="setTitle" tabindex="-1">
     <h2 id="setTitle" data-th="ตั้งค่า">Settings</h2>
-    <div class="setrow">
+    <section class="setgrp">
+      <h3 data-th="หน้าตาและภาษา">Look &amp; language</h3>
+      <div class="setlist">
+        <div class="setrow">
       <span class="lbl"><svg class="ico" aria-hidden="true"><use href="#i-globe"/></svg><span data-th="ภาษา">Language</span></span>
       <button class="icon-btn lang-btn" aria-pressed="false" aria-label="Language: English (tap for Thai)" title="English / Thai"><span class="en">EN</span><span class="th">TH</span></button>
     </div>
-    <div class="setrow col">
+        <div class="setrow col">
       <span class="lbl"><svg class="ico" aria-hidden="true"><use href="#i-palette"/></svg><span data-th="ธีม">Skin</span></span>
       <div class="skopts" id="skopts"></div>
     </div>
-    <button class="setrow" id="muteBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-vol"/></svg><span class="lbl" data-th="เสียง">Sound</span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
-    <button class="setrow" id="hapBtn" role="switch" aria-checked="true" aria-pressed="true" aria-label="Vibration"><svg class="ico" aria-hidden="true"><use href="#i-vib"/></svg><span class="lbl" data-th="การสั่น">Vibration</span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
-    <button class="setrow" id="autoPlaceBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg><span class="lbl two"><span data-th="วางอัตโนมัติ">Auto-place</span><small class="sub" data-th="วางบล็อกตามรูปแบบของด่านให้เลย">Fill the board with the level's layout</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
-    <button class="setrow" id="autoStartBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span class="lbl two"><span data-th="เริ่มเกมอัตโนมัติ">Auto-start</span><small class="sub" data-th="ข้ามขั้นตอนตั้งค่า วางบล็อกและเริ่มเล่นทันที">Skip setup: place the blocks and start at once</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
-    <button class="setrow" id="timerBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-timer"/></svg><span class="lbl two"><span data-th="จับเวลา">Timer</span><small class="sub" data-th="ปิดเพื่อเล่นแบบไม่กดดัน">Turn off for no-stress play</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
-    <button class="setrow" id="motionBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-motion"/></svg><span class="lbl two"><span data-th="ลดการเคลื่อนไหว">Reduce motion</span><small class="sub" data-th="ไม่มีแสงกะพริบหรือภาพเคลื่อนไหว บล็อกย้ายทันที">No pulsing or sliding effects; blocks move instantly</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
-    <button class="setrow" id="backupBtn"><svg class="ico" aria-hidden="true"><use href="#i-save"/></svg><span class="lbl two"><span data-th="สำรองความคืบหน้า">Back up progress</span><small class="sub" data-th="บันทึกหรือกู้คืนดาวของคุณ">Save or restore your stars</small></span><svg class="ico chev side" aria-hidden="true"><use href="#i-chev"/></svg></button>
-    <button class="setrow danger" id="resetAllBtn"><svg class="ico" aria-hidden="true"><use href="#i-reset"/></svg><span class="lbl two"><span data-th="รีเซ็ตเกมทั้งหมด">Reset all progress</span><small class="sub" data-th="ลบดาว สถิติ และวันต่อเนื่องทั้งหมด">Clears every star, best score and streak</small></span><svg class="ico chev side" aria-hidden="true"><use href="#i-chev"/></svg></button>
+      </div>
+    </section>
+    <section class="setgrp">
+      <h3 data-th="เสียงและการสัมผัส">Sound &amp; feel</h3>
+      <div class="setlist">
+        <button class="setrow" id="muteBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-vol"/></svg><span class="lbl" data-th="เสียง">Sound</span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+        <button class="setrow" id="hapBtn" role="switch" aria-checked="true" aria-pressed="true" aria-label="Vibration"><svg class="ico" aria-hidden="true"><use href="#i-vib"/></svg><span class="lbl" data-th="การสั่น">Vibration</span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+        <button class="setrow" id="motionBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-motion"/></svg><span class="lbl two"><span data-th="ลดการเคลื่อนไหว">Reduce motion</span><small class="sub" data-th="ไม่กะพริบ ไม่เลื่อน">No pulsing or sliding effects</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+      </div>
+    </section>
+    <section class="setgrp">
+      <h3 data-th="การเล่น">Gameplay</h3>
+      <div class="setlist">
+        <button class="setrow" id="autoPlaceBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg><span class="lbl" data-th="วางอัตโนมัติ">Auto-place</span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+        <button class="setrow" id="autoStartBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span class="lbl two"><span data-th="เริ่มเกมอัตโนมัติ">Auto-start</span><small class="sub" data-th="ข้ามการตั้งค่า เริ่มเล่นทันที">Skip setup, start at once</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+        <button class="setrow" id="timerBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-timer"/></svg><span class="lbl two"><span data-th="จับเวลา">Timer</span><small class="sub" data-th="ปิดเพื่อเล่นแบบไม่กดดัน">Turn off for no-stress play</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+      </div>
+    </section>
+    <section class="setgrp data">
+      <h3 data-th="ข้อมูลของคุณ">Your data</h3>
+      <div class="setlist">
+        <button class="setrow" id="backupBtn"><svg class="ico" aria-hidden="true"><use href="#i-save"/></svg><span class="lbl"><span data-th="สำรองความคืบหน้า">Back up progress</span></span><svg class="ico chev side" aria-hidden="true"><use href="#i-chev"/></svg></button>
+        <button class="setrow danger" id="resetAllBtn"><svg class="ico" aria-hidden="true"><use href="#i-reset"/></svg><span class="lbl two"><span data-th="รีเซ็ตเกมทั้งหมด">Reset all progress</span><small class="sub" data-th="ลบดาว สถิติ และวันต่อเนื่องทั้งหมด">Clears every star, best score and streak</small></span><svg class="ico chev side" aria-hidden="true"><use href="#i-chev"/></svg></button>
+      </div>
+    </section>
     <div class="row"><button class="btn go" id="setClose" data-th="เสร็จสิ้น">Done</button></div>
   </div>
 </div>

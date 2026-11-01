@@ -877,6 +877,10 @@ def toggles(p):
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.goto(URL)
     settings(page)
+    heads = page.locator('#settings .setgrp h3').all_inner_texts()
+    assert [h.lower() for h in heads] == ['look & language', 'sound & feel', 'gameplay', 'your data'], heads
+    ids = lambda i: page.locator('#settings .setgrp').nth(i).locator('.setrow').evaluate_all("rs => rs.map(r => r.id)")
+    assert ids(1) == ['muteBtn', 'hapBtn', 'motionBtn'] and ids(2) == ['autoPlaceBtn', 'autoStartBtn', 'timerBtn'] and ids(3) == ['backupBtn', 'resetAllBtn']
     sw = page.locator('#settings .setrow[role=switch]'); n = sw.count(); assert n >= 5
     for i in range(n):
         b = sw.nth(i); want = 'On' if b.get_attribute('aria-pressed') == 'true' else 'Off'

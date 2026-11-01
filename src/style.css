@@ -402,3 +402,16 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
 /* ---------- reduced motion: no pulsing, glowing or sliding; blocks jump straight to place ---------- */
 html[data-motion=reduce] *,html[data-motion=reduce] *::before,html[data-motion=reduce] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 html[data-motion=reduce] .piece[data-hint]{filter:brightness(1.2)}
+
+/* ---------- settings: four groups, each one rounded list with hairline dividers ---------- */
+.card.settings{padding:18px 16px 16px}
+.card.settings h2{margin-bottom:6px}
+.setgrp{margin-top:12px}
+.setgrp h3{margin:0 4px 6px;font-size:11.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.setlist{background:var(--panel2);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.setlist .setrow{margin:0;border:0;border-radius:0;background:none;padding:9px 12px;min-height:48px}
+.setlist .setrow+.setrow{border-top:1px solid var(--line)}
+.setlist .setrow.col{padding-bottom:12px}
+.setlist .setrow.danger{margin-top:0;border-color:var(--line)}
+.setlist .skprev{height:30px}
+.setlist .skopt{padding:4px 3px 5px}
