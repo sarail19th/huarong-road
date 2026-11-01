@@ -22,7 +22,7 @@ Klotski-style sliding-block puzzle (4x5 board, slide the big red 2x2 to the bott
   - **About panel** (`?`): 4 pages with Back/Next and dots; story behind the name, Thai-aware; numbers quoted there were checked against the solver.
   - **Menu:** collapsible "How to play" panel (open on first launch, `hr_howto`); paged level list (20 per page via chips + prev/next, `hr_page` remembers the page, opening a level moves the menu to its page); win + stars + progress in localStorage (`hr_progress`; daily cache `hr_daily_lv`).
   - **In-app updater:** the `Update` pill next to the `Version <hash>` label at the bottom of the menu probes the server, clears caches + the old service worker and reloads; a "new version ready · Update" banner shows when a new worker takes over. Progress/localStorage is never touched.
-- `src/style.css`, `src/index.html` - templates with `/*INLINE_...*/` placeholders.
+- `src/style.css`, `src/index.html` - templates with `/*INLINE_...*/` placeholders. `src/fonts/Anuphan-thai.woff2` is the Thai UI font (loopless; Thai glyphs only, weights 400-700): `build.js` base64-inlines it at `/*FONT_ANUPHAN*/` in `style.css`, and `html[lang=th]` switches to it (English keeps the system font, Latin/digits fall through the font stack).
 - `gen/gen.js` - level generator (seeded, deterministic). `gen/icons.py` - PWA icons: any 192/512, maskable, monochrome (themed Android icon), apple-touch-icon 180 (needs Pillow). Design: 4x4 board, red 2x2 in the middle ringed by small corners, wide top/bottom and tall sides, green exit under the bottom wide block; blocks on whole cells with one gap size (true 1x1/2x1/1x2/2x2 proportions); no emblem on the red block (the in-game piece keeps its triangle). `gen/shots.py` - store screenshots for the manifest (wide 1280x720 + two narrow 780x1688; needs Playwright, fixed date so they are reproducible; re-run when the menu or board look changes).
 - `build.js` - inlines everything into `dist/index.html`, writes the manifest (id, description, lang, categories, icons incl. maskable + monochrome, screenshots; the service worker caches every icon) (stamping `__BUILD__` with a content hash of the page + `gen/icons.py` + `build.js` that also names the service worker cache, so icon-only changes still ship; the worker fetches its files with `cache:'reload'`), writes manifest + service worker, and `dist/artifact.html` (title + style + body only, for the claude.ai Artifact tool).
 - `test/pwa_test.js` - checks the manifest, icon/screenshot files and sizes, the service-worker cache list and the head tags (description, apple-touch-icon, zoom allowed). `test/test.js` - verifies every level (solvable, par == true optimum, replay is legal). `test/ui_test.py` - Playwright mobile-viewport end-to-end test (needs `pip install playwright` + Chromium).
@@ -48,7 +48,7 @@ Serve `dist/` over https (or localhost) for the service worker to register; open
 - Piece animations must not scale (pieces are positioned with `transform: translate`, scaling shifts them).
 
 ## Credits
-See `NOTICE.md` (icons adapted from Material Design icons, Apache-2.0; licence text in `third_party/`).
+See `NOTICE.md` (icons adapted from Material Design icons, Apache-2.0; Thai font Anuphan, SIL OFL 1.1; licence texts in `third_party/`).
 
 ## Ideas not built yet
 Share codes for Design stage layouts (optional), Capacitor/TWA wrapper for a real APK.

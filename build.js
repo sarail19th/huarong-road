@@ -2,9 +2,12 @@
 const fs = require('fs');
 const path = require('path');
 const read = (f) => fs.readFileSync(path.join(__dirname, f), 'utf8');
+// style.css with the Thai font (src/fonts/Anuphan-thai.woff2) inlined as base64
+const styleCss = read('src/style.css')
+  .replace('/*FONT_ANUPHAN*/', () => fs.readFileSync(path.join(__dirname, 'src/fonts/Anuphan-thai.woff2')).toString('base64'));
 // function replacers so "$&"-style sequences in the source are never interpreted
 const draft = read('src/index.html')
-  .replace('/*INLINE_CSS*/', () => read('src/style.css'))
+  .replace('/*INLINE_CSS*/', () => styleCss)
   .replace('/*INLINE_SOLVER*/', () => read('src/solver.js'))
   .replace('/*INLINE_LEVELS*/', () => read('src/levels.js'))
   .replace('/*INLINE_DAILY*/', () => read('src/daily.js'))
@@ -48,7 +51,7 @@ self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWi
 console.log('built dist/index.html', (html.length / 1024).toFixed(1) + ' KB');
 
 // Artifact variant: the host wraps the page in its own skeleton, so emit title + style + body content only.
-const css = read('src/style.css');
+const css = styleCss;
 const body = html.split('<body data-phase="setup">')[1].split('</body>')[0].replace(/<style>[\s\S]*?<\/style>/, '');
 fs.writeFileSync(path.join(__dirname, 'dist/artifact.html'),
   '<title>Huarong Road</title>\n<style>' + css + '</style>\n' + body);

@@ -53,7 +53,7 @@ It is a hobby project, written with [Claude Code](https://claude.ai/code).
 - **Explained hints**, plus a **progress marker** (closer / no progress / further) after each move once you have used a hint.
 - **Solution viewer**: step or auto-play the optimal line.
 - Undo / Redo, Restart, best score per level, optional timer (turn it off for no-stress play).
-- **8 skins**, English / Thai (ไทย), sound, vibration and reduce-motion switches.
+- **8 skins**, English / Thai (ไทย, set in the modern loopless Anuphan font), sound, vibration and reduce-motion switches.
 - **Back up and restore** your progress with a copyable code or a text file.
 - Fully **offline** after the first load, installable as an app. No accounts, no network calls.
 
@@ -110,4 +110,5 @@ More detail on conventions and rules for changing things is in [`CLAUDE.md`](CLA
 
 - Code: MIT, see [`LICENSE`](LICENSE).
 - Button icons are adapted from Google's [Material Design icons](https://github.com/google/material-design-icons) (Apache-2.0), see [`NOTICE.md`](NOTICE.md). The app icon, gear, globe and timer icons are original to this project.
+- Thai text is set in [Anuphan](https://github.com/cadsondemak/Anuphan) (SIL Open Font License 1.1, full text in `third_party/OFL-Anuphan.txt`), embedded as a Thai-only subset so the game stays a single offline file.
 - Huarong Road (華容道) is named after the Huarong Pass episode in *Romance of the Three Kingdoms*, where Cao Cao slips away past his pursuers. The red block is Cao Cao. The in-app **About** (`?`) panel tells the story.

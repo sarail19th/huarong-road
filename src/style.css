@@ -77,9 +77,13 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{min-height:100%;background:var(--bg)}
+/* Thai text uses Anuphan (loopless, modern; Thai glyphs only, subset of the Google Fonts file, SIL OFL, see NOTICE.md).
+   The base64 is filled in by build.js. English, digits and the game terms keep the system font through the fallback list. */
+@font-face{font-family:"Anuphan";font-style:normal;font-weight:400 700;font-display:swap;src:url(data:font/woff2;base64,/*FONT_ANUPHAN*/) format("woff2")}
 html,body{margin:0;color:var(--text);
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none;
   -webkit-user-select:none;user-select:none}
+html[lang=th],html[lang=th] body{font-family:"Anuphan",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 body{touch-action:manipulation;min-height:100vh;background:linear-gradient(135deg,rgba(var(--bg-a),.18) 0 50%,rgba(var(--bg-b),.16) 50% 100%),var(--bg);background-attachment:fixed}
 button{font:inherit;color:inherit;border:0;cursor:pointer}
 .hidden{display:none!important}
