@@ -330,6 +330,7 @@ body.notimer #timeStat{display:none}
   <symbol id="i-globe" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></g></symbol>
   <symbol id="i-timer" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 1.5M9.5 2.5h5M12 2.5v3"/></g></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></symbol>
   <symbol id="i-help" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
@@ -478,6 +479,7 @@ body.notimer #timeStat{display:none}
     </div>
     <button class="setrow" id="muteBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-vol"/></svg><span class="lbl" data-th="เสียง">Sound</span><i class="pill"></i></button>
     <button class="setrow" id="hapBtn" role="switch" aria-checked="true" aria-pressed="true" aria-label="Vibration"><svg class="ico" aria-hidden="true"><use href="#i-vib"/></svg><span class="lbl" data-th="การสั่น">Vibration</span><i class="pill"></i></button>
+    <button class="setrow" id="autoStartBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span class="lbl two"><span data-th="เริ่มเกมอัตโนมัติ">Auto-start</span><small class="sub" data-th="ข้ามขั้นตอนตั้งค่า วางบล็อกและเริ่มเล่นทันที">Skip setup: place the blocks and start at once</small></span><i class="pill"></i></button>
     <button class="setrow" id="timerBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-timer"/></svg><span class="lbl two"><span data-th="จับเวลา">Timer</span><small class="sub" data-th="ปิดเพื่อเล่นแบบไม่กดดัน">Turn off for no-stress play</small></span><i class="pill"></i></button>
     <div class="row"><button class="btn go" id="setClose" data-th="เสร็จสิ้น">Done</button></div>
   </div>
@@ -663,7 +665,8 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   var haptics = store.get('hr_haptics', true);
   var timerOn = store.get('hr_timer', true); // off = no-stress mode: the clock is hidden (time is still tracked quietly)
   var autoPlace = store.get('hr_auto', true);
-  var BUILD = '4213344'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var autoStart = store.get('hr_autostart', false); // on = opening a level skips the setup phase and starts playing at once
+  var BUILD = 'a48c50c'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
@@ -802,8 +805,9 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     $('par').textContent = lv.par; $('moves').textContent = '0'; $('time').textContent = '0:00';
     G.sel = firstAvailable();
     hideTip(); renderAuto();
-    if (autoPlace) placeAll();
+    if (autoPlace || autoStart) placeAll();
     layout(); renderAll(); window.scrollTo(0, 0);
+    if (autoStart) startPlay();
   }
 
   function remaining(t) {
@@ -1362,6 +1366,11 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   if (!navigator.vibrate) $('hapBtn').style.display = 'none';
   $('hapBtn').onclick = function () { haptics = !haptics; store.set('hr_haptics', haptics); renderHaptics(); buzz(30); };
   renderHaptics();
+
+  // Auto-start switch: opening a level places the blocks for you and starts right away (no chips, no Start button)
+  function renderAutoStart() { setSwitch($('autoStartBtn'), autoStart); }
+  $('autoStartBtn').onclick = function () { autoStart = !autoStart; store.set('hr_autostart', autoStart); renderAutoStart(); };
+  renderAutoStart();
 
   // Timer switch: off hides the clock (no-stress mode); the time keeps counting quietly so turning it back on is correct
   function renderTimer() { setSwitch($('timerBtn'), timerOn); document.body.classList.toggle('notimer', !timerOn); }

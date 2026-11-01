@@ -733,12 +733,50 @@ def sound(p):
     ctx.close(); assert not errors, errors
 
 
+def autostart(p):
+    """Auto-start: off by default; on = levels open already in play (skip chips + Start), remembered, works for Next/Replay/Restart."""
+    ctx = launch(p).new_context(viewport={'width': 390, 'height': 800}, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.add_init_script("if (!sessionStorage.getItem('seeded')) { localStorage.setItem('hr_auto', 'false'); sessionStorage.setItem('seeded', '1'); }")
+    page.goto(URL)
+    settings(page); assert page.locator('#autoStartBtn').get_attribute('aria-pressed') == 'false', 'off by default'; page.click('#setClose')
+    lv(page, 0).click(); assert page.evaluate("() => document.body.dataset.phase") == 'setup' and page.locator('#startBtn').is_visible(), 'off: normal setup, even with Auto-place off'
+    assert page.locator('.piece').count() == 0
+    page.click('#backBtn')
+    settings(page); page.click('#autoStartBtn')
+    assert page.locator('#autoStartBtn').get_attribute('aria-pressed') == 'true' and page.evaluate("() => JSON.parse(localStorage.getItem('hr_autostart'))") is True
+    page.click('#setClose')
+    n = page.evaluate("() => Solver.piecesOf(LEVELS[3].g.split('').map(Number)).length")
+    lv(page, 3).click()
+    assert page.evaluate("() => document.body.dataset.phase") == 'play', 'level opens straight into play'
+    assert page.locator('#startBtn').is_hidden() and page.locator('.piece').count() == n and page.locator('.piece.bad').count() == 0
+    assert page.locator('#undoBtn').is_visible() and page.locator('#hintBtn').is_visible(), 'play controls are there'
+    page.wait_for_timeout(1300); assert page.locator('#time').inner_text() != '0:00', 'clock runs'
+    sol = page.evaluate("() => Solver.solve(LEVELS[3].g.split('').map(Number))")
+    for m in sol:                                                   # solve it; the win card's Next opens the next level in play too
+        bx = page.locator('#board').bounding_box(); cs = (bx['width'] - 20) / 4; d = {'R': (2, 2), 'V': (1, 2), 'H': (2, 1), 'S': (1, 1)}[m['t']]
+        sx = bx['x'] + 10 + (m['c'] + d[0] / 2) * cs; sy = bx['y'] + 10 + (m['r'] + d[1] / 2) * cs
+        page.mouse.move(sx, sy); page.mouse.down()
+        for i in range(1, 7): page.mouse.move(sx + m['dc'] * m['k'] * cs * i / 6, sy + m['dr'] * m['k'] * cs * i / 6)
+        page.mouse.up(); page.wait_for_timeout(250)
+    page.wait_for_selector('#win:not(.hidden)', timeout=5000)
+    page.click('#nextBtn'); assert page.evaluate("() => document.body.dataset.phase") == 'play' and page.locator('#lvTitle').inner_text().startswith('Level 5'), 'Next auto-starts too'
+    page.reload(); lv(page, 0).click(); assert page.evaluate("() => document.body.dataset.phase") == 'play', 'setting survives a reload'
+    page.click('#backBtn'); settings(page); page.click('#autoStartBtn'); page.click('#setClose')
+    lv(page, 0).click(); assert page.evaluate("() => document.body.dataset.phase") == 'setup', 'off again: setup returns'
+    ctx.close(); assert not errors, errors
+
+
 with sync_playwright() as p:
     if os.environ.get('HR_ONLY'):
         globals()[os.environ['HR_ONLY']](p); print('ONLY', os.environ['HR_ONLY'], 'OK'); sys.exit(0)
     features(p)
     controls(p)
     sound(p)
+    autostart(p)
+    print('auto-start: skips setup, Next/reload keep it, off restores setup')
     print('sound: context wakes on first tap, audible level, mute silences')
     skins_timer(p)
     print('skins: all visible at once, one tap each; timer switch hides the clock')

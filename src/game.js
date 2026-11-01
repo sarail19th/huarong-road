@@ -16,6 +16,7 @@
   var haptics = store.get('hr_haptics', true);
   var timerOn = store.get('hr_timer', true); // off = no-stress mode: the clock is hidden (time is still tracked quietly)
   var autoPlace = store.get('hr_auto', true);
+  var autoStart = store.get('hr_autostart', false); // on = opening a level skips the setup phase and starts playing at once
   var BUILD = '__BUILD__'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
@@ -155,8 +156,9 @@
     $('par').textContent = lv.par; $('moves').textContent = '0'; $('time').textContent = '0:00';
     G.sel = firstAvailable();
     hideTip(); renderAuto();
-    if (autoPlace) placeAll();
+    if (autoPlace || autoStart) placeAll();
     layout(); renderAll(); window.scrollTo(0, 0);
+    if (autoStart) startPlay();
   }
 
   function remaining(t) {
@@ -715,6 +717,11 @@
   if (!navigator.vibrate) $('hapBtn').style.display = 'none';
   $('hapBtn').onclick = function () { haptics = !haptics; store.set('hr_haptics', haptics); renderHaptics(); buzz(30); };
   renderHaptics();
+
+  // Auto-start switch: opening a level places the blocks for you and starts right away (no chips, no Start button)
+  function renderAutoStart() { setSwitch($('autoStartBtn'), autoStart); }
+  $('autoStartBtn').onclick = function () { autoStart = !autoStart; store.set('hr_autostart', autoStart); renderAutoStart(); };
+  renderAutoStart();
 
   // Timer switch: off hides the clock (no-stress mode); the time keeps counting quietly so turning it back on is correct
   function renderTimer() { setSwitch($('timerBtn'), timerOn); document.body.classList.toggle('notimer', !timerOn); }
