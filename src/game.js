@@ -14,13 +14,19 @@
   var seen = store.get('hr_seen', {}); // level ids whose solution was viewed: wins there earn no stars
   var muted = store.get('hr_muted', false);
   var haptics = store.get('hr_haptics', true);
+  var timerOn = store.get('hr_timer', true); // off = no-stress mode: the clock is hidden (time is still tracked quietly)
   var autoPlace = store.get('hr_auto', true);
   var BUILD = '__BUILD__'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
-  var SKINS = [
+  var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
-    { id: 'blossom', name: 'Blossom · pastel pink & black', theme: '#0b0709' },
-    { id: 'neon', name: 'Neon · green & black', theme: '#020503' }
+    { id: 'blossom', name: 'Blossom', theme: '#0b0709' },
+    { id: 'neon', name: 'Neon', theme: '#020503' },
+    { id: 'ocean', name: 'Ocean', theme: '#050d14' },
+    { id: 'sunset', name: 'Sunset', theme: '#0f0713' },
+    { id: 'forest', name: 'Forest', theme: '#060c08' },
+    { id: 'mono', name: 'Mono', theme: '#0a0a0a' },
+    { id: 'gold', name: 'Gold', theme: '#0a0804' }
   ];
   var skin = store.get('hr_skin', 'classic');
 
@@ -669,7 +675,7 @@
     }, 250);
     setTimeout(function () {
       $('winStars').textContent = stars(st);
-      $('winInfo').innerHTML = 'Moves <b>' + G.moves + '</b> (par ' + par + ') · Time <b>' + fmt(G.elapsed) + '</b>' +
+      $('winInfo').innerHTML = 'Moves <b>' + G.moves + '</b> (par ' + par + ')' + (timerOn ? ' · Time <b>' + fmt(G.elapsed) + '</b>' : '') +
         (G.hints ? ' · Hints ' + G.hints : '') + (seen[G.lv.id] ? '<br>' + L('Solution viewed — no stars for this level', 'ดูเฉลยแล้ว — ด่านนี้ไม่ได้ดาว') : '');
       $('nextBtn').classList.toggle('hidden', G.idx + 1 >= LV.length);
       $('win').classList.remove('hidden');
@@ -693,6 +699,11 @@
   if (!navigator.vibrate) $('hapBtn').style.display = 'none';
   $('hapBtn').onclick = function () { haptics = !haptics; store.set('hr_haptics', haptics); renderHaptics(); buzz(30); };
   renderHaptics();
+
+  // Timer switch: off hides the clock (no-stress mode); the time keeps counting quietly so turning it back on is correct
+  function renderTimer() { setSwitch($('timerBtn'), timerOn); document.body.classList.toggle('notimer', !timerOn); }
+  $('timerBtn').onclick = function () { timerOn = !timerOn; store.set('hr_timer', timerOn); renderTimer(); };
+  renderTimer();
 
   /* ---------- about: the story behind the name ---------- */
   var aboutPage = 0, aboutPages = document.querySelectorAll('#about .apage');
@@ -756,15 +767,15 @@
     var meta = document.querySelector('meta[name=theme-color]'); if (meta) meta.setAttribute('content', sk.theme);
     return sk;
   }
-  var SWATCH = { classic: 'linear-gradient(90deg,#e63946 50%,#2f80ed 50%)', blossom: 'linear-gradient(90deg,#ffb3d1 50%,#17101a 50%)', neon: 'linear-gradient(90deg,#39ff14 50%,#020503 50%)' };
   function renderSkinOpts() {
     Array.prototype.forEach.call($('skopts').children, function (b) {
-      var on = b.dataset.skin === skin; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+      var on = b.dataset.sk === skin; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
     });
   }
   SKINS.forEach(function (sk) {
-    var b = document.createElement('button'); b.className = 'skopt'; b.dataset.skin = sk.id;
-    b.innerHTML = '<i style="background:' + SWATCH[sk.id] + '"></i><span>' + sk.name.split(' ')[0] + '</span>';
+    var b = document.createElement('button'); b.className = 'skopt'; b.dataset.sk = sk.id;
+    b.innerHTML = '<span class="skprev" data-skin="' + sk.id + '"><i class="r"></i><i class="v"></i><i class="s"></i><i class="a"></i></span><span>' + sk.name + '</span>';
+    b.setAttribute('aria-label', 'Skin: ' + sk.name);
     b.onclick = function () { skin = sk.id; store.set('hr_skin', skin); applySkin(); renderSkinOpts(); };
     $('skopts').appendChild(b);
   });

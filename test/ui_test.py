@@ -19,7 +19,7 @@ def toggle_lang(page):
     settings(page); page.locator('#settings .lang-btn').click(); settings(page, False)
 
 def set_skin(page, name):
-    settings(page); page.locator(f'#settings .skopt[data-skin={name}]').click(); settings(page, False)
+    settings(page); page.locator(f'#settings .skopt[data-sk={name}]').click(); settings(page, False)
 
 def lv(page, idx):
     """The menu shows 20 levels per page: jump to the page that holds level idx (0-based) and return its button."""
@@ -545,8 +545,15 @@ def controls(p):
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
     page.add_init_script("window.__vib = []; navigator.vibrate = function (ms) { window.__vib.push(ms); return true; };")
     page.goto(URL)
-    # game bar no longer carries skin / sound / vibration / language buttons: only the gear
+    # consistency: the gear is top-right on the menu and in the game, and the update button is not a lookalike of Restart
+    mg = page.locator('#menu .settings-btn').bounding_box(); ub = page.locator('#refreshBtn').bounding_box()
+    assert mg['x'] > ub['x'] + ub['width'] and abs((mg['x'] + mg['width']) - 344) <= 2, 'menu gear sits at the top right'
+    assert page.locator('#refreshBtn use').get_attribute('href') != page.locator('#restartBtn use').get_attribute('href'), 'update icon differs from restart icon'
+    page.screenshot(path=f'{SHOTS}/menu_header.png')
     lv(page, 5).click()
+    gg = page.locator('#game .settings-btn').bounding_box()
+    assert abs((gg['x'] + gg['width']) - (mg['x'] + mg['width'])) <= 1 and abs(gg['y'] - mg['y']) <= 8, 'game gear is in the same corner as the menu gear'
+    # game bar no longer carries skin / sound / vibration / language buttons: only the gear
     for sel in ('#game .skin-btn', '#game .lang-btn', '#game #muteBtn', '#game #hapBtn'): assert page.locator(sel).count() == 0 or page.locator(sel).is_hidden(), sel
     page.click('#startBtn')
     box = lambda sel: page.locator(sel).bounding_box()
@@ -610,11 +617,65 @@ def controls(p):
     ctx.close(); assert not errors, errors
 
 
+def skins_timer(p):
+    """All skins visible at once (live previews), each selectable in one tap; timer switch hides the clock."""
+    ctx = launch(p).new_context(viewport={'width': 360, 'height': 740}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.goto(URL)
+    settings(page)
+    tiles = page.locator('#settings .skopt'); n = tiles.count()
+    assert n >= 8, f'{n} skins'
+    vp = page.viewport_size
+    for i in range(n):
+        b = tiles.nth(i).bounding_box(); assert b['y'] >= 0 and b['y'] + b['height'] <= vp['height'], f'skin tile {i} must be visible without scrolling'
+    # each preview paints with its own colours
+    cols = page.evaluate("() => [...document.querySelectorAll('#settings .skprev .r')].map(e => getComputedStyle(e).backgroundImage)")
+    assert len(set(cols)) == n, 'every skin preview looks different'
+    ids = page.evaluate("() => [...document.querySelectorAll('#settings .skopt')].map(b => b.dataset.sk)")
+    for sid in ids:                                   # one tap each, applied at once, remembered
+        page.locator(f'#settings .skopt[data-sk={sid}]').click()
+        assert page.evaluate("() => document.documentElement.dataset.skin") == sid
+        assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_skin'))") == sid
+        assert page.locator(f'#settings .skopt[data-sk={sid}]').get_attribute('aria-pressed') == 'true' and page.locator('#settings .skopt[aria-pressed=true]').count() == 1
+        bgc = page.evaluate("() => getComputedStyle(document.body).backgroundColor"); assert bgc
+        page.screenshot(path=f'{SHOTS}/skin_{sid}.png')
+    page.click('#setClose')
+    for sid in ('ocean', 'mono'):                     # new skins also drive the board itself
+        page.evaluate("(s) => { document.documentElement.dataset.skin = s; }", sid)
+        lv(page, 3).click(); page.click('#startBtn'); page.screenshot(path=f'{SHOTS}/play_{sid}.png'); page.click('#backBtn')
+    # timer: on by default, off hides the clock and the time on the win card, persists
+    lv(page, 0).click(); page.click('#startBtn')
+    assert page.locator('#timeStat').is_visible() and page.locator('#timerBtn').count() == 1
+    settings(page); assert page.locator('#timerBtn').get_attribute('aria-pressed') == 'true'
+    page.click('#timerBtn'); assert page.locator('#timerBtn').get_attribute('aria-pressed') == 'false'
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_timer'))") is False
+    page.screenshot(path=f'{SHOTS}/settings_notimer.png'); page.click('#setClose')
+    assert page.locator('#timeStat').is_hidden(), 'clock hidden in no-stress mode'
+    sol = page.evaluate("() => Solver.solve(LEVELS[0].g.split('').map(Number))")
+    for m in sol:
+        bx = page.locator('#board').bounding_box(); cs = (bx['width'] - 4 - 16) / 4
+        d = {'R': (2, 2), 'V': (1, 2), 'H': (2, 1), 'S': (1, 1)}[m['t']]
+        sx = bx['x'] + 2 + 8 + (m['c'] + d[0] / 2) * cs; sy = bx['y'] + 2 + 8 + (m['r'] + d[1] / 2) * cs
+        page.mouse.move(sx, sy); page.mouse.down()
+        for i in range(1, 7): page.mouse.move(sx + m['dc'] * m['k'] * cs * i / 6, sy + m['dr'] * m['k'] * cs * i / 6)
+        page.mouse.up(); page.wait_for_timeout(250)
+    page.wait_for_selector('#win:not(.hidden)', timeout=5000)
+    assert 'Time' not in page.locator('#winInfo').inner_text() and 'Moves' in page.locator('#winInfo').inner_text(), page.locator('#winInfo').inner_text()
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_progress'))['1'].stars") == 3, 'stars still earned without the clock'
+    page.reload(); lv(page, 1).click(); assert page.locator('#timeStat').is_hidden(), 'setting survives a reload'
+    settings(page); page.click('#timerBtn'); page.click('#setClose'); assert page.locator('#timeStat').is_visible()
+    ctx.close(); assert not errors, errors
+
+
 with sync_playwright() as p:
     if os.environ.get('HR_ONLY'):
         globals()[os.environ['HR_ONLY']](p); print('ONLY', os.environ['HR_ONLY'], 'OK'); sys.exit(0)
     features(p)
     controls(p)
+    skins_timer(p)
+    print('skins: all visible at once, one tap each; timer switch hides the clock')
     print('controls: undo/redo pair, hint+solution pair, restart confirm, settings panel OK')
     print('features: auto-place default, skins, two-step hints OK')
     lang_switch(p)

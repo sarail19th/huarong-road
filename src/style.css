@@ -6,23 +6,74 @@
   --pR:linear-gradient(145deg,#ff6a6f,#d42234);--pV:linear-gradient(145deg,#4a98ff,#1f62d4);--pS:linear-gradient(145deg,#ffd75a,#ee9f00);
   --ricon:rgba(255,255,255,.5);--ringR:rgba(255,255,255,.42);--ringV:rgba(255,255,255,.42);--ringS:rgba(255,255,255,.42);
   --led-r:#ff3b3b;--led-b:#2f8cff;--led-y:#ffd23a;
+  --edge:#262b33;--board:#07080a;--device:#0b0c0f;--bdR:initial;--bdV:initial;--bdS:initial;--shR:initial;--shV:initial;
   color-scheme:dark;
 }
-/* Skins: set via <html data-skin>. --yellow is the accent colour (stars, brand, selection), --green the "confirmed/exit" colour. */
-:root[data-skin=blossom]{
+/* Skins: <html data-skin> picks one, and the Settings preview tiles carry their own data-skin so every style is shown live.
+   --yellow is the accent colour (stars, brand, selection), --green the "confirmed/exit" colour. Each skin sets every variable it uses. */
+[data-skin=classic]{
+  --bg:#0d1117;--panel:#161b22;--panel2:#1f2630;--line:#2a313c;--text:#e8edf3;--muted:#8b97a7;
+  --red:#e63946;--yellow:#f5b82e;--green:#3ddc84;--amber:#ffb020;--ok:var(--green);--exit-rgb:61,220,132;--bg-a:47,128,237;--bg-b:230,57,70;
+  --pR:linear-gradient(145deg,#ff6a6f,#d42234);--pV:linear-gradient(145deg,#4a98ff,#1f62d4);--pS:linear-gradient(145deg,#ffd75a,#ee9f00);
+  --ricon:rgba(255,255,255,.5);--ringR:rgba(255,255,255,.42);--ringV:rgba(255,255,255,.42);--ringS:rgba(255,255,255,.42);
+  --led-r:#ff3b3b;--led-b:#2f8cff;--led-y:#ffd23a;
+  --edge:#262b33;--board:#07080a;--device:#0b0c0f;--bdR:initial;--bdV:initial;--bdS:initial;--shR:initial;--shV:initial;
+}
+[data-skin=blossom]{
   --bg:#0b0709;--panel:#17101a;--panel2:#21161f;--line:#3a2633;--text:#fbeef4;--muted:#b496a6;
   --yellow:#ffb3d1;--green:#ff8fc0;--ok:#fff;--amber:#ffd08a;--exit-rgb:255,222,236;--edge:#6b3d55;--board:#22141d;--device:#140c11;--bg-a:255,158,196;--bg-b:200,90,140;
   --pR:linear-gradient(145deg,#ffc2da,#ff80b0);--pV:linear-gradient(145deg,#ffe8f1,#f5b9d1);--pS:linear-gradient(145deg,#85567a,#5e3a55);
+  --bdR:initial;--bdV:initial;--shR:initial;--shV:initial;
   --bdS:2px solid #ffb3d1;--ricon:rgba(90,20,55,.6);--ringR:rgba(255,255,255,.7);--ringV:rgba(160,60,110,.4);--ringS:rgba(255,179,209,.8);
   --led-r:#ff80b0;--led-b:#ffe8f1;--led-y:#c4659a;
 }
-:root[data-skin=neon]{
+[data-skin=neon]{
   --bg:#020503;--panel:#07110a;--panel2:#0b1a10;--line:#16402a;--text:#e6ffec;--muted:#6fae82;
-  --yellow:#39ff14;--green:#39ff14;--amber:#ffe600;--exit-rgb:0,229,255;--bg-a:57,255,20;--bg-b:0,229,255;
+  --yellow:#39ff14;--green:#39ff14;--ok:#39ff14;--amber:#ffe600;--exit-rgb:0,229,255;--bg-a:57,255,20;--bg-b:0,229,255;
   --pR:linear-gradient(145deg,#8bff6a,#2ee000);--pV:linear-gradient(145deg,#1f7a3a,#145a29);--pS:linear-gradient(145deg,#f4ffe0,#c3f59a);
-  --edge:#1f7a3a;--board:#07170d;--device:#030b06;--bdV:2px solid #39ff14;--shR:0 0 14px rgba(57,255,20,.65),inset 0 -5px 0 rgba(0,0,0,.22);--shV:0 0 10px rgba(57,255,20,.45),inset 0 0 8px rgba(57,255,20,.25);
+  --edge:#1f7a3a;--board:#07170d;--device:#030b06;--bdR:initial;--bdS:initial;--bdV:2px solid #39ff14;--shR:0 0 14px rgba(57,255,20,.65),inset 0 -5px 0 rgba(0,0,0,.22);--shV:0 0 10px rgba(57,255,20,.45),inset 0 0 8px rgba(57,255,20,.25);
   --ricon:rgba(2,26,6,.7);--ringR:rgba(2,26,6,.45);--ringV:rgba(190,255,170,.75);--ringS:rgba(2,26,6,.4);
   --led-r:#39ff14;--led-b:#1fa84a;--led-y:#eaffd9;
+}
+[data-skin=ocean]{
+  --bg:#050d14;--panel:#0a1a26;--panel2:#10283a;--line:#1c3f58;--text:#e6f6ff;--muted:#7fa6bf;
+  --yellow:#4dd0e1;--green:#26e6c1;--ok:#26e6c1;--amber:#ffd166;--exit-rgb:38,230,193;--bg-a:0,150,200;--bg-b:20,80,160;
+  --pR:linear-gradient(145deg,#ff9a76,#ff5a36);--pV:linear-gradient(145deg,#2aa7d6,#146a99);--pS:linear-gradient(145deg,#bff3ff,#6fd0e8);
+  --edge:#1c4a66;--board:#07151f;--device:#040b11;--bdR:initial;--bdV:initial;--bdS:initial;--shR:initial;--shV:initial;
+  --ricon:rgba(255,255,255,.6);--ringR:rgba(255,255,255,.5);--ringV:rgba(255,255,255,.45);--ringS:rgba(10,60,90,.5);
+  --led-r:#ff7a55;--led-b:#2aa7d6;--led-y:#bff3ff;
+}
+[data-skin=sunset]{
+  --bg:#0f0713;--panel:#1b0f22;--panel2:#271631;--line:#4a2a55;--text:#fff1e6;--muted:#c09ab0;
+  --yellow:#ff9f43;--green:#ff6f91;--ok:#ffd166;--amber:#ffd166;--exit-rgb:255,111,145;--bg-a:255,111,145;--bg-b:155,93,229;
+  --pR:linear-gradient(145deg,#ffd166,#ff9f1c);--pV:linear-gradient(145deg,#9b5de5,#5a2d9c);--pS:linear-gradient(145deg,#ff9ebb,#f15bb5);
+  --edge:#5a2d6b;--board:#150a1b;--device:#0c0510;--bdR:initial;--bdV:initial;--bdS:initial;--shR:initial;--shV:initial;
+  --ricon:rgba(90,40,0,.6);--ringR:rgba(90,40,0,.4);--ringV:rgba(255,255,255,.45);--ringS:rgba(255,255,255,.55);
+  --led-r:#ffb347;--led-b:#9b5de5;--led-y:#ff6f91;
+}
+[data-skin=forest]{
+  --bg:#060c08;--panel:#0f1a12;--panel2:#16261a;--line:#2a4630;--text:#eaf5e6;--muted:#8fae92;
+  --yellow:#c5e17a;--green:#7bd88f;--ok:#7bd88f;--amber:#ffcf5c;--exit-rgb:123,216,143;--bg-a:60,140,70;--bg-b:140,110,50;
+  --pR:linear-gradient(145deg,#ffd54f,#f08c00);--pV:linear-gradient(145deg,#4caf50,#1f6b2b);--pS:linear-gradient(145deg,#f3ecd0,#c8b98a);
+  --edge:#2f5a3a;--board:#0a140c;--device:#050a06;--bdR:initial;--bdV:initial;--bdS:initial;--shR:initial;--shV:initial;
+  --ricon:rgba(60,35,0,.6);--ringR:rgba(60,35,0,.4);--ringV:rgba(255,255,255,.4);--ringS:rgba(60,45,10,.45);
+  --led-r:#ffd54f;--led-b:#4caf50;--led-y:#f3ecd0;
+}
+[data-skin=mono]{
+  --bg:#0a0a0a;--panel:#151515;--panel2:#202020;--line:#383838;--text:#f2f2f2;--muted:#9a9a9a;
+  --yellow:#ffffff;--green:#e0e0e0;--ok:#ffffff;--amber:#bdbdbd;--exit-rgb:255,255,255;--bg-a:90,90,90;--bg-b:40,40,40;
+  --pR:linear-gradient(145deg,#ffffff,#cfcfcf);--pV:linear-gradient(145deg,#6a6a6a,#3f3f3f);--pS:linear-gradient(145deg,#2c2c2c,#161616);
+  --edge:#4a4a4a;--board:#0e0e0e;--device:#070707;--bdR:initial;--bdV:initial;--shR:initial;--shV:initial;--bdS:2px solid #bdbdbd;
+  --ricon:rgba(0,0,0,.55);--ringR:rgba(0,0,0,.35);--ringV:rgba(255,255,255,.5);--ringS:rgba(255,255,255,.55);
+  --led-r:#ffffff;--led-b:#7a7a7a;--led-y:#3d3d3d;
+}
+[data-skin=gold]{
+  --bg:#0a0804;--panel:#16110a;--panel2:#211a0e;--line:#44381c;--text:#fff6dc;--muted:#b3a47a;
+  --yellow:#ffd54a;--green:#f5c542;--ok:#ffd54a;--amber:#ff9d3b;--exit-rgb:255,213,74;--bg-a:200,150,30;--bg-b:90,60,10;
+  --pR:linear-gradient(145deg,#ffe27a,#d4a017);--pV:linear-gradient(145deg,#2b2417,#171209);--pS:linear-gradient(145deg,#fff6dc,#e6d3a0);
+  --edge:#7a5f1a;--board:#100c05;--device:#080603;--bdR:initial;--bdS:initial;--bdV:2px solid #d4a017;--shR:0 0 12px rgba(255,213,74,.45),inset 0 -5px 0 rgba(0,0,0,.22);--shV:initial;
+  --ricon:rgba(70,45,0,.65);--ringR:rgba(70,45,0,.4);--ringV:rgba(255,213,74,.8);--ringS:rgba(70,45,0,.35);
+  --led-r:#ffd54a;--led-b:#8a6d1c;--led-y:#fff6dc;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{min-height:100%;background:var(--bg)}
@@ -208,8 +259,8 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 /* ---------- app updates ---------- */
 .updbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:8px 8px 8px 14px;background:var(--panel);border:1px solid var(--yellow);border-radius:14px;font-size:13.5px;font-weight:600}
 .updbar .btn.go{flex:none;margin:0;padding:8px 16px;font-size:13px;color:#06210f}
-#refreshBtn.spin{animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+#refreshBtn.spin .ico{animation:bob .7s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(4px)}}
 .ver{margin:22px 0 0;text-align:center;color:var(--muted);font-size:11.5px}
 .ver b{font-weight:600;letter-spacing:.5px}
 .src{margin:4px 0 0;text-align:center;font-size:11.5px}
@@ -217,7 +268,7 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 
 /* ---------- settings + confirm ---------- */
 .btn.danger{background:#c0303a;border-color:#c0303a;color:#fff}
-.card.settings{text-align:left;max-height:calc(100dvh - 40px);overflow-y:auto}
+.card.settings{max-width:380px;text-align:left;max-height:calc(100dvh - 40px);overflow-y:auto}
 .card.settings h2{margin-bottom:10px}
 .setrow{display:flex;align-items:center;gap:12px;width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:0 0 8px;font-size:14px;font-weight:600;text-align:left}
 .setrow .lbl{display:flex;align-items:center;gap:10px;flex:1}
@@ -228,9 +279,20 @@ body:not([data-phase=solution]) .only-sol{display:none!important}
 .pill::after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s}
 [aria-pressed=true]>.pill{background:var(--green)}
 [aria-pressed=true]>.pill::after{transform:translateX(18px)}
-.skopts{display:flex;gap:6px}
-.skopt{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:8px 4px;font-size:12px;font-weight:600;color:var(--muted)}
-.skopt i{width:34px;height:18px;border-radius:9px;display:block;border:1px solid rgba(255,255,255,.25)}
+.skopts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.skopt{display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:5px 3px 6px;font-size:11px;font-weight:600;color:var(--muted);min-width:0}
+/* live preview: the tile carries data-skin, so it paints itself with that skin's real colours */
+.skprev{display:flex;align-items:flex-end;justify-content:center;gap:3px;width:100%;height:34px;padding:4px;border-radius:8px;background:var(--device);border:1px solid var(--edge)}
+.skprev i{display:block;border-radius:3px}
+.skprev .r{width:14px;height:14px;background:var(--pR);border:var(--bdR,0);box-shadow:var(--shR,none)}
+.skprev .v{width:8px;height:22px;background:var(--pV);border:var(--bdV,0)}
+.skprev .s{width:8px;height:8px;background:var(--pS);border:var(--bdS,0)}
+.skprev .a{width:6px;height:6px;border-radius:50%;background:var(--yellow);align-self:flex-start}
 .skopt.on{border-color:var(--yellow);color:var(--text)}
 .card.settings .row{margin-top:12px}
 .card.settings .lang-btn{width:auto}
+
+/* no-stress mode: the clock is hidden */
+body.notimer #timeStat{display:none}
+.setrow .lbl.two{flex-direction:column;align-items:flex-start;gap:1px}
+.setrow .sub{color:var(--muted);font-size:11px;font-weight:500}
