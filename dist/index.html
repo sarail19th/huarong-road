@@ -2,12 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0d1117">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Huarong Road</title>
+<meta name="description" content="Slide the big red block out through the exit. 100 levels, a new daily puzzle, hints, a stage designer, English and Thai. Works offline.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>:root{
   --bg:#0d1117;--panel:#161b22;--panel2:#1f2630;--line:#2a313c;
   --text:#e8edf3;--muted:#8b97a7;
@@ -90,7 +92,7 @@ html{min-height:100%;background:var(--bg)}
 html,body{margin:0;color:var(--text);
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none;
   -webkit-user-select:none;user-select:none}
-body{min-height:100vh;background:linear-gradient(135deg,rgba(var(--bg-a),.18) 0 50%,rgba(var(--bg-b),.16) 50% 100%),var(--bg);background-attachment:fixed}
+body{touch-action:manipulation;min-height:100vh;background:linear-gradient(135deg,rgba(var(--bg-a),.18) 0 50%,rgba(var(--bg-b),.16) 50% 100%),var(--bg);background-attachment:fixed}
 button{font:inherit;color:inherit;border:0;cursor:pointer}
 .hidden{display:none!important}
 .screen{max-width:520px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
@@ -998,7 +1000,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
   applyMotion(); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = '5d36fa2'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = 'd31eb35'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
     { id: 'classic', name: 'Classic', theme: '#0d1117' },

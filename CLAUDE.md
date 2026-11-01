@@ -23,9 +23,9 @@ Klotski-style sliding-block puzzle (4x5 board, slide the big red 2x2 to the bott
   - **Menu:** collapsible "How to play" panel (open on first launch, `hr_howto`); paged level list (20 per page via chips + prev/next, `hr_page` remembers the page, opening a level moves the menu to its page); win + stars + progress in localStorage (`hr_progress`; daily cache `hr_daily_lv`).
   - **In-app updater:** the `Update` pill next to the `Version <hash>` label at the bottom of the menu probes the server, clears caches + the old service worker and reloads; a "new version ready · Update" banner shows when a new worker takes over. Progress/localStorage is never touched.
 - `src/style.css`, `src/index.html` - templates with `/*INLINE_...*/` placeholders.
-- `gen/gen.js` - level generator (seeded, deterministic). `gen/icons.py` - PWA icons (needs Pillow).
-- `build.js` - inlines everything into `dist/index.html` (stamping `__BUILD__` with a content hash that also names the service worker cache; the worker fetches its files with `cache:'reload'`), writes manifest + service worker, and `dist/artifact.html` (title + style + body only, for the claude.ai Artifact tool).
-- `test/test.js` - verifies every level (solvable, par == true optimum, replay is legal). `test/ui_test.py` - Playwright mobile-viewport end-to-end test (needs `pip install playwright` + Chromium).
+- `gen/gen.js` - level generator (seeded, deterministic). `gen/icons.py` - PWA icons: any 192/512, maskable, monochrome (themed Android icon), apple-touch-icon 180 (needs Pillow). `gen/shots.py` - store screenshots for the manifest (wide 1280x720 + two narrow 780x1688; needs Playwright, fixed date so they are reproducible; re-run when the menu or board look changes).
+- `build.js` - inlines everything into `dist/index.html`, writes the manifest (id, description, lang, categories, icons incl. maskable + monochrome, screenshots; the service worker caches every icon) (stamping `__BUILD__` with a content hash that also names the service worker cache; the worker fetches its files with `cache:'reload'`), writes manifest + service worker, and `dist/artifact.html` (title + style + body only, for the claude.ai Artifact tool).
+- `test/pwa_test.js` - checks the manifest, icon/screenshot files and sizes, the service-worker cache list and the head tags (description, apple-touch-icon, zoom allowed). `test/test.js` - verifies every level (solvable, par == true optimum, replay is legal). `test/ui_test.py` - Playwright mobile-viewport end-to-end test (needs `pip install playwright` + Chromium).
 
 ## Commands
 ```
@@ -33,6 +33,8 @@ node gen/gen.js        # regenerate src/levels.js (~25 s)
 node test/test.js      # must print "OK: 100 levels verified"
 node build.js          # produce dist/
 python3 gen/icons.py   # icons into dist/ (run after build)
+python3 gen/shots.py   # manifest screenshots into dist/ (run after build; PW_CHROMIUM=<chromium path> if needed)
+node test/pwa_test.js  # manifest / icons / screenshots / service-worker list
 python3 test/ui_test.py
 ```
 Serve `dist/` over https (or localhost) for the service worker to register; opening the file directly also works but skips the PWA parts.
@@ -42,6 +44,7 @@ Serve `dist/` over https (or localhost) for the service worker to register; open
 - Keep `par` equal to the true BFS optimum; star rating depends on it (<= par = 3 stars, <= 1.4x par = 2).
 - UI changes: rebuild and run `python3 test/ui_test.py`.
 - New guidance text (hints, status, solution, about) needs a Thai version too: use `L(en, th)` in JS or `data-th` in HTML.
+- Never block pinch zoom in the viewport meta (`user-scalable=no` fails accessibility audits); the board uses `touch-action:none` and the body `touch-action:manipulation` instead.
 - Piece animations must not scale (pieces are positioned with `transform: translate`, scaling shifts them).
 
 ## Credits

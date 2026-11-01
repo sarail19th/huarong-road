@@ -16,18 +16,28 @@ const html = draft.split('__BUILD__').join(v);
 fs.mkdirSync(path.join(__dirname, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(__dirname, 'dist/index.html'), html);
 
+// icons: gen/icons.py, screenshots: gen/shots.py (both write into dist/)
 fs.writeFileSync(path.join(__dirname, 'dist/manifest.webmanifest'), JSON.stringify({
-  name: 'Huarong Road', short_name: 'Huarong', start_url: './', scope: './', display: 'standalone',
+  id: './', name: 'Huarong Road', short_name: 'Huarong',
+  description: 'Slide the big red block out through the exit. 100 levels, a new daily puzzle, hints, a stage designer, English and Thai. Works offline.',
+  lang: 'en', dir: 'ltr', categories: ['games', 'entertainment'],
+  start_url: './', scope: './', display: 'standalone',
   orientation: 'portrait', background_color: '#0d1117', theme_color: '#0d1117',
   icons: [
     { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
     { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-    { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+    { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    { src: 'icon-monochrome-512.png', sizes: '512x512', type: 'image/png', purpose: 'monochrome' }
+  ],
+  screenshots: [
+    { src: 'screenshot-wide.png', sizes: '1280x720', type: 'image/png', form_factor: 'wide', label: 'Pick a level or play the daily puzzle' },
+    { src: 'screenshot-menu.png', sizes: '780x1688', type: 'image/png', form_factor: 'narrow', label: 'Pick a level or play the daily puzzle' },
+    { src: 'screenshot-game.png', sizes: '780x1688', type: 'image/png', form_factor: 'narrow', label: 'Slide the red block to the exit' }
   ]
 }, null, 2));
 
 fs.writeFileSync(path.join(__dirname, 'dist/sw.js'), `const C='huarong-${v}';
-const FILES=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+const FILES=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png','./icon-monochrome-512.png','./apple-touch-icon.png'];
 // cache:'reload' goes to the server, never the browser's HTTP cache, so a new version can't be filled with stale files
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>Promise.all(FILES.map(f=>fetch(f,{cache:'reload'}).then(r=>{if(!r.ok)throw new Error(f);return c.put(f,r)})))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

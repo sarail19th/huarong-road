@@ -1,6 +1,14 @@
 {
+  "id": "./",
   "name": "Huarong Road",
   "short_name": "Huarong",
+  "description": "Slide the big red block out through the exit. 100 levels, a new daily puzzle, hints, a stage designer, English and Thai. Works offline.",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "games",
+    "entertainment"
+  ],
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -25,6 +33,35 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "icon-monochrome-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "monochrome"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Pick a level or play the daily puzzle"
+    },
+    {
+      "src": "screenshot-menu.png",
+      "sizes": "780x1688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Pick a level or play the daily puzzle"
+    },
+    {
+      "src": "screenshot-game.png",
+      "sizes": "780x1688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Slide the red block to the exit"
     }
   ]
 }
