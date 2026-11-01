@@ -10,8 +10,10 @@ const draft = read('src/index.html')
   .replace('/*INLINE_DAILY*/', () => read('src/daily.js'))
   .replace('/*INLINE_GAME*/', () => read('src/game.js'));
 // Version id = short hash of the app itself: it only changes when the app does, and the page, the service worker's
-// cache name and the "Version" label in the menu all agree on it.
-const v = require('crypto').createHash('sha1').update(draft).digest('hex').slice(0, 7);
+// cache name and the "Version" label in the menu all agree on it. The icon generator and this build script (which
+// holds the manifest and the cached file list) are part of it, so an icon-only change still ships a new worker.
+const v = require('crypto').createHash('sha1').update(draft).update(read('gen/icons.py')).update(read('build.js'))
+  .digest('hex').slice(0, 7);
 const html = draft.split('__BUILD__').join(v);
 fs.mkdirSync(path.join(__dirname, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(__dirname, 'dist/index.html'), html);
