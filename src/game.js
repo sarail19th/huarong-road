@@ -705,6 +705,12 @@
   $('timerBtn').onclick = function () { timerOn = !timerOn; store.set('hr_timer', timerOn); renderTimer(); };
   renderTimer();
 
+  // "How to play" folds away for players who know the game; the choice is remembered (open on first launch)
+  var howOpen = store.get('hr_howto', true);
+  function renderHow() { $('howto').classList.toggle('closed', !howOpen); $('howToggle').setAttribute('aria-expanded', howOpen); }
+  $('howToggle').onclick = function () { howOpen = !howOpen; store.set('hr_howto', howOpen); renderHow(); };
+  renderHow();
+
   /* ---------- about: the story behind the name ---------- */
   var aboutPage = 0, aboutPages = document.querySelectorAll('#about .apage');
   (function () { // one dot per page; tapping a dot jumps there

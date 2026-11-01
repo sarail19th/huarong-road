@@ -243,7 +243,7 @@ def thai(p):
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
     page.goto(URL)
     has_thai = lambda t: re.search('[\u0e00-\u0e7f]', t) is not None
-    assert 'How it works' in page.locator('.howto').inner_text() and page.evaluate("() => document.documentElement.lang") == 'en'
+    assert 'How to play' in page.locator('.howto').inner_text() and page.evaluate("() => document.documentElement.lang") == 'en'
     toggle_lang(page)
     assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_lang'))") == 'th'
     assert page.evaluate("() => document.documentElement.lang") == 'th'
@@ -288,7 +288,7 @@ def thai(p):
     page.reload()
     assert page.evaluate("() => document.documentElement.lang") == 'th' and 'วิธีเล่น' in page.locator('.howto').inner_text()
     toggle_lang(page)
-    assert 'How it works' in page.locator('.howto').inner_text() and page.evaluate("() => JSON.parse(localStorage.getItem('hr_lang'))") == 'en'
+    assert 'How to play' in page.locator('.howto').inner_text() and page.evaluate("() => JSON.parse(localStorage.getItem('hr_lang'))") == 'en'
     ctx.close()
     assert not errors, errors
     print('thai hint 2:', thai_body2)
@@ -545,6 +545,19 @@ def controls(p):
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
     page.add_init_script("window.__vib = []; navigator.vibrate = function (ms) { window.__vib.push(ms); return true; };")
     page.goto(URL)
+    # How to play: open at first, folds away, remembered, saves space, Thai heading
+    assert 'How to play' in page.locator('#howToggle').inner_text() and page.locator('#howBody').is_visible()
+    assert page.locator('#howToggle').get_attribute('aria-expanded') == 'true'
+    y_open = page.locator('.lv').first.bounding_box()['y']
+    page.click('#howToggle')
+    assert page.locator('#howBody').is_hidden() and page.locator('#howToggle').get_attribute('aria-expanded') == 'false'
+    assert page.locator('.lv').first.bounding_box()['y'] < y_open - 80, 'levels move up when the panel is folded'
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_howto'))") is False
+    page.reload(); assert page.locator('#howBody').is_hidden(), 'folded state survives a reload'
+    toggle_lang(page); assert page.locator('#howToggle').inner_text().strip() == 'วิธีเล่น'; page.click('#howToggle'); assert 'ตั้งค่า' in page.locator('#howBody').inner_text()
+    toggle_lang(page); assert page.locator('#howBody').is_visible() and page.locator('#howToggle').inner_text().strip() == 'How to play'
+    page.click('#howToggle'); assert page.locator('#howBody').is_hidden()
+    page.click('#howToggle'); assert page.locator('#howBody').is_visible() and 'Set up' in page.locator('#howBody').inner_text()
     # consistency: the gear is top-right on the menu and in the game, and the update button is not a lookalike of Restart
     mg = page.locator('#menu .settings-btn').bounding_box()
     assert abs((mg['x'] + mg['width']) - 344) <= 2, 'menu gear sits at the top right'

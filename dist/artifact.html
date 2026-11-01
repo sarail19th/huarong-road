@@ -97,6 +97,13 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .howto{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;font-size:13.5px;line-height:1.5;color:#c9d2de}
 .howto b{color:var(--text)}
 .howto ol{margin:6px 0 0;padding-left:20px}
+.howto{padding:0}
+.howhead{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;padding:11px 14px;font-size:14px;color:var(--text);text-align:left}
+.howbody{padding:0 14px 12px}
+.howbody ol{margin-top:0}
+.chev{width:22px;height:22px;color:var(--muted);transition:transform .15s}
+.howto.closed .chev{transform:rotate(-90deg)}
+.howto.closed .howbody{display:none}
 .total{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin:8px 2px}
 .total b{color:var(--yellow)}
 h3.grade{display:flex;align-items:baseline;gap:8px;margin:18px 2px 8px;font-size:15px}
@@ -316,6 +323,7 @@ body.notimer #timeStat{display:none}
   <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></symbol>
   <symbol id="i-globe" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></g></symbol>
   <symbol id="i-timer" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 1.5M9.5 2.5h5M12 2.5v3"/></g></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></symbol>
   <symbol id="i-help" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
@@ -337,18 +345,19 @@ body.notimer #timeStat{display:none}
     <h1>Huarong <span>Road</span></h1>
     <p>Sliding-block puzzle · 100 graded levels · exact par for every level</p>
   </div>
-  <div class="howto" data-th="<b>วิธีเล่น</b>
-    <ol>
+  <div class="howto" id="howto">
+    <button class="howhead" id="howToggle" aria-expanded="true" aria-controls="howBody"><b data-th="วิธีเล่น">How to play</b><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+    <div class="howbody" id="howBody" data-th="<ol>
       <li><b>ตั้งค่า</b> — วางบล็อกให้เหมือนรูปบนจอ LED เมื่อวางถูกตำแหน่ง “ชิป” ของบล็อกนั้นจะสว่างขึ้น</li>
       <li><b>เลื่อน</b> — ลากบล็อกเข้าไปในช่องว่าง</li>
       <li><b>หนีออก</b> — พาสี่เหลี่ยม<b style='color:#ff6a6f'>สีแดง</b>ขนาดใหญ่ออกทางประตูด้านล่าง</li>
     </ol>">
-    <b>How it works</b>
     <ol>
       <li><b>Set up</b> — copy the layout shown on the LED. Place each block; its “chip” lights up when it sits in the right spot.</li>
       <li><b>Slide</b> — drag blocks into the empty space.</li>
       <li><b>Escape</b> — guide the big <b style="color:#ff6a6f">red square</b> out through the exit at the bottom.</li>
     </ol>
+    </div>
   </div>
   <div class="total"><span>Stars collected</span><b id="totalStars">0 / 0</b></div>
   <div class="pgchips" id="pgchips" role="tablist" aria-label="Level pages"></div>
@@ -648,7 +657,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   var haptics = store.get('hr_haptics', true);
   var timerOn = store.get('hr_timer', true); // off = no-stress mode: the clock is hidden (time is still tracked quietly)
   var autoPlace = store.get('hr_auto', true);
-  var BUILD = 'b00b08c'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = 'ce8682e'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
@@ -1336,6 +1345,12 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   function renderTimer() { setSwitch($('timerBtn'), timerOn); document.body.classList.toggle('notimer', !timerOn); }
   $('timerBtn').onclick = function () { timerOn = !timerOn; store.set('hr_timer', timerOn); renderTimer(); };
   renderTimer();
+
+  // "How to play" folds away for players who know the game; the choice is remembered (open on first launch)
+  var howOpen = store.get('hr_howto', true);
+  function renderHow() { $('howto').classList.toggle('closed', !howOpen); $('howToggle').setAttribute('aria-expanded', howOpen); }
+  $('howToggle').onclick = function () { howOpen = !howOpen; store.set('hr_howto', howOpen); renderHow(); };
+  renderHow();
 
   /* ---------- about: the story behind the name ---------- */
   var aboutPage = 0, aboutPages = document.querySelectorAll('#about .apage');
