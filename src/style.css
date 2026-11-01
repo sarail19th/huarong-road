@@ -334,3 +334,26 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
 /* on/off word beside each switch */
 .setrow .st{min-width:28px;text-align:right;font-size:12px;font-weight:700;color:var(--muted)}
 .setrow .st.on{color:var(--green)}
+
+/* ---------- daily puzzle ---------- */
+.daily{background:var(--panel);border:1px solid var(--yellow);border-radius:16px;padding:12px;margin-bottom:10px}
+.dhead{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:10px}
+.dtag{background:var(--yellow);color:#10131a;font-weight:800;letter-spacing:1px;border-radius:6px;padding:2px 7px;font-size:11px}
+.ddate{color:var(--muted);flex:1}
+.streak{font-weight:700;white-space:nowrap}
+.dbody{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.led.dled{grid-template-columns:repeat(4,10px);grid-template-rows:repeat(5,10px);padding:4px;flex:none}
+.dinfo{display:flex;flex-direction:column;gap:2px;font-size:13px;min-width:0}
+.dinfo b{font-size:16px}
+.dinfo span{color:#c9d2de}
+.dinfo .dnote{color:var(--muted);font-size:12px}
+.week{display:flex;justify-content:space-between;gap:4px;margin:0 0 10px}
+.day{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;max-width:40px;padding:4px 0;border-radius:8px;background:var(--panel2);font-size:11px}
+.day small{color:var(--muted)}
+.day b{color:var(--yellow);min-height:16px}
+.day.miss b,.day.future b{color:#555d69}
+.day.today{outline:2px solid var(--yellow);outline-offset:-2px}
+.daily .btn.go{width:100%}
+.dwin{margin-top:6px}
+.streakbig{font-size:17px;margin:6px 0 8px}
+.dwin .next{color:var(--muted)!important;font-size:13px}

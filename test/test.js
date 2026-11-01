@@ -45,3 +45,18 @@ LEVELS.forEach((lv) => {
 
 console.log(`OK: ${LEVELS.length} levels verified (par ${LEVELS[0].par}..${maxPar}) in ${Date.now() - t0} ms`);
 console.log('par curve:', LEVELS.map((l) => l.par).join(' '));
+
+// Daily puzzle: two weeks of dates. Same date -> same puzzle; par is the true optimum; difficulty follows the weekday.
+const Daily = require('../src/daily.js');
+let dk = '2026-11-02', dailyMs = 0;
+for (let n = 0; n < 14; n++, dk = Daily.addDays(dk, 1)) {
+  const t = Date.now(), a = Daily.generate(dk); dailyMs = Math.max(dailyMs, Date.now() - t);
+  const b = Daily.generate(dk), g = a.g.split('').map(Number);
+  assert.strictEqual(a.g, b.g, `daily ${dk}: not deterministic`);
+  assert.strictEqual(a.par, Sol.solve(g).length, `daily ${dk}: par is not the optimum`);
+  assert.ok(Math.abs(a.par - Daily.TARGET[Daily.weekday(dk)]) <= 3, `daily ${dk}: par ${a.par} far from target`);
+  assert.strictEqual(a.number, n + 2, `daily ${dk}: number`);
+  Sol.piecesOf(g).forEach((p) => assert.strictEqual(g[p.r * 4 + p.c], Sol.HEAD[p.t]));
+}
+assert.notStrictEqual(Daily.generate('2026-11-02').g, Daily.generate('2026-11-09').g, 'different days differ');
+console.log(`OK: daily puzzle verified for 14 days (deterministic, par = optimum, weekday difficulty; slowest ${dailyMs} ms)`);

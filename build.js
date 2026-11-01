@@ -7,6 +7,7 @@ const draft = read('src/index.html')
   .replace('/*INLINE_CSS*/', () => read('src/style.css'))
   .replace('/*INLINE_SOLVER*/', () => read('src/solver.js'))
   .replace('/*INLINE_LEVELS*/', () => read('src/levels.js'))
+  .replace('/*INLINE_DAILY*/', () => read('src/daily.js'))
   .replace('/*INLINE_GAME*/', () => read('src/game.js'));
 // Version id = short hash of the app itself: it only changes when the app does, and the page, the service worker's
 // cache name and the "Version" label in the menu all agree on it.

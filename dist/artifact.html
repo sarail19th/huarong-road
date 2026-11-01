@@ -335,6 +335,29 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
 /* on/off word beside each switch */
 .setrow .st{min-width:28px;text-align:right;font-size:12px;font-weight:700;color:var(--muted)}
 .setrow .st.on{color:var(--green)}
+
+/* ---------- daily puzzle ---------- */
+.daily{background:var(--panel);border:1px solid var(--yellow);border-radius:16px;padding:12px;margin-bottom:10px}
+.dhead{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:10px}
+.dtag{background:var(--yellow);color:#10131a;font-weight:800;letter-spacing:1px;border-radius:6px;padding:2px 7px;font-size:11px}
+.ddate{color:var(--muted);flex:1}
+.streak{font-weight:700;white-space:nowrap}
+.dbody{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.led.dled{grid-template-columns:repeat(4,10px);grid-template-rows:repeat(5,10px);padding:4px;flex:none}
+.dinfo{display:flex;flex-direction:column;gap:2px;font-size:13px;min-width:0}
+.dinfo b{font-size:16px}
+.dinfo span{color:#c9d2de}
+.dinfo .dnote{color:var(--muted);font-size:12px}
+.week{display:flex;justify-content:space-between;gap:4px;margin:0 0 10px}
+.day{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;max-width:40px;padding:4px 0;border-radius:8px;background:var(--panel2);font-size:11px}
+.day small{color:var(--muted)}
+.day b{color:var(--yellow);min-height:16px}
+.day.miss b,.day.future b{color:#555d69}
+.day.today{outline:2px solid var(--yellow);outline-offset:-2px}
+.daily .btn.go{width:100%}
+.dwin{margin-top:6px}
+.streakbig{font-size:17px;margin:6px 0 8px}
+.dwin .next{color:var(--muted)!important;font-size:13px}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -374,6 +397,12 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
       <button class="icon-btn settings-btn" aria-label="Settings" title="Settings"><svg class="ico" aria-hidden="true"><use href="#i-gear"/></svg></button>
     </div>
     <p class="tagline" data-th="ปริศนาบล็อกเลื่อน · 100 ด่าน">Sliding-block puzzle · 100 levels</p>
+  </div>
+  <div class="daily" id="daily">
+    <div class="dhead"><span class="dtag" data-th="รายวัน">DAILY</span><span class="ddate" id="dDate"></span><span class="streak" id="dStreak"></span></div>
+    <div class="dbody"><div class="led dled" id="dLed" aria-hidden="true"></div><div class="dinfo"><b id="dTitle"></b><span id="dGrade"></span><span class="dnote" id="dNote"></span></div></div>
+    <div class="week" id="dWeek"></div>
+    <button class="btn go" id="dPlay" disabled></button>
   </div>
   <div class="howto" id="howto">
     <button class="howhead" id="howToggle" aria-expanded="true" aria-controls="howBody"><b data-th="วิธีเล่น">How to play</b><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
@@ -551,9 +580,10 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
 
 <div class="overlay hidden" id="win">
   <div class="card" role="dialog" aria-modal="true" aria-labelledby="winTitle" tabindex="-1">
-    <h2 id="winTitle" data-th="ผ่านด่าน!">Cleared!</h2>
+    <h2 id="winTitle">Cleared!</h2>
     <div class="big" id="winStars">★★★</div>
     <p id="winInfo"></p>
+    <div class="dwin hidden" id="dWin"><div class="streakbig" id="dWinStreak"></div><div class="week" id="dWinWeek"></div><p class="next" id="dNext"></p></div>
     <div class="row">
       <button class="btn" id="menuBtn" data-th="ด่าน">Levels</button>
       <button class="btn" id="replayBtn" data-th="เล่นซ้ำ">Replay</button>
@@ -562,7 +592,7 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
   </div>
 </div>
 
-<script>(function (root, factory) {
+<script id="srcSolver">(function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.Solver = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
@@ -689,6 +719,105 @@ button:focus-visible,textarea:focus-visible,.lv:focus-visible{outline:2px solid 
 <script>var LEVELS=[{"id":1,"par":2,"g":"78597865912653496090"},{"id":2,"par":2,"g":"78785599660512963409"},{"id":3,"par":3,"g":"59596065590665129634"},{"id":4,"par":3,"g":"99055506669512563469"},{"id":5,"par":3,"g":"57896990978012553466"},{"id":6,"par":4,"g":"57806955956656126034"},{"id":7,"par":4,"g":"57896009789912553466"},{"id":8,"par":5,"g":"55906655596660129934"},{"id":9,"par":6,"g":"59556566969059126034"},{"id":10,"par":6,"g":"57896978559966120034"},{"id":11,"par":7,"g":"00555566669995129634"},{"id":12,"par":8,"g":"59596560067812953496"},{"id":13,"par":8,"g":"50786785909678129934"},{"id":14,"par":9,"g":"50996785078612593469"},{"id":15,"par":10,"g":"90959556966012553466"},{"id":16,"par":11,"g":"55786695129634789090"},{"id":17,"par":11,"g":"59096978785512663409"},{"id":18,"par":12,"g":"78557866951296340990"},{"id":19,"par":13,"g":"07850786129934559966"},{"id":20,"par":14,"g":"90505569665512663499"},{"id":21,"par":15,"g":"99955786650056126934"},{"id":22,"par":15,"g":"95950656556066129934"},{"id":23,"par":16,"g":"59786900125534669978"},{"id":24,"par":17,"g":"59786912593460559066"},{"id":25,"par":18,"g":"09997855596665120634"},{"id":26,"par":19,"g":"59596065125634659096"},{"id":27,"par":20,"g":"05780699125534669978"},{"id":28,"par":21,"g":"99781255346655096690"},{"id":29,"par":22,"g":"78091259346555966609"},{"id":30,"par":23,"g":"07891259346555966609"},{"id":31,"par":24,"g":"09789912903455556666"},{"id":32,"par":25,"g":"78127834995095659606"},{"id":33,"par":26,"g":"12783478559066959906"},{"id":34,"par":27,"g":"12783478789595069609"},{"id":35,"par":28,"g":"78127834055956606999"},{"id":36,"par":29,"g":"12783450556566969990"},{"id":37,"par":30,"g":"78990125534669550966"},{"id":38,"par":31,"g":"12783478905059656996"},{"id":39,"par":32,"g":"59786120034955956696"},{"id":40,"par":33,"g":"78095129634955956606"},{"id":41,"par":34,"g":"78780912093499557866"},{"id":42,"par":35,"g":"99055786691259346780"},{"id":43,"par":36,"g":"78501265349659506969"},{"id":44,"par":38,"g":"91290340978955556666"},{"id":45,"par":39,"g":"78990125534669057896"},{"id":46,"par":40,"g":"99789595560660127834"},{"id":47,"par":41,"g":"12783455096695059696"},{"id":48,"par":42,"g":"78950126534565969609"},{"id":49,"par":43,"g":"55096678099512963478"},{"id":50,"par":44,"g":"55786612993495050696"},{"id":51,"par":46,"g":"97855126634995590660"},{"id":52,"par":47,"g":"12993478590065559666"},{"id":53,"par":48,"g":"78129934905595660678"},{"id":54,"par":49,"g":"99127834950056556966"},{"id":55,"par":50,"g":"12783409559966507869"},{"id":56,"par":52,"g":"99127834055956656906"},{"id":57,"par":53,"g":"91255346659056786909"},{"id":58,"par":54,"g":"51296345905678650996"},{"id":59,"par":55,"g":"50956126934578569960"},{"id":60,"par":56,"g":"91250346978559566069"},{"id":61,"par":58,"g":"12593465780659956906"},{"id":62,"par":59,"g":"51296340097859556966"},{"id":63,"par":60,"g":"91209345785659656906"},{"id":64,"par":61,"g":"55786699901259346780"},{"id":65,"par":63,"g":"78951206345099659786"},{"id":66,"par":64,"g":"78950126034999557866"},{"id":67,"par":65,"g":"51296349789950556066"},{"id":68,"par":67,"g":"78501269349578569960"},{"id":69,"par":68,"g":"55126634999595060678"},{"id":70,"par":69,"g":"01259346907895559666"},{"id":71,"par":71,"g":"95125634678095509669"},{"id":72,"par":72,"g":"50786512963450786999"},{"id":73,"par":73,"g":"78051256346078599969"},{"id":74,"par":75,"g":"05909678551266349978"},{"id":75,"par":76,"g":"50126934785059656996"},{"id":76,"par":77,"g":"05129634557866599960"},{"id":77,"par":79,"g":"12993450506567869978"},{"id":78,"par":80,"g":"12593469578969057806"},{"id":79,"par":81,"g":"78951256346078599069"},{"id":80,"par":83,"g":"12593460578069597869"},{"id":81,"par":84,"g":"95990612093478557866"},{"id":82,"par":86,"g":"07859126934909557866"},{"id":83,"par":87,"g":"12553466578969780099"},{"id":84,"par":88,"g":"51206345789678059996"},{"id":85,"par":90,"g":"95129634905578667809"},{"id":86,"par":90,"g":"51256346578569969009"},{"id":87,"par":91,"g":"51256346780995099678"},{"id":88,"par":93,"g":"90051296345599667878"},{"id":89,"par":94,"g":"12053496955996607878"},{"id":90,"par":95,"g":"50126034978978957896"},{"id":91,"par":97,"g":"07895512663459096978"},{"id":92,"par":98,"g":"12053496909978557866"},{"id":93,"par":100,"g":"59596969051206347878"},{"id":94,"par":101,"g":"12953496095578667809"},{"id":95,"par":103,"g":"59556966090978127834"},{"id":96,"par":104,"g":"59956596967812003478"},{"id":97,"par":106,"g":"95955696697812003478"},{"id":98,"par":107,"g":"12593469789057806789"},{"id":99,"par":109,"g":"12553466907890597869"},{"id":100,"par":110,"g":"90551266349509967878"}];
 if(typeof module!=="undefined")module.exports=LEVELS;
 </script>
+<script id="srcDaily">// Daily puzzle: generated on the device from the local date, so it works offline and everyone gets the
+// same puzzle on the same day. Same method as gen/gen.js: a random tiling with red parked at the exit,
+// the whole reachable state space, multi-source BFS from the solved states; par is the true optimum.
+// Difficulty climbs through the week (Monday easiest, Sunday hardest).
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./solver.js'));
+  else root.Daily = factory(root.Solver);
+})(this, function (Sol) {
+  'use strict';
+  var EPOCH = Date.UTC(2026, 10, 1);              // 1 Nov 2026 = Daily #1
+  var TARGET = [62, 14, 20, 27, 34, 42, 52];      // by weekday, Sunday = 0
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function dateKey(d) { d = d || new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function utcOf(key) { var p = key.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]); }
+  function weekday(key) { return new Date(utcOf(key)).getUTCDay(); }
+  function numberOf(key) { return Math.round((utcOf(key) - EPOCH) / 864e5) + 1; }
+  function addDays(key, n) { var d = new Date(utcOf(key) + n * 864e5); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()); }
+
+  function tiling(rng) {
+    function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = (rng() * (i + 1)) | 0, t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+    for (;;) {
+      var occ = []; for (var i = 0; i < 20; i++) occ.push(false);
+      [13, 14, 17, 18].forEach(function (x) { occ[x] = true; });
+      var free = []; for (i = 0; i < 20; i++) if (!occ[i]) free.push(i);
+      shuffle(free).slice(0, 2).forEach(function (x) { occ[x] = true; });
+      var ps = [];
+      var dfs = function () {
+        var i = occ.indexOf(false); if (i < 0) return true;
+        var r = (i / 4) | 0, c = i % 4, opts = [], seen = {};
+        shuffle(['V', 'V', 'V', 'H', 'S', 'S']).forEach(function (t) { if (!seen[t]) { seen[t] = 1; opts.push(t); } });
+        for (var k = 0; k < opts.length; k++) {
+          var t = opts[k];
+          if (t === 'V' && !(r + 1 < 5 && !occ[i + 4])) continue;
+          if (t === 'H' && !(c + 1 < 4 && !occ[i + 1])) continue;
+          var cells = t === 'V' ? [i, i + 4] : t === 'H' ? [i, i + 1] : [i];
+          cells.forEach(function (x) { occ[x] = true; }); ps.push({ t: t, r: r, c: c });
+          if (dfs()) return true;
+          ps.pop(); cells.forEach(function (x) { occ[x] = false; });
+        }
+        return false;
+      };
+      if (!dfs()) continue;
+      var s = ps.filter(function (p) { return p.t === 'S'; }).length;
+      if (s < 2 || s > 5) continue;
+      return Sol.fromPieces([{ t: 'R', r: 3, c: 1 }].concat(ps));
+    }
+  }
+
+  // every reachable state, then the distance of each one to the nearest solved state
+  function depths(start) {
+    var grids = new Map(), adj = new Map(), q = [start];
+    grids.set(Sol.key(start), start);
+    for (var qi = 0; qi < q.length; qi++) {
+      var g = q[qi], list = [];
+      Sol.neighbors(g).forEach(function (nb) {
+        var nk = Sol.key(nb.g); list.push(nk);
+        if (!grids.has(nk)) { grids.set(nk, nb.g); q.push(nb.g); }
+      });
+      adj.set(Sol.key(g), list);
+    }
+    var depth = new Map(), dq = [];
+    grids.forEach(function (g, k) { if (Sol.isGoal(g)) { depth.set(k, 0); dq.push(k); } });
+    for (var i = 0; i < dq.length; i++) {
+      var k = dq[i], d = depth.get(k);
+      adj.get(k).forEach(function (nk) { if (!depth.has(nk)) { depth.set(nk, d + 1); dq.push(nk); } });
+    }
+    return { grids: grids, depth: depth };
+  }
+
+  function generate(key) {
+    var rng = mulberry32(hash('huarong-daily-' + key)), target = TARGET[weekday(key)], best = null;
+    for (var attempt = 0; attempt < 4; attempt++) {
+      var r = depths(tiling(rng)), byDepth = {};
+      r.depth.forEach(function (d, k) { if (d > 0) (byDepth[d] = byDepth[d] || []).push(k); });
+      for (var off = 0; off <= 40; off++) {
+        var cands = [target - off, target + off].filter(function (d) { return byDepth[d]; });
+        if (!cands.length) continue;
+        var d = cands[0], keys = byDepth[d], k = keys[(rng() * keys.length) | 0];
+        if (!best || off < best.off) best = { off: off, par: d, g: r.grids.get(k) };
+        break;
+      }
+      if (best && best.off <= 2) break;
+    }
+    return { id: 'd' + key, key: key, number: numberOf(key), par: best.par, g: best.g.join(''), daily: true };
+  }
+
+  return { generate: generate, dateKey: dateKey, numberOf: numberOf, weekday: weekday, addDays: addDays, TARGET: TARGET };
+});
+</script>
 <script>(function () {
   'use strict';
   var Sol = Solver, W = Sol.W, H = Sol.H, DIM = Sol.DIM, HEAD = Sol.HEAD;
@@ -708,7 +837,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   var timerOn = store.get('hr_timer', true); // off = no-stress mode: the clock is hidden (time is still tracked quietly)
   var autoPlace = store.get('hr_auto', true);
   var autoStart = store.get('hr_autostart', false); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = 'a5dcbed'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = 'f93bd24'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
@@ -767,7 +896,10 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     if (par <= 90) return { name: L('Expert', 'เชี่ยวชาญ'), hint: L('serious puzzling', 'ปริศนาจริงจัง') };
     return { name: L('Master', 'ปรมาจารย์'), hint: L('legendary layouts', 'รูปแบบระดับตำนาน') };
   }
-  function levelTitle(i) { return L('Level ', 'ด่าน ') + (i + 1) + ' · ' + gradeOf(LV[i].par).name; }
+  function levelTitle(lv, i) {
+    if (lv.daily) return L('Daily #', 'รายวัน #') + lv.number + ' · ' + dayLabel(lv.key);
+    return L('Level ', 'ด่าน ') + (i + 1) + ' · ' + gradeOf(lv.par).name;
+  }
   function gridOf() { return Sol.fromPieces(G.pieces); }
   function snap() { return G.pieces.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; }); }
 
@@ -862,8 +994,76 @@ if(typeof module!=="undefined")module.exports=LEVELS;
     clearTimer(); G = null; hideTip();
     $('game').classList.add('hidden'); closeDlg('win');
     $('menu').classList.remove('hidden');
-    renderMenu(); window.scrollTo(0, 0);
+    renderMenu(); loadDaily(); window.scrollTo(0, 0);
   }
+
+  /* ---------- daily puzzle: generated from today's date on the device (see daily.js) ---------- */
+  var dailyLv = null, dailyBusy = null;
+  function dayLabel(key) {
+    var p = key.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]);
+    try { return d.toLocaleDateString(lang === 'th' ? 'th-TH' : 'en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); } catch (e) { return key; }
+  }
+  function solvedOn(key) { return !!progress['d' + key]; }
+  function streak() { // consecutive solved days, counting back from today (or from yesterday while today is still open)
+    var k = Daily.dateKey(), n = 0;
+    if (!solvedOn(k)) k = Daily.addDays(k, -1);
+    while (solvedOn(k)) { n++; k = Daily.addDays(k, -1); }
+    return n;
+  }
+  function renderWeek(box) { // this week, Monday to Sunday
+    var today = Daily.dateKey(), mon = Daily.addDays(today, -((Daily.weekday(today) + 6) % 7));
+    var names = lang === 'th' ? ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'] : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    var html = '';
+    for (var i = 0; i < 7; i++) {
+      var k = Daily.addDays(mon, i), done = solvedOn(k), cls = done ? 'done' : k === today ? 'today' : k > today ? 'future' : 'miss';
+      html += '<span class="day ' + cls + '" title="' + k + '"><small>' + names[i] + '</small><b>' + (done ? '★' : k === today ? '?' : k > today ? '·' : '–') + '</b></span>';
+    }
+    box.innerHTML = html;
+  }
+  function untilTomorrow() {
+    var now = new Date(), mid = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1), m = Math.max(1, Math.round((mid - now) / 60000));
+    var h = Math.floor(m / 60); m = m % 60;
+    return L('Next puzzle in <b>' + h + ' h ' + m + ' m</b>', 'ปริศนาถัดไปในอีก <b>' + h + ' ชม. ' + m + ' นาที</b>');
+  }
+  function renderDaily() {
+    var key = Daily.dateKey(), lv = dailyLv && dailyLv.key === key ? dailyLv : null, n = streak();
+    $('dDate').textContent = dayLabel(key);
+    $('dStreak').textContent = n ? '🔥 ' + L(n + '-day streak', 'ต่อเนื่อง ' + n + ' วัน') : L('Start a streak', 'เริ่มสะสมวันต่อเนื่อง');
+    renderWeek($('dWeek'));
+    var led = $('dLed');
+    if (!lv) {
+      $('dTitle').textContent = L('Daily #', 'รายวัน #') + Daily.numberOf(key); $('dGrade').textContent = L('Preparing today’s puzzle…', 'กำลังเตรียมปริศนาวันนี้…'); $('dNote').textContent = '';
+      led.innerHTML = new Array(21).join('<i></i>'); $('dPlay').disabled = true; $('dPlay').textContent = L('Play today’s puzzle', 'เล่นปริศนาวันนี้');
+      return;
+    }
+    var g = lv.g.split('').map(Number), pr = progress[lv.id];
+    led.innerHTML = g.map(function (v) { return '<i class="' + (v === 0 ? '' : v <= 4 ? 'R' : v <= 8 ? 'B' : 'Y') + '"></i>'; }).join('');
+    $('dTitle').textContent = L('Puzzle #', 'ปริศนา #') + lv.number;
+    $('dGrade').textContent = gradeOf(lv.par).name + ' · par ' + lv.par;
+    $('dNote').textContent = pr ? L('Solved ', 'ผ่านแล้ว ') + stars(pr.stars) + ' · ' + pr.moves + ' moves' : L('Same puzzle for everyone today', 'ทุกคนได้ปริศนาเดียวกันในวันนี้');
+    $('dPlay').disabled = false;
+    $('dPlay').textContent = pr ? L('Play again', 'เล่นอีกครั้ง') : L('Play today’s puzzle', 'เล่นปริศนาวันนี้');
+  }
+  // Generate today's puzzle once per day, off the main thread when possible (it explores ~20k positions)
+  function loadDaily() {
+    var key = Daily.dateKey();
+    if (dailyLv && dailyLv.key === key) { renderDaily(); return; }
+    var c = store.get('hr_daily_lv', null);
+    if (c && c.key === key && c.g) { dailyLv = c; renderDaily(); return; }
+    renderDaily();
+    if (dailyBusy === key) return;
+    dailyBusy = key;
+    var done = function (lv) { dailyBusy = null; dailyLv = lv; store.set('hr_daily_lv', lv); renderDaily(); };
+    var inline = function () { setTimeout(function () { done(Daily.generate(key)); }, 30); };
+    try {
+      var src = $('srcSolver').textContent + ';\n' + $('srcDaily').textContent + ';\nonmessage=function(e){postMessage(Daily.generate(e.data));};';
+      var url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' })), w = new Worker(url);
+      w.onmessage = function (e) { w.terminate(); URL.revokeObjectURL(url); done(e.data); };
+      w.onerror = function (e) { if (e && e.preventDefault) e.preventDefault(); w.terminate(); inline(); };
+      w.postMessage(key);
+    } catch (e) { inline(); }
+  }
+  $('dPlay').onclick = function () { if (dailyLv && dailyLv.key === Daily.dateKey()) openLevel(dailyLv); else loadDaily(); };
 
   /* ---------- level lifecycle ---------- */
   function clearBoard() { els.forEach(function (el) { el.remove(); }); els.clear(); }
@@ -871,14 +1071,16 @@ if(typeof module!=="undefined")module.exports=LEVELS;
 
   function openLevel(i) {
     clearTimer();
-    menuPage = Math.floor(i / PAGE); store.set('hr_page', menuPage); // coming back to the menu lands on this level's page
-    var lv = LV[i], target = lv.g.split('').map(Number);
+    var lv = typeof i === 'number' ? LV[i] : i;              // a daily puzzle is passed as its level object
+    if (typeof i !== 'number') i = -1;
+    else { menuPage = Math.floor(i / PAGE); store.set('hr_page', menuPage); } // back on the menu, land on this level's page
+    var target = lv.g.split('').map(Number);
     G = { idx: i, lv: lv, target: target, tpieces: Sol.piecesOf(target), pieces: [], initial: null, dc: {}, trend: null,
           phase: 'setup', sel: null, moves: 0, hints: 0, hist: [], redo: [], t0: 0, elapsed: 0, msg: '', sol: null };
     clearBoard();
     $('menu').classList.add('hidden'); closeDlg('win'); $('game').classList.remove('hidden');
     document.body.dataset.phase = 'setup';
-    $('lvTitle').textContent = levelTitle(i);
+    $('lvTitle').textContent = levelTitle(lv, i);
     renderBest();
     $('par').textContent = lv.par; $('moves').textContent = '0'; $('time').textContent = '0:00';
     G.sel = firstAvailable();
@@ -1437,8 +1639,16 @@ if(typeof module!=="undefined")module.exports=LEVELS;
         (G.hints ? ' · ' + L('Hints ', 'คำใบ้ ') + G.hints : '') + (bestLine ? '<span class="best">' + bestLine + '</span>' : '') +
         (seen[G.lv.id] ? '<br>' + L('Solution viewed — no stars for this level', 'ดูเฉลยแล้ว — ด่านนี้ไม่ได้ดาว') : '');
       renderBest();
-      $('nextBtn').classList.toggle('hidden', G.idx + 1 >= LV.length);
-      openDlg('win', G.idx + 1 < LV.length ? '#nextBtn' : '#menuBtn');
+      var daily = !!G.lv.daily, hasNext = !daily && G.idx + 1 < LV.length;
+      $('winTitle').textContent = daily ? L('Daily solved!', 'ผ่านปริศนารายวัน!') : L('Cleared!', 'ผ่านด่าน!');
+      $('dWin').classList.toggle('hidden', !daily);
+      if (daily) {
+        var n = streak();
+        $('dWinStreak').innerHTML = '🔥 ' + L('<b>' + n + '</b>-day streak', 'ต่อเนื่อง <b>' + n + '</b> วัน');
+        renderWeek($('dWinWeek')); $('dNext').innerHTML = untilTomorrow();
+      }
+      $('nextBtn').classList.toggle('hidden', !hasNext);
+      openDlg('win', hasNext ? '#nextBtn' : '#menuBtn');
     }, 950);
   }
   $('nextBtn').onclick = function () { openLevel(G.idx + 1); };
@@ -1520,10 +1730,10 @@ if(typeof module!=="undefined")module.exports=LEVELS;
       b.setAttribute('aria-pressed', lang === 'th');
       b.setAttribute('aria-label', lang === 'th' ? 'ภาษา: ไทย (แตะเพื่อเปลี่ยนเป็น English)' : 'Language: English (tap for Thai)');
     });
-    renderMenu();
+    renderMenu(); renderDaily();
     Array.prototype.forEach.call(document.querySelectorAll('.setrow[role=switch]'), renderSwitchText);
     if (!G) return;
-    $('lvTitle').textContent = levelTitle(G.idx);
+    $('lvTitle').textContent = levelTitle(G.lv, G.idx);
     if (G.msg) G.msg = '';
     renderStatus();
     if (G.phase === 'play' && G.hint && !$('tip').classList.contains('hidden')) showHint(G.hint);
@@ -1623,6 +1833,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   $('settings').addEventListener('click', function (e) { if (e.target === this) showSettings(false); });
   applySkin(); renderSkinOpts();
   applyLang();
+  loadDaily();
 
   /* ---------- app updates: refresh button + "new version ready" banner ---------- */
   var hasSW = 'serviceWorker' in navigator && /^https?:/.test(location.protocol);

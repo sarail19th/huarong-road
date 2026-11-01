@@ -4,6 +4,7 @@ Klotski-style sliding-block puzzle (4x5 board, slide the big red 2x2 to the bott
 
 ## Layout
 - `src/solver.js` - board model + BFS solver. Grid is 20 cells, row-major. Codes: 0 empty, 1-4 red 2x2 (TL,TR,BL,BR), 5-6 vertical 1x2, 7-8 horizontal 2x1, 9 single. One "move" = one block slid any distance in a straight line. Goal: red top-left at row 3, col 1.
+- `src/daily.js` - daily puzzle, generated on the device from the local date (offline; same puzzle for everyone that day): seeded random tiling + full state-space BFS like `gen/gen.js`, par = true optimum, weekday difficulty targets (`TARGET`, Mon 14 ... Sun 62). Daily #1 = 1 Nov 2026. UMD, also used by `test/test.js`.
 - `src/levels.js` - GENERATED (100 levels, `{id, par, g}`). Do not hand-edit; run the generator.
 - `src/game.js` - all UI logic. Main pieces:
   - **Setup phase:** copy the LED layout; chip check = piece type at the right cell. The Auto-place toggle (default ON, `hr_auto`) pre-fills every level.
@@ -13,9 +14,10 @@ Klotski-style sliding-block puzzle (4x5 board, slide the big red 2x2 to the bott
   - **Settings panel** (gear, top-right on the menu and in the game). In order: language switch (`EN | TH`, active side highlighted, `hr_lang`); skin picker (8 skins: classic, blossom, neon, ocean, sunset, forest, mono, gold, all shown at once as live preview tiles; each skin is a `[data-skin=...]` block of CSS variables in `style.css` that sets every variable it uses, and a tile carries its own `data-skin` to paint itself; `hr_skin`); sound (`hr_muted`); vibration (`hr_haptics`, hidden where unsupported); Auto-place switch (`hr_auto`, same setting as the key on the setup screen, kept in sync); Auto-start switch (`hr_autostart`, default off: opening a level places the blocks and starts playing at once, skipping the chips and the Start button; it overrides Auto-place); Timer switch (`hr_timer`; off = no-stress mode: the clock and the win-card time are hidden, time is still tracked); Back up progress (opens a dialog: copy a `HR1.<base64 JSON>` code or save it as a .txt file, restore from a pasted code or a file; restoring merges, keeping the best of both, and never loses progress). Every switch shows On/Off (เปิด/ปิด) beside the pill.
   - **Language:** `EN | TH` switches every action, message, hint, grade name and the solution viewer to Thai; brand name and the game terms Moves, Par, Time, Best, Undo, Redo and EXIT stay English on purpose (`L(en, th)` in code, `data-th` attributes in the HTML for static text). The switch also lives in the About panel.
   - **Dialogs:** `openDlg`/`closeDlg` move keyboard focus into a dialog and back to the opener; Esc closes the top dialog (except the win card); Tab stays inside.
+  - **Daily puzzle:** card at the top of the menu (date, streak, LED preview, grade + par, this week's row, Play). Generated once per day in a Web Worker built from the inlined `srcSolver` + `srcDaily` scripts (falls back to the main thread), cached in `hr_daily_lv`. Results live in `hr_progress` under `d<YYYY-MM-DD>` (so backups include them; they do not count toward the 300 level stars). Streak = consecutive solved days back from today (or yesterday while today is open). The win card shows streak, week row and a countdown to midnight.
   - **Best score:** fewest moves per level, shown as a 4th stat (`Best`) once a level is cleared and on the win card ("New best!" when beaten).
   - **About panel** (`?`): 4 pages with Back/Next and dots; story behind the name, Thai-aware; numbers quoted there were checked against the solver.
-  - **Menu:** collapsible "How to play" panel (open on first launch, `hr_howto`); paged level list (20 per page via chips + prev/next, `hr_page` remembers the page, opening a level moves the menu to its page); win + stars + progress in localStorage (`hr_progress`).
+  - **Menu:** collapsible "How to play" panel (open on first launch, `hr_howto`); paged level list (20 per page via chips + prev/next, `hr_page` remembers the page, opening a level moves the menu to its page); win + stars + progress in localStorage (`hr_progress`; daily cache `hr_daily_lv`).
   - **In-app updater:** the `Update` pill next to the `Version <hash>` label at the bottom of the menu probes the server, clears caches + the old service worker and reloads; a "new version ready · Update" banner shows when a new worker takes over. Progress/localStorage is never touched.
 - `src/style.css`, `src/index.html` - templates with `/*INLINE_...*/` placeholders.
 - `gen/gen.js` - level generator (seeded, deterministic). `gen/icons.py` - PWA icons (needs Pillow).
@@ -43,4 +45,4 @@ Serve `dist/` over https (or localhost) for the service worker to register; open
 See `NOTICE.md` (icons adapted from Material Design icons, Apache-2.0; licence text in `third_party/`).
 
 ## Ideas not built yet
-Daily puzzle, level editor, Capacitor/TWA wrapper for a real APK.
+Level editor (mockup agreed: place blocks, live solvability + optimum, test play, save to My levels; sharing codes optional), Capacitor/TWA wrapper for a real APK.

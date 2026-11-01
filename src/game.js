@@ -76,7 +76,10 @@
     if (par <= 90) return { name: L('Expert', 'เชี่ยวชาญ'), hint: L('serious puzzling', 'ปริศนาจริงจัง') };
     return { name: L('Master', 'ปรมาจารย์'), hint: L('legendary layouts', 'รูปแบบระดับตำนาน') };
   }
-  function levelTitle(i) { return L('Level ', 'ด่าน ') + (i + 1) + ' · ' + gradeOf(LV[i].par).name; }
+  function levelTitle(lv, i) {
+    if (lv.daily) return L('Daily #', 'รายวัน #') + lv.number + ' · ' + dayLabel(lv.key);
+    return L('Level ', 'ด่าน ') + (i + 1) + ' · ' + gradeOf(lv.par).name;
+  }
   function gridOf() { return Sol.fromPieces(G.pieces); }
   function snap() { return G.pieces.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; }); }
 
@@ -171,8 +174,76 @@
     clearTimer(); G = null; hideTip();
     $('game').classList.add('hidden'); closeDlg('win');
     $('menu').classList.remove('hidden');
-    renderMenu(); window.scrollTo(0, 0);
+    renderMenu(); loadDaily(); window.scrollTo(0, 0);
   }
+
+  /* ---------- daily puzzle: generated from today's date on the device (see daily.js) ---------- */
+  var dailyLv = null, dailyBusy = null;
+  function dayLabel(key) {
+    var p = key.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]);
+    try { return d.toLocaleDateString(lang === 'th' ? 'th-TH' : 'en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); } catch (e) { return key; }
+  }
+  function solvedOn(key) { return !!progress['d' + key]; }
+  function streak() { // consecutive solved days, counting back from today (or from yesterday while today is still open)
+    var k = Daily.dateKey(), n = 0;
+    if (!solvedOn(k)) k = Daily.addDays(k, -1);
+    while (solvedOn(k)) { n++; k = Daily.addDays(k, -1); }
+    return n;
+  }
+  function renderWeek(box) { // this week, Monday to Sunday
+    var today = Daily.dateKey(), mon = Daily.addDays(today, -((Daily.weekday(today) + 6) % 7));
+    var names = lang === 'th' ? ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'] : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    var html = '';
+    for (var i = 0; i < 7; i++) {
+      var k = Daily.addDays(mon, i), done = solvedOn(k), cls = done ? 'done' : k === today ? 'today' : k > today ? 'future' : 'miss';
+      html += '<span class="day ' + cls + '" title="' + k + '"><small>' + names[i] + '</small><b>' + (done ? '★' : k === today ? '?' : k > today ? '·' : '–') + '</b></span>';
+    }
+    box.innerHTML = html;
+  }
+  function untilTomorrow() {
+    var now = new Date(), mid = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1), m = Math.max(1, Math.round((mid - now) / 60000));
+    var h = Math.floor(m / 60); m = m % 60;
+    return L('Next puzzle in <b>' + h + ' h ' + m + ' m</b>', 'ปริศนาถัดไปในอีก <b>' + h + ' ชม. ' + m + ' นาที</b>');
+  }
+  function renderDaily() {
+    var key = Daily.dateKey(), lv = dailyLv && dailyLv.key === key ? dailyLv : null, n = streak();
+    $('dDate').textContent = dayLabel(key);
+    $('dStreak').textContent = n ? '🔥 ' + L(n + '-day streak', 'ต่อเนื่อง ' + n + ' วัน') : L('Start a streak', 'เริ่มสะสมวันต่อเนื่อง');
+    renderWeek($('dWeek'));
+    var led = $('dLed');
+    if (!lv) {
+      $('dTitle').textContent = L('Daily #', 'รายวัน #') + Daily.numberOf(key); $('dGrade').textContent = L('Preparing today’s puzzle…', 'กำลังเตรียมปริศนาวันนี้…'); $('dNote').textContent = '';
+      led.innerHTML = new Array(21).join('<i></i>'); $('dPlay').disabled = true; $('dPlay').textContent = L('Play today’s puzzle', 'เล่นปริศนาวันนี้');
+      return;
+    }
+    var g = lv.g.split('').map(Number), pr = progress[lv.id];
+    led.innerHTML = g.map(function (v) { return '<i class="' + (v === 0 ? '' : v <= 4 ? 'R' : v <= 8 ? 'B' : 'Y') + '"></i>'; }).join('');
+    $('dTitle').textContent = L('Puzzle #', 'ปริศนา #') + lv.number;
+    $('dGrade').textContent = gradeOf(lv.par).name + ' · par ' + lv.par;
+    $('dNote').textContent = pr ? L('Solved ', 'ผ่านแล้ว ') + stars(pr.stars) + ' · ' + pr.moves + ' moves' : L('Same puzzle for everyone today', 'ทุกคนได้ปริศนาเดียวกันในวันนี้');
+    $('dPlay').disabled = false;
+    $('dPlay').textContent = pr ? L('Play again', 'เล่นอีกครั้ง') : L('Play today’s puzzle', 'เล่นปริศนาวันนี้');
+  }
+  // Generate today's puzzle once per day, off the main thread when possible (it explores ~20k positions)
+  function loadDaily() {
+    var key = Daily.dateKey();
+    if (dailyLv && dailyLv.key === key) { renderDaily(); return; }
+    var c = store.get('hr_daily_lv', null);
+    if (c && c.key === key && c.g) { dailyLv = c; renderDaily(); return; }
+    renderDaily();
+    if (dailyBusy === key) return;
+    dailyBusy = key;
+    var done = function (lv) { dailyBusy = null; dailyLv = lv; store.set('hr_daily_lv', lv); renderDaily(); };
+    var inline = function () { setTimeout(function () { done(Daily.generate(key)); }, 30); };
+    try {
+      var src = $('srcSolver').textContent + ';\n' + $('srcDaily').textContent + ';\nonmessage=function(e){postMessage(Daily.generate(e.data));};';
+      var url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' })), w = new Worker(url);
+      w.onmessage = function (e) { w.terminate(); URL.revokeObjectURL(url); done(e.data); };
+      w.onerror = function (e) { if (e && e.preventDefault) e.preventDefault(); w.terminate(); inline(); };
+      w.postMessage(key);
+    } catch (e) { inline(); }
+  }
+  $('dPlay').onclick = function () { if (dailyLv && dailyLv.key === Daily.dateKey()) openLevel(dailyLv); else loadDaily(); };
 
   /* ---------- level lifecycle ---------- */
   function clearBoard() { els.forEach(function (el) { el.remove(); }); els.clear(); }
@@ -180,14 +251,16 @@
 
   function openLevel(i) {
     clearTimer();
-    menuPage = Math.floor(i / PAGE); store.set('hr_page', menuPage); // coming back to the menu lands on this level's page
-    var lv = LV[i], target = lv.g.split('').map(Number);
+    var lv = typeof i === 'number' ? LV[i] : i;              // a daily puzzle is passed as its level object
+    if (typeof i !== 'number') i = -1;
+    else { menuPage = Math.floor(i / PAGE); store.set('hr_page', menuPage); } // back on the menu, land on this level's page
+    var target = lv.g.split('').map(Number);
     G = { idx: i, lv: lv, target: target, tpieces: Sol.piecesOf(target), pieces: [], initial: null, dc: {}, trend: null,
           phase: 'setup', sel: null, moves: 0, hints: 0, hist: [], redo: [], t0: 0, elapsed: 0, msg: '', sol: null };
     clearBoard();
     $('menu').classList.add('hidden'); closeDlg('win'); $('game').classList.remove('hidden');
     document.body.dataset.phase = 'setup';
-    $('lvTitle').textContent = levelTitle(i);
+    $('lvTitle').textContent = levelTitle(lv, i);
     renderBest();
     $('par').textContent = lv.par; $('moves').textContent = '0'; $('time').textContent = '0:00';
     G.sel = firstAvailable();
@@ -746,8 +819,16 @@
         (G.hints ? ' · ' + L('Hints ', 'คำใบ้ ') + G.hints : '') + (bestLine ? '<span class="best">' + bestLine + '</span>' : '') +
         (seen[G.lv.id] ? '<br>' + L('Solution viewed — no stars for this level', 'ดูเฉลยแล้ว — ด่านนี้ไม่ได้ดาว') : '');
       renderBest();
-      $('nextBtn').classList.toggle('hidden', G.idx + 1 >= LV.length);
-      openDlg('win', G.idx + 1 < LV.length ? '#nextBtn' : '#menuBtn');
+      var daily = !!G.lv.daily, hasNext = !daily && G.idx + 1 < LV.length;
+      $('winTitle').textContent = daily ? L('Daily solved!', 'ผ่านปริศนารายวัน!') : L('Cleared!', 'ผ่านด่าน!');
+      $('dWin').classList.toggle('hidden', !daily);
+      if (daily) {
+        var n = streak();
+        $('dWinStreak').innerHTML = '🔥 ' + L('<b>' + n + '</b>-day streak', 'ต่อเนื่อง <b>' + n + '</b> วัน');
+        renderWeek($('dWinWeek')); $('dNext').innerHTML = untilTomorrow();
+      }
+      $('nextBtn').classList.toggle('hidden', !hasNext);
+      openDlg('win', hasNext ? '#nextBtn' : '#menuBtn');
     }, 950);
   }
   $('nextBtn').onclick = function () { openLevel(G.idx + 1); };
@@ -829,10 +910,10 @@
       b.setAttribute('aria-pressed', lang === 'th');
       b.setAttribute('aria-label', lang === 'th' ? 'ภาษา: ไทย (แตะเพื่อเปลี่ยนเป็น English)' : 'Language: English (tap for Thai)');
     });
-    renderMenu();
+    renderMenu(); renderDaily();
     Array.prototype.forEach.call(document.querySelectorAll('.setrow[role=switch]'), renderSwitchText);
     if (!G) return;
-    $('lvTitle').textContent = levelTitle(G.idx);
+    $('lvTitle').textContent = levelTitle(G.lv, G.idx);
     if (G.msg) G.msg = '';
     renderStatus();
     if (G.phase === 'play' && G.hint && !$('tip').classList.contains('hidden')) showHint(G.hint);
@@ -932,6 +1013,7 @@
   $('settings').addEventListener('click', function (e) { if (e.target === this) showSettings(false); });
   applySkin(); renderSkinOpts();
   applyLang();
+  loadDaily();
 
   /* ---------- app updates: refresh button + "new version ready" banner ---------- */
   var hasSW = 'serviceWorker' in navigator && /^https?:/.test(location.protocol);

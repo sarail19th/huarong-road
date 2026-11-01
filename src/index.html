@@ -49,6 +49,12 @@
     </div>
     <p class="tagline" data-th="ปริศนาบล็อกเลื่อน · 100 ด่าน">Sliding-block puzzle · 100 levels</p>
   </div>
+  <div class="daily" id="daily">
+    <div class="dhead"><span class="dtag" data-th="รายวัน">DAILY</span><span class="ddate" id="dDate"></span><span class="streak" id="dStreak"></span></div>
+    <div class="dbody"><div class="led dled" id="dLed" aria-hidden="true"></div><div class="dinfo"><b id="dTitle"></b><span id="dGrade"></span><span class="dnote" id="dNote"></span></div></div>
+    <div class="week" id="dWeek"></div>
+    <button class="btn go" id="dPlay" disabled></button>
+  </div>
   <div class="howto" id="howto">
     <button class="howhead" id="howToggle" aria-expanded="true" aria-controls="howBody"><b data-th="วิธีเล่น">How to play</b><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
     <div class="howbody" id="howBody" data-th="<ol>
@@ -225,9 +231,10 @@
 
 <div class="overlay hidden" id="win">
   <div class="card" role="dialog" aria-modal="true" aria-labelledby="winTitle" tabindex="-1">
-    <h2 id="winTitle" data-th="ผ่านด่าน!">Cleared!</h2>
+    <h2 id="winTitle">Cleared!</h2>
     <div class="big" id="winStars">★★★</div>
     <p id="winInfo"></p>
+    <div class="dwin hidden" id="dWin"><div class="streakbig" id="dWinStreak"></div><div class="week" id="dWinWeek"></div><p class="next" id="dNext"></p></div>
     <div class="row">
       <button class="btn" id="menuBtn" data-th="ด่าน">Levels</button>
       <button class="btn" id="replayBtn" data-th="เล่นซ้ำ">Replay</button>
@@ -236,8 +243,9 @@
   </div>
 </div>
 
-<script>/*INLINE_SOLVER*/</script>
+<script id="srcSolver">/*INLINE_SOLVER*/</script>
 <script>/*INLINE_LEVELS*/</script>
+<script id="srcDaily">/*INLINE_DAILY*/</script>
 <script>/*INLINE_GAME*/</script>
 </body>
 </html>

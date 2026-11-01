@@ -896,6 +896,60 @@ def toggles(p):
     ctx.close(); assert not errors, errors
 
 
+def daily(p):
+    """Daily puzzle from the date: same as the Node generator, playable, streak + week row, rolls over at midnight."""
+    import datetime
+    ctx = launch(p).new_context(viewport={'width': 390, 'height': 820}, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    def at(y, m, d, h=9):
+        page.clock.set_fixed_time(datetime.datetime(y, m, d, h, 30)); page.goto(URL)
+        page.wait_for_function("() => !document.getElementById('dPlay').disabled", timeout=20000)
+    def play_daily(extra=0):
+        page.click('#dPlay')
+        if page.locator('#startBtn').is_visible(): page.click('#startBtn')
+        g = page.evaluate("() => JSON.parse(localStorage.getItem('hr_daily_lv')).g")
+        sol = page.evaluate("(g) => Solver.solve(g.split('').map(Number))", g)
+        for m in sol:
+            bx = page.locator('#board').bounding_box(); cs = (bx['width'] - 20) / 4; d = {'R': (2, 2), 'V': (1, 2), 'H': (2, 1), 'S': (1, 1)}[m['t']]
+            sx = bx['x'] + 10 + (m['c'] + d[0] / 2) * cs; sy = bx['y'] + 10 + (m['r'] + d[1] / 2) * cs
+            page.mouse.move(sx, sy); page.mouse.down()
+            for i in range(1, 7): page.mouse.move(sx + m['dc'] * m['k'] * cs * i / 6, sy + m['dr'] * m['k'] * cs * i / 6)
+            page.mouse.up(); page.wait_for_timeout(200)
+        page.wait_for_selector('#win:not(.hidden)', timeout=5000)
+        return len(sol)
+    at(2026, 11, 4)                                                    # a Wednesday
+    lvd = page.evaluate("() => JSON.parse(localStorage.getItem('hr_daily_lv'))")
+    assert lvd['key'] == '2026-11-04' and lvd['number'] == 4
+    assert page.evaluate("(k) => Daily.generate(k).g", '2026-11-04') == lvd['g'], 'background result = direct generation'
+    assert abs(lvd['par'] - 27) <= 3, lvd['par']
+    assert 'Puzzle #4' in page.inner_text('#daily') and f"par {lvd['par']}" in page.inner_text('#daily') and 'Start a streak' in page.inner_text('#daily')
+    assert page.locator('#dWeek .day').count() == 7 and page.locator('#dWeek .day.today').count() == 1
+    n = play_daily()
+    assert page.inner_text('#lvTitle').startswith('Daily #4')
+    assert page.inner_text('#winTitle') == 'Daily solved!' and page.locator('#nextBtn').is_hidden()
+    assert '1-day streak' in page.inner_text('#dWinStreak') and 'Next puzzle in' in page.inner_text('#dNext')
+    assert '14 h 30 m' in page.inner_text('#dNext'), page.inner_text('#dNext')
+    assert page.locator('#dWinWeek .day.done').count() == 1 and page.locator('#win .big').inner_text() == '★★★'
+    page.screenshot(path=f'{SHOTS}/daily_win.png')
+    page.click('#menuBtn')
+    assert 'Solved ★★★' in page.inner_text('#daily') and page.inner_text('#dPlay') == 'Play again' and '1-day streak' in page.inner_text('#dStreak')
+    assert page.inner_text('#totalStars').startswith('0 /'), 'daily stars are separate from the 300 level stars'
+    at(2026, 11, 5)                                                    # next day: new puzzle, streak still alive
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_daily_lv')).key") == '2026-11-05'
+    assert '1-day streak' in page.inner_text('#dStreak') and page.inner_text('#dPlay') == 'Play today’s puzzle'
+    play_daily(); assert '2-day streak' in page.inner_text('#dWinStreak')
+    page.click('#menuBtn'); assert page.locator('#dWeek .day.done').count() == 2
+    toggle_lang(page); assert 'ต่อเนื่อง 2 วัน' in page.inner_text('#dStreak') and 'ปริศนา #5' in page.inner_text('#daily'); toggle_lang(page)
+    at(2026, 11, 7)                                                    # skipped the 6th: streak broken
+    assert 'Start a streak' in page.inner_text('#dStreak') and page.locator('#dWeek .day.miss').count() >= 1
+    # backup carries daily results too
+    settings(page); page.click('#backupBtn'); code = page.locator('#bkOut').input_value(); page.click('#bkClose')
+    assert '2026-11-04' in page.evaluate("(c) => decodeURIComponent(escape(atob(c.slice(4))))", code)
+    ctx.close(); assert not errors, errors
+
+
 with sync_playwright() as p:
     if os.environ.get('HR_ONLY'):
         globals()[os.environ['HR_ONLY']](p); print('ONLY', os.environ['HR_ONLY'], 'OK'); sys.exit(0)
@@ -905,6 +959,8 @@ with sync_playwright() as p:
     autostart(p)
     polish(p)
     toggles(p)
+    daily(p)
+    print('daily: generated from the date, playable, streak + week row, day rollover, in backups')
     print('toggles: Auto-place switch synced with the setup key, On/Off words on every switch')
     print('polish: Thai covers actions, dialogs keyboard-safe, backup round-trips, best score')
     print('auto-start: skips setup, Next/reload keep it, off restores setup')
