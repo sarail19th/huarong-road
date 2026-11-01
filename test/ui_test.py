@@ -150,6 +150,10 @@ def features(p):
     assert page.locator('#tip').is_visible()
     head1, body1 = page.locator('#tipHead').inner_text(), page.locator('#tipBody').inner_text()
     assert page.locator('.piece[data-focus]').count() >= 1 and page.locator('.piece[data-hint]').count() == 0
+    assert page.evaluate("() => getComputedStyle(document.querySelector('#tipHead .step')).float") == 'none', 'step label must not float into the text'
+    sb = page.locator('#tipHead .step').bounding_box(); hb = page.locator('#tipHead').bounding_box(); bb = page.locator('#tipBody').bounding_box()
+    assert sb['y'] <= hb['y'] + 2 and bb['y'] >= hb['y'] + hb['height'] - 2, 'step line above the headline; body starts below it'
+    assert bb['x'] <= hb['x'] + 2, 'body text starts at the left edge, not pushed in by a float'
     page.screenshot(path=f'{SHOTS}/blossom_hint1.png')
     page.click('#hintBtn')
     assert page.locator('.piece[data-hint]').count() == 1 and 'Try this' in page.locator('#tipHead').inner_text()
@@ -616,7 +620,8 @@ def controls(p):
     # Thai confirm
     play(sol[0]); toggle_lang(page); page.click('#restartBtn')
     assert 'เริ่มด่านนี้ใหม่' in page.locator('#rsAsk h2').inner_text() and page.locator('#rsYes').inner_text() == 'เริ่มใหม่'
-    assert page.locator('#undoBtn').inner_text() == 'ย้อนกลับ' and page.locator('#redoBtn').inner_text() == 'ทำซ้ำ'
+    assert page.locator('#undoBtn').inner_text() == 'Undo' and page.locator('#redoBtn').inner_text() == 'Redo' and page.locator('#timeStat small').text_content() == 'Time', 'game terms stay English in Thai mode'
+    assert page.locator('#hintBtn').inner_text() == 'คำใบ้'
     page.click('#rsNo'); toggle_lang(page)
     # settings panel: sound + vibration switches and skin options; gear opens, Done / backdrop / Esc close
     settings(page)

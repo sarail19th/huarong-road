@@ -201,7 +201,7 @@ html:not([lang=th]) .lang-btn .en,html[lang=th] .lang-btn .th{background:var(--y
 .tip{margin:0 2px 10px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--yellow);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.45;color:#c9d2de}
 .tip b{display:block;color:var(--text);margin-bottom:2px}
 .tip em{display:block;margin-top:6px;font-style:normal;color:var(--muted);font-size:12.5px}
-.tip .step{float:right;color:var(--muted);font-size:11.5px;font-weight:400}
+.tip .step{display:block;margin:0 0 3px;color:var(--muted);font-size:11.5px;font-weight:400}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--panel2);border:1px solid var(--yellow);color:var(--text);
   border-radius:999px;padding:8px 18px;font-size:13px;z-index:30;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.5)}
 
@@ -385,7 +385,7 @@ body.notimer #timeStat{display:none}
     <button class="icon-btn settings-btn" aria-label="Settings" title="Settings"><svg class="ico" aria-hidden="true"><use href="#i-gear"/></svg></button>
   </div>
   <div class="stats">
-    <div class="stat" id="timeStat"><small data-th="เวลา">Time</small><b id="time">0:00</b></div>
+    <div class="stat" id="timeStat"><small>Time</small><b id="time">0:00</b></div>
     <div class="stat"><small>Moves</small><b id="moves">0</b></div>
     <div class="stat"><small>Par</small><b id="par">0</b></div>
   </div>
@@ -397,8 +397,8 @@ body.notimer #timeStat{display:none}
         <button class="key toggle only-setup" id="autoBtn" aria-pressed="true">Auto-place</button>
         <button class="key only-setup" id="clearBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg><span>Clear</span></button>
         <div class="grp only-play" role="group" aria-label="Undo and redo">
-          <button class="tool" id="undoBtn" aria-label="Undo" disabled><svg class="ico" aria-hidden="true"><use href="#i-undo"/></svg><span data-th="ย้อนกลับ">Undo</span></button>
-          <button class="tool" id="redoBtn" aria-label="Redo" disabled><svg class="ico flip" aria-hidden="true"><use href="#i-undo"/></svg><span data-th="ทำซ้ำ">Redo</span></button>
+          <button class="tool" id="undoBtn" aria-label="Undo" disabled><svg class="ico" aria-hidden="true"><use href="#i-undo"/></svg><span>Undo</span></button>
+          <button class="tool" id="redoBtn" aria-label="Redo" disabled><svg class="ico flip" aria-hidden="true"><use href="#i-undo"/></svg><span>Redo</span></button>
         </div>
       </div>
     </div>
@@ -667,7 +667,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   var haptics = store.get('hr_haptics', true);
   var timerOn = store.get('hr_timer', true); // off = no-stress mode: the clock is hidden (time is still tracked quietly)
   var autoPlace = store.get('hr_auto', true);
-  var BUILD = '45debe5'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = '5843db9'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
@@ -1203,7 +1203,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
       var m = i.first, arrow = m.dr < 0 ? '↑' : m.dr > 0 ? '↓' : m.dc < 0 ? '←' : '→';
       els.get(i.mover.id).setAttribute('data-hint', arrow + (m.k > 1 ? m.k : ''));
     }
-    $('tipHead').innerHTML = t.head + '<span class="step">' + L(i.left + ' move' + (i.left > 1 ? 's' : '') + ' to go · hint ' + h.tier + '/2', 'เหลืออีก ' + i.left + ' ครั้ง · คำใบ้ ' + h.tier + '/2') + '</span>';
+    $('tipHead').innerHTML = '<span class="step">' + L(i.left + ' move' + (i.left > 1 ? 's' : '') + ' to go · hint ' + h.tier + '/2', 'เหลืออีก ' + i.left + ' ครั้ง · คำใบ้ ' + h.tier + '/2') + '</span>' + t.head;
     $('tipBody').textContent = t.body; $('tipWhy').textContent = t.why;
     $('tip').classList.remove('hidden');
     try { $('tip').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
