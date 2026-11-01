@@ -965,7 +965,10 @@ def design(p):
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
     page.goto(URL)
     assert 'Build your own puzzle' in page.inner_text('#dsCard')
-    page.click('#dsOpen'); assert page.evaluate("() => document.body.dataset.phase") == 'design'
+    page.click('#dsOpen'); assert page.locator('#stages').is_visible() and page.locator('#stEmpty').is_visible(), 'My stages page, empty state'
+    assert page.inner_text('#stCount') == '0 / 50' and page.inner_text('#stHard') == '–'
+    page.screenshot(path=f'{SHOTS}/stages_empty.png')
+    page.click('#stNew'); assert page.evaluate("() => document.body.dataset.phase") == 'design'
     assert page.inner_text('#lvTitle') == 'Design stage' and page.locator('.stats').is_hidden() and page.locator('#undoBtn').is_hidden()
     def tap(r, c):
         bx = page.locator('#board').bounding_box(); cs = (bx['width'] - 20) / 4
@@ -989,13 +992,16 @@ def design(p):
     assert head() in ('Mirror image of Level 10', 'Same as Level 10'), head()
     build([('R', 0, 0), ('H', 0, 2), ('H', 1, 2), ('H', 2, 0), ('H', 2, 2), ('H', 3, 0), ('H', 3, 2), ('H', 4, 0)])
     assert head() == '✗ No solution' and page.locator('#dsSave').is_disabled() and page.locator('#dsTest').is_disabled()
+    assert 'fewer than 4 small blocks' in page.inner_text('#dsCheck'), 'tip for a locked layout with no small blocks'
     build([('R', 0, 1), ('V', 0, 0), ('V', 0, 3), ('V', 2, 0), ('H', 2, 1), ('V', 2, 3), ('S', 3, 1), ('S', 3, 2), ('S', 4, 0), ('S', 4, 1)])
     assert head().startswith('✓ Solvable · minimum ') and 'Grade: ' in page.inner_text('#dsBody'), head()
     par = int(re.search(r'minimum (\d+)', head()).group(1))
     page.screenshot(path=f'{SHOTS}/design.png', full_page=True)
     page.click('#dsSave')
     assert 'Saved as Stage 1' in page.inner_text('#status') and page.inner_text('#lvTitle') == 'Edit stage 1'
-    assert page.locator('#dsSave').is_disabled() and page.locator('.dsrow').count() == 1 and '1 / 50' in page.inner_text('#dsListCount')
+    assert page.locator('#dsSave').is_disabled() and 'tip2' not in page.inner_html('#dsCheck'), 'tip gone once it is solvable'
+    page.click('#backBtn'); assert page.locator('#stages').is_visible(), 'editor back -> My stages'
+    assert page.locator('.dsrow').count() == 1 and page.inner_text('#stCount') == '1 / 50' and page.inner_text('#stHard') == f'par {par}' and page.locator('#stEmpty').is_hidden()
     stored = page.evaluate("() => JSON.parse(localStorage.getItem('hr_designs'))"); assert stored[0]['n'] == 1 and stored[0]['par'] == par
     # play the saved stage from the list (opens straight into play), win records stars for that stage
     page.click('.dsrow .dsplay')
@@ -1008,9 +1014,12 @@ def design(p):
         for i in range(1, 7): page.mouse.move(sx + m['dc'] * m['k'] * cs * i / 6, sy + m['dr'] * m['k'] * cs * i / 6)
         page.mouse.up(); page.wait_for_timeout(120)
     page.wait_for_selector('#win:not(.hidden)', timeout=5000)
-    assert page.inner_text('#menuBtn') == 'Edit' and page.locator('#nextBtn').is_hidden()
+    assert page.inner_text('#menuBtn') == 'My stages' and page.locator('#nextBtn').is_hidden()
     assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_progress'))['s1'].stars") == 3
-    page.click('#menuBtn'); assert page.evaluate("() => document.body.dataset.phase") == 'design' and '★★★' in page.inner_text('#dsList')
+    page.click('#menuBtn'); assert page.locator('#stages').is_visible() and '★★★' in page.inner_text('#dsList') and page.inner_text('#stStars') == '3 / 3'
+    page.screenshot(path=f'{SHOTS}/stages_list.png')
+    page.click('.dsrow [data-edit]'); assert page.inner_text('#lvTitle') == 'Edit stage 1' and page.evaluate("() => document.body.dataset.phase") == 'design'
+    page.click('#backBtn'); page.click('#stNew')
     # an unsaved draft never records anything
     build([('R', 0, 1), ('V', 0, 0), ('V', 0, 3), ('V', 2, 0), ('H', 2, 1), ('V', 2, 3), ('S', 3, 1), ('S', 3, 2), ('S', 4, 3), ('S', 4, 2)])
     keys0 = page.evaluate("() => Object.keys(JSON.parse(localStorage.getItem('hr_progress') || '{}')).sort().join()")
@@ -1021,16 +1030,19 @@ def design(p):
     # cap: 50 stages
     page.evaluate("() => { var d = JSON.parse(localStorage.getItem('hr_designs')); for (var i = 2; i <= 50; i++) d.push({ n: i, g: d[0].g.slice(0, 18) + ('0' + i).slice(-2), par: 5, at: 0 }); localStorage.setItem('hr_designs', JSON.stringify(d)); }")
     page.reload(); page.click('#dsOpen')
+    assert page.inner_text('#stCount') == '50 / 50' and page.locator('#stNew').is_disabled(), 'New stage greys out at 50'
+    page.click('.dsrow [data-edit] >> nth=0')
     build([('R', 0, 1), ('V', 0, 0), ('V', 0, 3), ('V', 2, 0), ('H', 2, 1), ('V', 2, 3), ('S', 3, 1), ('S', 3, 2), ('S', 4, 3), ('S', 4, 2)])
-    assert page.locator('#dsSave').is_disabled() and page.inner_text('#dsSave') == '50 stages max' and '50 / 50' in page.inner_text('#dsListCount')
+    assert page.inner_text('#dsSave') == 'Save changes', 'editing still works at the cap'
+    page.click('#backBtn')
     # two-tap delete
     first = page.locator('.dsrow [data-del]').first; first.click(); assert page.locator('.dsrow [data-del].armed').count() == 1
-    page.locator('.dsrow [data-del].armed').click(); assert '49 / 50' in page.inner_text('#dsListCount')
+    page.locator('.dsrow [data-del].armed').click(); assert page.inner_text('#stCount') == '49 / 50' and page.locator('#stNew').is_enabled()
     # Thai
-    toggle_lang(page); assert page.inner_text('#lvTitle') in ('ออกแบบด่าน',) and 'บันทึกด่าน' in page.inner_text('#dsSave') + 'บันทึกด่าน'
+    toggle_lang(page); assert page.inner_text('#stages .hud .title') == 'ด่านของฉัน' and 'สร้างด่านใหม่' in page.inner_text('#stNew')
     toggle_lang(page)
     # backup carries designs
-    page.click('#backBtn'); settings(page); page.click('#backupBtn'); code = page.locator('#bkOut').input_value(); page.click('#bkClose')
+    page.click('#stBack'); settings(page); page.click('#backupBtn'); code = page.locator('#bkOut').input_value(); page.click('#bkClose')
     page.evaluate("() => { localStorage.removeItem('hr_designs'); localStorage.removeItem('hr_progress'); }"); page.reload()
     assert 'Build your own puzzle' == page.inner_text('#dsCount')
     settings(page); page.click('#backupBtn'); page.fill('#bkIn', code); page.click('#bkRestore'); page.click('#bkClose')

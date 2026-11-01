@@ -84,6 +84,24 @@
   <p class="src"><a href="https://github.com/sarail19th/huarong-road" target="_blank" rel="noopener noreferrer">Source on GitHub</a> · <a href="https://github.com/sarail19th/huarong-road/blob/main/NOTICE.md" target="_blank" rel="noopener noreferrer">Icon credits</a></p>
 </section>
 
+<section id="stages" class="screen hidden">
+  <div class="hud">
+    <button class="icon-btn" id="stBack" aria-label="Back" title="Back"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg></button>
+    <div class="title" data-th="ด่านของฉัน">My stages</div>
+    <button class="icon-btn settings-btn" aria-label="Settings" title="Settings"><svg class="ico" aria-hidden="true"><use href="#i-gear"/></svg></button>
+  </div>
+  <div class="stsum" id="stSum">
+    <div class="stcell"><small data-th="ด่าน">Stages</small><b id="stCount">0 / 50</b></div>
+    <div class="stcell"><small data-th="ดาว">Stars</small><b id="stStars">0 / 0</b></div>
+    <div class="stcell"><small data-th="ยากสุด">Hardest</small><b id="stHard">–</b></div>
+  </div>
+  <button class="btn go stnew" id="stNew"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg><span data-th="สร้างด่านใหม่">New stage</span></button>
+  <div class="stempty hidden" id="stEmpty">
+    <p data-th="ยังไม่มีด่านของคุณ สร้างปริศนาเอง: วางบล็อกแดงใหญ่ 1 ก้อน วางบล็อกอื่นจนเหลือช่องว่าง 2 ช่อง แล้วโปรแกรมจะบอกว่าแก้ได้ไหม ใช้กี่ครั้ง และอยู่ระดับไหน">No stages yet. Build your own puzzle: place the big red block, fill the board until 2 cells are left, and the solver tells you whether it can be solved, in how many moves, and its grade.</p>
+  </div>
+  <div id="dsList"></div>
+</section>
+
 <section id="game" class="screen hidden">
   <div class="hud">
     <button class="icon-btn" id="backBtn" aria-label="Back" title="Back"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg></button>
@@ -135,8 +153,6 @@
   <div class="dspanel only-design">
     <div class="dscheck" id="dsCheck"><b id="dsHead"></b><span id="dsBody"></span></div>
     <div class="row"><button class="btn" id="dsTest" data-th="ทดลองเล่น">Test play</button><button class="btn go" id="dsSave" data-th="บันทึกด่าน">Save stage</button></div>
-    <h4 class="dslisth"><span data-th="ด่านของฉัน">My stages</span> <small id="dsListCount"></small></h4>
-    <div id="dsList"></div>
   </div>
   <div class="row only-setup"><button class="btn go" id="startBtn" disabled data-th="เริ่มเล่น">Start puzzle</button></div>
 </section>

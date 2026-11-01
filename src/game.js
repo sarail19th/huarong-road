@@ -179,8 +179,7 @@
 
   function showMenu() {
     clearTimer(); G = null; hideTip();
-    $('game').classList.add('hidden'); closeDlg('win');
-    $('menu').classList.remove('hidden');
+    showScreen('menu');
     renderMenu(); loadDaily(); window.scrollTo(0, 0);
   }
 
@@ -287,10 +286,10 @@
     if (src) G.pieces = src.map(function (p) { return { id: ++uid, t: p.t, r: p.r, c: p.c }; });
     if (G.pieces.some(function (p) { return p.t === 'R'; })) G.sel = 'S';
     clearBoard();
-    $('menu').classList.add('hidden'); closeDlg('win'); $('game').classList.remove('hidden');
+    showScreen('game');
     document.body.dataset.phase = 'design';
     $('lvTitle').textContent = G.editing ? L('Edit stage ', 'แก้ไขด่าน ') + G.editing : L('Design stage', 'ออกแบบด่าน');
-    hideTip(); renderRecord(); $('bestStat').classList.add('hidden'); layout(); renderAll(); designCheck(); renderStages(); window.scrollTo(0, 0);
+    hideTip(); renderRecord(); $('bestStat').classList.add('hidden'); layout(); renderAll(); designCheck(); window.scrollTo(0, 0);
   }
   function renderDesignTray() {
     var counts = { R: 0, V: 0, H: 0, S: 0 };
@@ -326,6 +325,7 @@
   function designChanged() { G.msg = ''; renderAll(); designCheck(); }
   function setCheck(cls, head, body) {
     var b = $('dsCheck'); b.className = 'dscheck ' + (cls || '');
+    Array.prototype.forEach.call(b.querySelectorAll('.tip2'), function (t) { t.remove(); });
     $('dsHead').textContent = head; $('dsBody').textContent = body || '';
   }
   // Live check after every change: rules first, then "is it one of the levels?", then the solver (in the worker)
@@ -350,7 +350,17 @@
         setCheck('', L('Checking…', 'กำลังตรวจ…'), L('Looking for the shortest solution', 'กำลังหาทางแก้ที่สั้นที่สุด'));
         job({ type: 'solve', g: g }, function (sol) {
           if (!G || G.phase !== 'design' || G.check !== chk) return;   // the layout changed meanwhile
-          if (!sol) { setCheck('bad', L('✗ No solution', '✗ ไม่มีทางแก้'), L('Red can never reach the exit from here. Move a block or two.', 'บล็อกแดงไปถึงทางออกไม่ได้เลย ลองย้ายบล็อกสักหนึ่งหรือสองก้อน')); renderDesignButtons(); return; }
+          if (!sol) {
+            setCheck('bad', L('✗ No solution', '✗ ไม่มีทางแก้'), L('Red can never reach the exit from here. Move a block or two.', 'บล็อกแดงไปถึงทางออกไม่ได้เลย ลองย้ายบล็อกสักหนึ่งหรือสองก้อน'));
+            var smalls = G.pieces.filter(function (p) { return p.t === 'S'; }).length;
+            if (smalls < 4) { // measured: ~4% of random layouts with 0 small blocks are solvable, ~16% with 2, ~71% with 4
+              var t = document.createElement('span'); t.className = 'tip2';
+              t.textContent = L('Tip: layouts with fewer than 4 small blocks are usually locked — try swapping a tall or wide block for two small ones.',
+                'เคล็ดลับ: ถ้ามีบล็อกเล็กน้อยกว่า 4 ก้อน มักจะติดจนแก้ไม่ได้ ลองเปลี่ยนบล็อกตั้งหรือบล็อกนอน 1 ก้อนเป็นบล็อกเล็ก 2 ก้อน');
+              $('dsCheck').appendChild(t);
+            }
+            renderDesignButtons(); return;
+          }
           chk.ok = true; chk.par = sol.length; chk.save = !same || same.g !== key || same.n !== G.editing;
           if (same && same.n === G.editing) chk.save = false;
           var gr = gradeOf(chk.par).name;
@@ -387,13 +397,23 @@
       G.editing = n; $('lvTitle').textContent = L('Edit stage ', 'แก้ไขด่าน ') + n;
       say(L('Saved as Stage ' + n, 'บันทึกเป็นด่าน ' + n + ' แล้ว'));
     }
-    saveDesigns(); beep(880, 0.12); buzz(30); c.save = false; renderDesignButtons(); renderStages();
+    saveDesigns(); beep(880, 0.12); buzz(30); c.save = false; renderDesignButtons();
     setCheck('ok', $('dsHead').textContent, $('dsBody').textContent.replace(L(' · saved', ' · บันทึกแล้ว'), '') + L(' · saved', ' · บันทึกแล้ว'));
   };
+  function showStages() {
+    clearTimer(); G = null; hideTip();
+    showScreen('stages'); renderStages(); window.scrollTo(0, 0);
+  }
   function renderStages() {
-    $('dsListCount').textContent = designs.length + ' / ' + MAX_STAGES;
+    var got = 0, hard = 0;
+    designs.forEach(function (d) { var pr = progress['s' + d.n]; if (pr) got += pr.stars; hard = Math.max(hard, d.par); });
+    $('stCount').textContent = designs.length + ' / ' + MAX_STAGES;
+    $('stStars').textContent = got + ' / ' + designs.length * 3;
+    $('stHard').textContent = hard ? 'par ' + hard : '–';
+    $('stEmpty').classList.toggle('hidden', designs.length > 0);
+    $('stNew').disabled = designs.length >= MAX_STAGES;
     var box = $('dsList');
-    if (!designs.length) { box.innerHTML = '<p class="dsempty">' + L('Nothing saved yet. Build a layout above and tap Save stage.', 'ยังไม่มีด่านที่บันทึกไว้ สร้างด้านบนแล้วแตะบันทึกด่าน') + '</p>'; return; }
+    if (!designs.length) { box.innerHTML = ''; return; }
     box.innerHTML = designs.slice().sort(function (a, b) { return b.n - a.n; }).map(function (d) {
       var pr = progress['s' + d.n];
       return '<div class="dsrow"><button class="dsplay" data-play="' + d.n + '">' + L('Stage ', 'ด่าน ') + d.n +
@@ -404,7 +424,7 @@
   }
   $('dsList').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
-    if (b.dataset.play) { var d = designs.filter(function (x) { return x.n === +b.dataset.play; })[0]; if (d) openLevel(stageLv(d)); return; }
+    if (b.dataset.play) { var d = designs.filter(function (x) { return x.n === +b.dataset.play; })[0]; if (d) { var lv = stageLv(d); lv.fromList = true; openLevel(lv); } return; }
     if (b.dataset.edit) { openDesign(+b.dataset.edit); return; }
     if (b.dataset.del) { // two taps: the first arms the button, the second deletes
       var n = +b.dataset.del;
@@ -414,7 +434,6 @@
       }
       designs = designs.filter(function (x) { return x.n !== n; }); saveDesigns();
       delete progress['s' + n]; delete seen['s' + n]; store.set('hr_progress', progress); store.set('hr_seen', seen);
-      if (G && G.editing === n) { G.editing = null; $('lvTitle').textContent = L('Design stage', 'ออกแบบด่าน'); designCheck(); }
       renderStages(); renderDsCard();
     }
   });
@@ -422,7 +441,14 @@
     $('dsCount').textContent = designs.length ? L(designs.length + ' saved · build your own puzzle', 'บันทึกไว้ ' + designs.length + ' ด่าน · สร้างปริศนาของคุณเอง')
       : L('Build your own puzzle', 'สร้างปริศนาของคุณเอง');
   }
-  $('dsOpen').onclick = function () { openDesign(null); };
+  $('dsOpen').onclick = showStages;
+  $('stNew').onclick = function () { openDesign(null); };
+  $('stBack').onclick = showMenu;
+
+  function showScreen(id) {
+    ['menu', 'stages', 'game'].forEach(function (k) { $(k).classList.toggle('hidden', k !== id); });
+    closeDlg('win');
+  }
 
   /* ---------- level lifecycle ---------- */
   function clearBoard() { els.forEach(function (el) { el.remove(); }); els.clear(); }
@@ -437,7 +463,7 @@
     G = { idx: i, lv: lv, target: target, tpieces: Sol.piecesOf(target), pieces: [], initial: null, dc: {}, trend: null,
           phase: 'setup', sel: null, moves: 0, hints: 0, hist: [], redo: [], t0: 0, elapsed: 0, msg: '', sol: null };
     clearBoard();
-    $('menu').classList.add('hidden'); closeDlg('win'); $('game').classList.remove('hidden');
+    showScreen('game');
     document.body.dataset.phase = 'setup';
     $('lvTitle').textContent = levelTitle(lv, i);
     renderBest();
@@ -1031,7 +1057,7 @@
         (seen[G.lv.id] ? '<br>' + L('Solution viewed — no stars for this level', 'ดูเฉลยแล้ว — ด่านนี้ไม่ได้ดาว') : '');
       renderBest();
       var daily = !!G.lv.daily, hasNext = G.idx >= 0 && G.idx + 1 < LV.length;
-      $('menuBtn').textContent = G.lv.design ? L('Edit', 'แก้ไข') : L('Levels', 'ด่าน');
+      $('menuBtn').textContent = G.lv.fromList ? L('My stages', 'ด่านของฉัน') : G.lv.design ? L('Edit', 'แก้ไข') : L('Levels', 'ด่าน');
       $('winTitle').textContent = daily ? L('Daily solved!', 'ผ่านปริศนารายวัน!') : L('Cleared!', 'ผ่านด่าน!');
       $('dWin').classList.toggle('hidden', !daily);
       if (daily) {
@@ -1046,9 +1072,13 @@
   $('nextBtn').onclick = function () { openLevel(G.idx + 1); };
   $('replayBtn').onclick = function () { closeDlg('win'); doRestart(); };
   // From a design's test play (or its win card) go back to the editor with that layout; otherwise to the menu
-  function leave() { if (G && G.lv && G.lv.design) openDesign(G.lv.n || G.lv.edit || null, G.initial); else showMenu(); }
+  function leave() {
+    if (G && G.lv && G.lv.fromList) showStages();
+    else if (G && G.lv && G.lv.design) openDesign(G.lv.n || G.lv.edit || null, G.initial);
+    else showMenu();
+  }
   $('menuBtn').onclick = leave;
-  $('backBtn').onclick = function () { if (G && G.phase === 'design') showMenu(); else leave(); };
+  $('backBtn').onclick = function () { if (G && G.phase === 'design') showStages(); else leave(); };
   // Sound and vibration are switches in the Settings panel (aria-pressed = on)
   function setSwitch(btn, on, icon) {
     btn.setAttribute('aria-pressed', on); btn.setAttribute('aria-checked', on);
@@ -1127,7 +1157,7 @@
       b.setAttribute('aria-pressed', lang === 'th');
       b.setAttribute('aria-label', lang === 'th' ? 'ภาษา: ไทย (แตะเพื่อเปลี่ยนเป็น English)' : 'Language: English (tap for Thai)');
     });
-    renderMenu(); renderDaily();
+    renderMenu(); renderDaily(); if (!$('stages').classList.contains('hidden')) renderStages();
     Array.prototype.forEach.call(document.querySelectorAll('.setrow[role=switch]'), renderSwitchText);
     if (!G) return;
     if (G.phase === 'design') { $('lvTitle').textContent = G.editing ? L('Edit stage ', 'แก้ไขด่าน ') + G.editing : L('Design stage', 'ออกแบบด่าน'); renderAll(); designCheck(); renderStages(); return; }

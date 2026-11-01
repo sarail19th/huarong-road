@@ -415,3 +415,13 @@ html[data-motion=reduce] .piece[data-hint]{filter:brightness(1.2)}
 .setlist .setrow.danger{margin-top:0;border-color:var(--line)}
 .setlist .skprev{height:30px}
 .setlist .skopt{padding:4px 3px 5px}
+
+/* ---------- My stages page ---------- */
+.stsum{display:flex;gap:8px;margin-bottom:10px}
+.stcell{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 8px;text-align:center}
+.stcell small{display:block;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.8px}
+.stcell b{font-size:17px;font-variant-numeric:tabular-nums}
+.btn.stnew{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px}
+.btn.stnew .ico{width:18px;height:18px}
+.stempty p{margin:0 2px 12px;color:var(--muted);font-size:13.5px;line-height:1.55}
+.dscheck .tip2{display:block;margin-top:4px;color:var(--text);font-size:12.5px}
