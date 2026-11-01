@@ -86,13 +86,12 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .screen{max-width:520px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
 
 /* ---------- menu ---------- */
-.brand{position:relative;text-align:center;margin:8px 0 14px}
-.brandbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.brandbar .left{display:flex;gap:8px}
+.brand{text-align:center;margin:2px 0 12px}
+.brandbar{display:grid;grid-template-columns:40px 1fr 40px;align-items:center;gap:8px;margin-bottom:4px}
 .about-btn{color:var(--yellow)}
-.brand h1{margin:0;font-size:26px;letter-spacing:.5px}
+.brand h1{margin:0;font-size:25px;letter-spacing:.5px;line-height:1.1;white-space:nowrap}
 .brand h1 span{color:var(--yellow)}
-.brand p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.brand p{margin:0;color:var(--muted);font-size:13px;white-space:nowrap}
 .howto{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;font-size:13.5px;line-height:1.5;color:#c9d2de}
 .howto b{color:var(--text)}
 .howto ol{margin:6px 0 0;padding-left:20px}
@@ -105,6 +104,8 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .howto.closed .howbody{display:none}
 .total{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin:8px 2px}
 .total b{color:var(--yellow)}
+.total .lbl{display:inline-flex;align-items:center;gap:6px}
+.ico.star{width:17px;height:17px;color:var(--yellow)}
 h3.grade{display:flex;align-items:baseline;gap:8px;margin:18px 2px 8px;font-size:15px}
 h3.grade small{color:var(--muted);font-weight:400;font-size:12px}
 .lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}

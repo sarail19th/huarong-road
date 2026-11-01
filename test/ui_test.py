@@ -573,6 +573,14 @@ def controls(p):
     toggle_lang(page); assert page.locator('#howBody').is_visible() and page.locator('#howToggle').inner_text().strip() == 'How to play'
     page.click('#howToggle'); assert page.locator('#howBody').is_hidden()
     page.click('#howToggle'); assert page.locator('#howBody').is_visible() and 'Set up' in page.locator('#howBody').inner_text()
+    # header: title shares the row with ? and the gear; one-line centred subtitle; star icon on the stars line
+    tb = page.locator('#menu h1').bounding_box(); ab = page.locator('#aboutBtn').bounding_box(); gb0 = page.locator('#menu .settings-btn').bounding_box()
+    assert abs((tb['y'] + tb['height'] / 2) - (ab['y'] + ab['height'] / 2)) < 10 and abs((tb['y'] + tb['height'] / 2) - (gb0['y'] + gb0['height'] / 2)) < 10, 'title on the same row as the buttons'
+    assert ab['x'] + ab['width'] <= tb['x'] and tb['x'] + tb['width'] <= gb0['x'], 'title sits between the buttons'
+    assert abs((tb['x'] + tb['width'] / 2) - 180) < 6, 'title centred'
+    tg = page.locator('#menu .tagline').bounding_box(); assert tg['height'] < 22, 'tagline is a single line'
+    assert abs((tg['x'] + tg['width'] / 2) - 180) < 6, 'tagline centred'
+    assert page.locator('.total .ico.star').is_visible()
     # consistency: the gear is top-right on the menu and in the game, and the update button is not a lookalike of Restart
     mg = page.locator('#menu .settings-btn').bounding_box()
     assert abs((mg['x'] + mg['width']) - 344) <= 2, 'menu gear sits at the top right'
