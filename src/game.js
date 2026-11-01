@@ -37,15 +37,31 @@
 
   /* ---------- helpers ---------- */
   function L(en, th) { return lang === 'th' ? th : en; }
+  // Sound: one short, clearly audible note per event. The audio context is created/resumed on the first tap
+  // (phones keep it suspended until then) and the note has a quick attack + decay so it is a "tock", not a faint click.
+  function audio() {
+    var Ctx = window.AudioContext || window.webkitAudioContext; if (!Ctx) return null;
+    window._ac = window._ac || new Ctx();
+    if (window._ac.state === 'suspended') try { window._ac.resume(); } catch (e) {}
+    return window._ac;
+  }
+  ['pointerup', 'touchend', 'click', 'keydown'].forEach(function (ev) { // wake audio on the first real tap
+    document.addEventListener(ev, function unlock() {
+      if (!muted) audio();
+      ['pointerup', 'touchend', 'click', 'keydown'].forEach(function (e2) { document.removeEventListener(e2, unlock, true); });
+    }, true);
+  });
   function beep(f, d) {
     if (muted) return;
     try {
-      window._ac = window._ac || new (window.AudioContext || window.webkitAudioContext)();
-      var o = window._ac.createOscillator(), g = window._ac.createGain();
-      o.frequency.value = f || 520; g.gain.value = 0.05;
-      o.connect(g); g.connect(window._ac.destination); o.start();
-      g.gain.exponentialRampToValueAtTime(0.0001, window._ac.currentTime + (d || 0.06));
-      o.stop(window._ac.currentTime + (d || 0.06));
+      var ac = audio(); if (!ac) return;
+      var t = ac.currentTime, dur = Math.max(d || 0.06, 0.1);
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.type = 'triangle'; o.frequency.value = f || 520;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.35, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + dur + 0.02);
     } catch (e) {}
   }
   function buzz(ms) { if (haptics) try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }

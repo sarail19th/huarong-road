@@ -702,11 +702,44 @@ def skins_timer(p):
     ctx.close(); assert not errors, errors
 
 
+def sound(p):
+    """Sound is really produced (running context, audible level, decent length) and the Sound switch silences it."""
+    ctx = launch(p).new_context(viewport={'width': 390, 'height': 800}, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.add_init_script("""window.__peaks = []; window.__osc = 0;
+      var r = AudioParam.prototype.exponentialRampToValueAtTime; AudioParam.prototype.exponentialRampToValueAtTime = function (v, t) { window.__peaks.push(v); return r.call(this, v, t); };
+      var c = AudioContext.prototype.createOscillator; AudioContext.prototype.createOscillator = function () { window.__osc++; return c.call(this); };""")
+    page.goto(URL)
+    assert page.evaluate("() => window._ac === undefined"), 'no audio context before the first tap'
+    lv(page, 0).tap(); page.click('#startBtn')
+    assert page.evaluate("() => window._ac && window._ac.state") == 'running', 'context awake after the first taps'
+    page.wait_for_timeout(200)
+    n0 = page.evaluate("() => window.__osc"); assert n0 >= 1 and max(page.evaluate("() => window.__peaks")) >= 0.2, 'audible level'
+    def drag_first():
+        sol = page.evaluate("() => Solver.solve(LEVELS[0].g.split('').map(Number))"); m = sol[0]
+        bx = page.locator('#board').bounding_box(); cs = (bx['width'] - 20) / 4; d = {'R': (2, 2), 'V': (1, 2), 'H': (2, 1), 'S': (1, 1)}[m['t']]
+        sx = bx['x'] + 10 + (m['c'] + d[0] / 2) * cs; sy = bx['y'] + 10 + (m['r'] + d[1] / 2) * cs
+        page.mouse.move(sx, sy); page.mouse.down()
+        for i in range(1, 7): page.mouse.move(sx + m['dc'] * m['k'] * cs * i / 6, sy + m['dr'] * m['k'] * cs * i / 6)
+        page.mouse.up(); page.wait_for_timeout(250)
+    drag_first(); assert page.evaluate("() => window.__osc") > n0, 'a move makes a sound'
+    n1 = page.evaluate("() => window.__osc"); page.click('#undoBtn')
+    settings(page); page.click('#muteBtn'); n2 = page.evaluate("() => window.__osc")      # now muted
+    page.click('#setClose'); page.click('#redoBtn'); page.wait_for_timeout(200)
+    assert page.evaluate("() => window.__osc") == n2, 'muted: no sound'
+    settings(page); page.click('#muteBtn'); page.wait_for_timeout(100)
+    assert page.evaluate("() => window.__osc") > n2, 'switching Sound back on plays a confirmation note'
+    ctx.close(); assert not errors, errors
+
+
 with sync_playwright() as p:
     if os.environ.get('HR_ONLY'):
         globals()[os.environ['HR_ONLY']](p); print('ONLY', os.environ['HR_ONLY'], 'OK'); sys.exit(0)
     features(p)
     controls(p)
+    sound(p)
+    print('sound: context wakes on first tap, audible level, mute silences')
     skins_timer(p)
     print('skins: all visible at once, one tap each; timer switch hides the clock')
     print('controls: undo/redo pair, hint+solution pair, restart confirm, settings panel OK')
