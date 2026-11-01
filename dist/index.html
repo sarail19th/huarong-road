@@ -81,10 +81,10 @@
 [data-skin=gold]{
   --bg:#0a0804;--panel:#16110a;--panel2:#211a0e;--line:#44381c;--text:#fff6dc;--muted:#b3a47a;
   --yellow:#ffd54a;--green:#f5c542;--ok:#ffd54a;--amber:#ff9d3b;--exit-rgb:255,213,74;--bg-a:200,150,30;--bg-b:90,60,10;
-  --pR:linear-gradient(145deg,#ffe27a,#d4a017);--pV:linear-gradient(145deg,#2b2417,#171209);--pS:linear-gradient(145deg,#fff6dc,#e6d3a0);
-  --edge:#7a5f1a;--board:#100c05;--device:#080603;--bdR:initial;--bdS:initial;--bdV:2px solid #d4a017;--shR:0 0 12px rgba(255,213,74,.45),inset 0 -5px 0 rgba(0,0,0,.22);--shV:initial;
-  --ricon:rgba(70,45,0,.65);--ringR:rgba(70,45,0,.4);--ringV:rgba(255,213,74,.8);--ringS:rgba(70,45,0,.35);
-  --led-r:#ffd54a;--led-b:#8a6d1c;--led-y:#fff6dc;
+  --pR:linear-gradient(145deg,#ffe27a,#d4a017);--pV:linear-gradient(145deg,#b8863a,#6e4a14);--pS:linear-gradient(145deg,#fff6dc,#e6d3a0);
+  --edge:#7a5f1a;--board:#100c05;--device:#080603;--bdR:initial;--bdS:initial;--bdV:2px solid #ffe08a;--shR:0 0 12px rgba(255,213,74,.45),inset 0 -5px 0 rgba(0,0,0,.22);--shV:0 0 8px rgba(255,213,74,.25),inset 0 -5px 0 rgba(0,0,0,.25),inset 0 2px 0 rgba(255,255,255,.25);
+  --ricon:rgba(70,45,0,.65);--ringR:rgba(70,45,0,.4);--ringV:rgba(255,240,190,.85);--ringS:rgba(70,45,0,.35);
+  --led-r:#ffd54a;--led-b:#b8863a;--led-y:#fff6dc;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{min-height:100%;background:var(--bg)}
@@ -659,7 +659,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   var haptics = store.get('hr_haptics', true);
   var timerOn = store.get('hr_timer', true); // off = no-stress mode: the clock is hidden (time is still tracked quietly)
   var autoPlace = store.get('hr_auto', true);
-  var BUILD = '3e14dfc'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = 'da3731e'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
