@@ -26,7 +26,7 @@
   --pR:linear-gradient(145deg,#ffc2da,#ff80b0);--pV:linear-gradient(145deg,#ffe8f1,#f5b9d1);--pS:linear-gradient(145deg,#85567a,#5e3a55);
   --bdR:initial;--bdV:initial;--shR:initial;--shV:initial;
   --bdS:2px solid #ffb3d1;--ricon:rgba(90,20,55,.6);--ringR:rgba(255,255,255,.7);--ringV:rgba(160,60,110,.4);--ringS:rgba(255,179,209,.8);
-  --led-r:#ff80b0;--led-b:#ffe8f1;--led-y:#c4659a;
+  --led-r:#ff80b0;--led-b:#ffe8f1;--led-y:#a64fd0;
 }
 [data-skin=neon]{
   --bg:#020503;--panel:#07110a;--panel2:#0b1a10;--line:#16402a;--text:#e6ffec;--muted:#6fae82;
@@ -63,11 +63,10 @@
 [data-skin=mono]{
   --bg:#0a0a0a;--panel:#151515;--panel2:#202020;--line:#383838;--text:#f2f2f2;--muted:#9a9a9a;
   --yellow:#ffffff;--green:#e0e0e0;--ok:#ffffff;--amber:#bdbdbd;--exit-rgb:255,255,255;--bg-a:90,90,90;--bg-b:40,40,40;
-  --pR:linear-gradient(145deg,#ffffff,#f4f4f4);--pV:linear-gradient(145deg,#666,#3a3a3a);--pS:linear-gradient(145deg,#2c2c2c,#161616);
-  --edge:#4a4a4a;--board:#0e0e0e;--device:#070707;--bdR:initial;--bdV:initial;--shV:initial;
-  --shR:0 0 18px rgba(255,255,255,.6),inset 0 -4px 0 rgba(0,0,0,.1),inset 0 2px 0 #fff;--bdS:2px solid #bdbdbd;
-  --ricon:rgba(0,0,0,.55);--ringR:rgba(0,0,0,.35);--ringV:rgba(255,255,255,.5);--ringS:rgba(255,255,255,.55);
-  --led-r:#ffffff;--led-b:#7a7a7a;--led-y:#3d3d3d;
+  --pR:linear-gradient(145deg,#ffffff,#f4f4f4);--pV:linear-gradient(145deg,#666,#3a3a3a);--pS:linear-gradient(145deg,#cfcfcf,#9c9c9c);
+  --edge:#4a4a4a;--board:#0e0e0e;--device:#070707;--bdR:initial;--bdV:initial;--bdS:initial;--shV:initial;
+  --shR:0 0 18px rgba(255,255,255,.6),inset 0 -4px 0 rgba(0,0,0,.1),inset 0 2px 0 #fff;--ricon:rgba(0,0,0,.55);--ringR:rgba(0,0,0,.35);--ringV:rgba(255,255,255,.5);--ringS:rgba(0,0,0,.5);
+  --led-r:#ffffff;--led-b:#686868;--led-y:#acacac;
 }
 [data-skin=gold]{
   --bg:#0a0804;--panel:#16110a;--panel2:#211a0e;--line:#44381c;--text:#fff6dc;--muted:#b3a47a;
@@ -649,7 +648,7 @@ if(typeof module!=="undefined")module.exports=LEVELS;
   var haptics = store.get('hr_haptics', true);
   var timerOn = store.get('hr_timer', true); // off = no-stress mode: the clock is hidden (time is still tracked quietly)
   var autoPlace = store.get('hr_auto', true);
-  var BUILD = 'da3731e'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = 'b00b08c'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
