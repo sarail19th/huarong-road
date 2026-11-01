@@ -125,7 +125,7 @@
     menuPage = Math.floor(i / PAGE); store.set('hr_page', menuPage); // coming back to the menu lands on this level's page
     var lv = LV[i], target = lv.g.split('').map(Number);
     G = { idx: i, lv: lv, target: target, tpieces: Sol.piecesOf(target), pieces: [], initial: null, dc: {}, trend: null,
-          phase: 'setup', sel: null, moves: 0, hints: 0, hist: [], t0: 0, elapsed: 0, msg: '', sol: null };
+          phase: 'setup', sel: null, moves: 0, hints: 0, hist: [], redo: [], t0: 0, elapsed: 0, msg: '', sol: null };
     clearBoard();
     $('menu').classList.add('hidden'); $('win').classList.add('hidden'); $('game').classList.remove('hidden');
     document.body.dataset.phase = 'setup';
@@ -170,7 +170,12 @@
     if (G) renderPieces();
   }
 
-  function renderAll() { renderLED(); renderPieces(); renderTray(); renderStatus(); }
+  function renderAll() { renderLED(); renderPieces(); renderTray(); renderStatus(); renderCtl(); }
+  // Undo / Redo are greyed out when there is nothing to step to
+  function renderCtl() {
+    var on = !!G && G.phase === 'play';
+    $('undoBtn').disabled = !on || !G.hist.length; $('redoBtn').disabled = !on || !G.redo.length;
+  }
 
   function renderLED() {
     var g = G.phase === 'setup' ? G.target : gridOf();
@@ -296,7 +301,7 @@
 
   function startPlay() {
     G.phase = 'play'; document.body.dataset.phase = 'play';
-    G.initial = snap(); G.moves = 0; G.hints = 0; G.hist = []; G.msg = ''; G.trend = null; hideTip();
+    G.initial = snap(); G.moves = 0; G.hints = 0; G.hist = []; G.redo = []; G.msg = ''; G.trend = null; hideTip();
     G.t0 = Date.now(); $('moves').textContent = '0'; $('time').textContent = '0:00';
     clearTimer(); timerId = setInterval(tick, 250);
     renderAll(); beep(740, 0.1);
@@ -371,26 +376,42 @@
 
   function commitMove(p, dr, dc, k) {
     var before = gridOf();
-    G.hist.push(snap()); hideTip(); G.trend = null;
+    G.hist.push(snap()); G.redo = []; hideTip(); G.trend = null;
     p.r += dr * k; p.c += dc * k; G.moves++;
     $('moves').textContent = G.moves;
-    renderPieces(); renderLED(); renderStatus(); beep(500, 0.04); buzz(15);
+    renderPieces(); renderLED(); renderStatus(); renderCtl(); beep(500, 0.04); buzz(15);
     if (Sol.isGoal(gridOf())) win(); else updateTrend(before, false);
   }
 
   $('undoBtn').onclick = function () {
     if (!G || G.phase !== 'play' || !G.hist.length) return;
-    hideTip(); G.trend = null; G.pieces = G.hist.pop(); G.moves = Math.max(0, G.moves - 1);
-    $('moves').textContent = G.moves; renderPieces(); renderLED(); renderStatus(); updateTrend(null, true);
+    hideTip(); G.trend = null; G.redo.push(snap()); G.pieces = G.hist.pop(); G.moves = Math.max(0, G.moves - 1);
+    $('moves').textContent = G.moves; renderPieces(); renderLED(); renderStatus(); renderCtl(); updateTrend(null, true);
   };
-  $('restartBtn').onclick = function () {
+  $('redoBtn').onclick = function () {
+    if (!G || G.phase !== 'play' || !G.redo.length) return;
+    var before = gridOf();
+    hideTip(); G.trend = null; G.hist.push(snap()); G.pieces = G.redo.pop(); G.moves++;
+    $('moves').textContent = G.moves; renderPieces(); renderLED(); renderStatus(); renderCtl(); beep(500, 0.04); buzz(15);
+    if (Sol.isGoal(gridOf())) win(); else updateTrend(before, false);
+  };
+  function doRestart() {
     if (!G || !G.initial) return;
     G.pieces = G.initial.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; });
-    hideTip(); G.trend = null; G.moves = 0; G.hist = []; G.phase = 'play'; document.body.dataset.phase = 'play';
+    hideTip(); G.trend = null; G.moves = 0; G.hist = []; G.redo = []; G.phase = 'play'; document.body.dataset.phase = 'play';
     G.t0 = Date.now(); $('moves').textContent = '0'; $('time').textContent = '0:00';
     clearTimer(); timerId = setInterval(tick, 250);
     clearBoard(); renderAll();
+  }
+  // Restart wipes the attempt, so ask first; nothing to lose (no moves yet) restarts straight away.
+  $('restartBtn').onclick = function () {
+    if (!G || G.phase !== 'play') return;
+    if (!G.moves) return doRestart();
+    $('rsBody').textContent = L('Your ' + G.moves + ' move' + (G.moves > 1 ? 's' : '') + ' and the clock will be reset.', 'ทั้ง ' + G.moves + ' ครั้งที่เดินและเวลาจะถูกรีเซ็ต');
+    $('rsAsk').classList.remove('hidden');
   };
+  $('rsNo').onclick = function () { $('rsAsk').classList.add('hidden'); };
+  $('rsYes').onclick = function () { $('rsAsk').classList.add('hidden'); doRestart(); };
   /* ---------- hints: explain what to focus on, where and why ---------- */
   var KIND = { R: 'big red square', V: 'tall block', H: 'wide block', S: 'small square' };
   var KIND_TH = { R: 'สี่เหลี่ยมแดงใหญ่', V: 'บล็อกตั้ง', H: 'บล็อกนอน', S: 'บล็อกเล็ก' };
@@ -563,7 +584,7 @@
     if (!steps) { say(L('No solution found for this layout', 'ไม่พบเฉลยสำหรับรูปแบบนี้')); return; }
     seen[G.lv.id] = 1; store.set('hr_seen', seen);
     // freeze the player's attempt, show the start position again and walk it from there
-    G.sol = { steps: steps, i: 0, stash: { pieces: snap(), hist: G.hist, moves: G.moves }, pausedAt: Date.now() };
+    G.sol = { steps: steps, i: 0, stash: { pieces: snap(), hist: G.hist, redo: G.redo, moves: G.moves }, pausedAt: Date.now() };
     clearTimer(); hideTip();
     G.pieces = G.initial.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; });
     G.phase = 'solution'; document.body.dataset.phase = 'solution';
@@ -621,7 +642,7 @@
     if (!G || !G.sol) return;
     stopAuto();
     var S = G.sol; G.sol = null;
-    G.pieces = S.stash.pieces; G.hist = S.stash.hist; G.moves = S.stash.moves;
+    G.pieces = S.stash.pieces; G.hist = S.stash.hist; G.redo = S.stash.redo; G.moves = S.stash.moves;
     G.t0 += Date.now() - S.pausedAt; // the clock did not run while the solution was open
     G.phase = 'play'; document.body.dataset.phase = 'play';
     clearTimer(); timerId = setInterval(tick, 250);
@@ -630,7 +651,7 @@
 
   /* ---------- win ---------- */
   function win() {
-    G.phase = 'won'; document.body.dataset.phase = 'won'; clearTimer();
+    G.phase = 'won'; document.body.dataset.phase = 'won'; clearTimer(); renderCtl();
     G.elapsed = Date.now() - G.t0;
     var par = G.lv.par, st = seen[G.lv.id] ? 0 : G.moves <= par ? 3 : G.moves <= Math.ceil(par * 1.4) ? 2 : 1;
     var prev = progress[G.lv.id];
@@ -655,17 +676,20 @@
     }, 950);
   }
   $('nextBtn').onclick = function () { openLevel(G.idx + 1); };
-  $('replayBtn').onclick = function () { $('win').classList.add('hidden'); $('restartBtn').onclick(); };
+  $('replayBtn').onclick = function () { $('win').classList.add('hidden'); doRestart(); };
   $('menuBtn').onclick = showMenu;
   $('backBtn').onclick = showMenu;
-  $('muteBtn').onclick = function () { muted = !muted; store.set('hr_muted', muted); $('muteBtn').textContent = muted ? '🔇' : '🔊'; };
-  $('muteBtn').textContent = muted ? '🔇' : '🔊';
-
-  // Vibration toggle (Android Chrome only: iOS Safari has no Vibration API, so the button is hidden there)
-  function renderHaptics() {
-    var b = $('hapBtn'); b.textContent = haptics ? '📳' : '📴';
-    b.setAttribute('aria-pressed', haptics); b.setAttribute('aria-label', haptics ? 'Vibration on' : 'Vibration off');
+  // Sound and vibration are switches in the Settings panel (aria-pressed = on)
+  function setSwitch(btn, on, icon) {
+    btn.setAttribute('aria-pressed', on); btn.setAttribute('aria-checked', on);
+    if (icon) btn.querySelector('use').setAttribute('href', '#i-' + icon);
   }
+  function renderSound() { setSwitch($('muteBtn'), !muted, muted ? 'volx' : 'vol'); }
+  $('muteBtn').onclick = function () { muted = !muted; store.set('hr_muted', muted); renderSound(); beep(660, 0.08); };
+  renderSound();
+
+  // Vibration toggle (Android Chrome only: iOS Safari has no Vibration API, so the row is hidden there)
+  function renderHaptics() { setSwitch($('hapBtn'), haptics); }
   if (!navigator.vibrate) $('hapBtn').style.display = 'none';
   $('hapBtn').onclick = function () { haptics = !haptics; store.set('hr_haptics', haptics); renderHaptics(); buzz(30); };
   renderHaptics();
@@ -693,7 +717,7 @@
   $('aboutBtn').onclick = function () { showAbout(true); };
   $('aboutClose').onclick = function () { showAbout(false); };
   $('about').addEventListener('click', function (e) { if (e.target === this) showAbout(false); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') showAbout(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { showAbout(false); showSettings(false); } });
 
   /* ---------- language: instructions, hints and solution in English or Thai ---------- */
   // Static text carries its Thai copy in data-th; the English original is stashed in data-en on first switch.
@@ -716,7 +740,7 @@
   Array.prototype.forEach.call(document.querySelectorAll('.lang-btn'), function (b) {
     b.onclick = function () {
       lang = lang === 'th' ? 'en' : 'th'; store.set('hr_lang', lang); applyLang();
-      if ($('about').classList.contains('hidden')) toast(lang === 'th' ? 'คำแนะนำ คำใบ้ เฉลย: ภาษาไทย' : 'Instructions, hints, solution: English');
+      if ($('about').classList.contains('hidden') && $('settings').classList.contains('hidden')) toast(lang === 'th' ? 'คำแนะนำ คำใบ้ เฉลย: ภาษาไทย' : 'Instructions, hints, solution: English');
     };
   });
 
@@ -732,13 +756,26 @@
     var meta = document.querySelector('meta[name=theme-color]'); if (meta) meta.setAttribute('content', sk.theme);
     return sk;
   }
-  Array.prototype.forEach.call(document.querySelectorAll('.skin-btn'), function (b) {
-    b.onclick = function () {
-      var i = SKINS.map(function (x) { return x.id; }).indexOf(skin);
-      skin = SKINS[(i + 1) % SKINS.length].id; store.set('hr_skin', skin); toast('Skin: ' + applySkin().name);
-    };
+  var SWATCH = { classic: 'linear-gradient(90deg,#e63946 50%,#2f80ed 50%)', blossom: 'linear-gradient(90deg,#ffb3d1 50%,#17101a 50%)', neon: 'linear-gradient(90deg,#39ff14 50%,#020503 50%)' };
+  function renderSkinOpts() {
+    Array.prototype.forEach.call($('skopts').children, function (b) {
+      var on = b.dataset.skin === skin; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+    });
+  }
+  SKINS.forEach(function (sk) {
+    var b = document.createElement('button'); b.className = 'skopt'; b.dataset.skin = sk.id;
+    b.innerHTML = '<i style="background:' + SWATCH[sk.id] + '"></i><span>' + sk.name.split(' ')[0] + '</span>';
+    b.onclick = function () { skin = sk.id; store.set('hr_skin', skin); applySkin(); renderSkinOpts(); };
+    $('skopts').appendChild(b);
   });
-  applySkin();
+  renderSkinOpts();
+
+  /* ---------- settings panel: skin, sound, vibration, language ---------- */
+  function showSettings(on) { $('settings').classList.toggle('hidden', !on); }
+  Array.prototype.forEach.call(document.querySelectorAll('.settings-btn'), function (b) { b.onclick = function () { showSettings(true); }; });
+  $('setClose').onclick = function () { showSettings(false); };
+  $('settings').addEventListener('click', function (e) { if (e.target === this) showSettings(false); });
+  applySkin(); renderSkinOpts();
   applyLang();
 
   /* ---------- app updates: refresh button + "new version ready" banner ---------- */

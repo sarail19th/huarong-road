@@ -6,13 +6,28 @@ SHOTS = os.environ.get('HR_SHOTS', '/tmp/hr-shots')
 os.makedirs(SHOTS, exist_ok=True)
 URL = 'file://' + os.path.join(ROOT, 'dist', 'index.html')
 
+def launch(p):
+    exe = os.environ.get('PW_CHROMIUM')
+    return p.chromium.launch(executable_path=exe, args=['--no-sandbox']) if exe else p.chromium.launch()
+
+def settings(page, on=True):
+    """Open/close the Settings panel (gear in the menu header or the game bar)."""
+    if on: page.locator('.settings-btn:visible').first.click(); page.wait_for_selector('#settings:not(.hidden)')
+    else: page.click('#setClose'); page.wait_for_selector('#settings.hidden', state='attached')
+
+def toggle_lang(page):
+    settings(page); page.locator('#settings .lang-btn').click(); settings(page, False)
+
+def set_skin(page, name):
+    settings(page); page.locator(f'#settings .skopt[data-skin={name}]').click(); settings(page, False)
+
 def lv(page, idx):
     """The menu shows 20 levels per page: jump to the page that holds level idx (0-based) and return its button."""
     page.locator('.pgchip').nth(idx // 20).click()
     return page.locator('.lv').nth(idx % 20)
 
 def run(level_idx, p, shots=False, haptics_off=False):
-    ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    ctx = launch(p).new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
     page = ctx.new_page()
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
@@ -24,10 +39,11 @@ def run(level_idx, p, shots=False, haptics_off=False):
     if shots: page.screenshot(path=f'{SHOTS}/1_menu.png')
     lv(page, level_idx).click()
     if haptics_off:
-        assert page.locator('#hapBtn').is_visible()
+        settings(page); assert page.locator('#hapBtn').is_visible()
         page.click('#hapBtn')
         assert page.evaluate("() => localStorage.getItem('hr_haptics')") == 'false', 'haptics setting persisted'
         assert page.locator('#hapBtn').get_attribute('aria-pressed') == 'false'
+        settings(page, False)
 
     # --- setup phase: place every target piece by tapping tray + board
     target = page.evaluate("() => { var lv = LEVELS[%d]; return Solver.piecesOf(lv.g.split('').map(Number)); }" % level_idx)
@@ -104,7 +120,7 @@ def run(level_idx, p, shots=False, haptics_off=False):
     return len(solution), moves, st, info, stored
 
 def features(p):
-    ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    ctx = launch(p).new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
     page = ctx.new_page(); errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
@@ -112,10 +128,10 @@ def features(p):
     # skins: classic -> blossom -> neon -> classic, persisted
     assert page.evaluate("() => document.documentElement.dataset.skin") == 'classic'
     for want in ['blossom', 'neon', 'classic']:
-        page.locator('#menu .skin-btn').click()
+        set_skin(page, want)
         assert page.evaluate("() => document.documentElement.dataset.skin") == want
         assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_skin'))") == want
-    page.locator('#menu .skin-btn').click()  # blossom, remembered across levels
+    set_skin(page, 'blossom')  # remembered across levels
     lv(page, 5).click()
     # auto-place defaults to on: layout is already copied and verified
     n = page.evaluate("() => Solver.piecesOf(LEVELS[5].g.split('').map(Number)).length")
@@ -140,7 +156,7 @@ def features(p):
     body2 = page.locator('#tipBody').inner_text()
     page.screenshot(path=f'{SHOTS}/blossom_hint2.png')
     # follow the hinted move for real: the tip must clear after any move
-    page.click('#undoBtn')  # nothing to undo yet, tip stays
+    assert page.locator('#undoBtn').is_disabled() and page.locator('#redoBtn').is_disabled(), 'nothing to undo/redo yet'
     assert page.locator('#tip').is_visible()
     m = page.evaluate("() => { var s = Solver.solve(LEVELS[5].g.split('').map(Number)); return s[0]; }")
     box = page.locator('#board').bounding_box(); cs = (box['width'] - 4 - 16) / 4
@@ -151,7 +167,7 @@ def features(p):
     page.mouse.up(); page.wait_for_timeout(100)
     assert page.locator('#tip').is_hidden(), 'tip clears after a move'
     page.screenshot(path=f'{SHOTS}/blossom_play.png')
-    page.locator('#game .skin-btn').click()
+    set_skin(page, 'neon')
     assert page.evaluate("() => document.documentElement.dataset.skin") == 'neon'
     page.click('#hintBtn'); page.wait_for_timeout(100)
     page.screenshot(path=f'{SHOTS}/neon_hint1.png')
@@ -161,7 +177,7 @@ def features(p):
 
 def solution_view(p, idx):
     """Show-solution flow: confirm dialog, step viewer, no stars afterwards (even when solved optimally)."""
-    ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    ctx = launch(p).new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
     page = ctx.new_page(); errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
@@ -221,17 +237,17 @@ def solution_view(p, idx):
 def thai(p):
     """Language toggle: instructions, hints and solution switch to Thai and back; the choice persists."""
     import re
-    ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    ctx = launch(p).new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
     page = ctx.new_page(); errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
     page.goto(URL)
     has_thai = lambda t: re.search('[\u0e00-\u0e7f]', t) is not None
     assert 'How it works' in page.locator('.howto').inner_text() and page.evaluate("() => document.documentElement.lang") == 'en'
-    page.locator('#menu .lang-btn').click()
+    toggle_lang(page)
     assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_lang'))") == 'th'
     assert page.evaluate("() => document.documentElement.lang") == 'th'
-    assert 'วิธีเล่น' in page.locator('.howto').inner_text() and page.locator('#menu .lang-btn').get_attribute('aria-pressed') == 'true'
+    assert 'วิธีเล่น' in page.locator('.howto').inner_text() and page.locator('#settings .lang-btn').get_attribute('aria-pressed') == 'true'
     page.screenshot(path=f'{SHOTS}/thai_menu.png')
     lv(page, 5).click()
     assert has_thai(page.locator('#status').inner_text()) or page.locator('#status').is_hidden()
@@ -247,10 +263,10 @@ def thai(p):
     assert 'ลองทำแบบนี้' in page.locator('#tipHead').inner_text() and 'เลื่อน' in page.locator('#tipBody').inner_text()
     thai_body2 = page.locator('#tipBody').inner_text()
     page.screenshot(path=f'{SHOTS}/thai_hint2.png')
-    page.locator('#game .lang-btn').click()      # switch back mid-hint: the open tip re-renders in English
+    toggle_lang(page)      # switch back mid-hint: the open tip re-renders in English
     assert 'Try this' in page.locator('#tipHead').inner_text() and page.locator('#hintBtn').inner_text() == 'Hint'
     assert 'Drag blocks' in page.locator('#status').inner_text()
-    page.locator('#game .lang-btn').click()      # and Thai again
+    toggle_lang(page)      # and Thai again
     assert 'ลองทำแบบนี้' in page.locator('#tipHead').inner_text()
     # solution flow in Thai
     page.click('#solBtn')
@@ -265,13 +281,13 @@ def thai(p):
     page.screenshot(path=f'{SHOTS}/thai_solution.png')
     for i in range(n): page.click('#solNext')
     assert page.locator('#solHead').inner_text() == f'ไขได้ใน {n} ครั้ง'
-    page.locator('#game .lang-btn').click()      # language switch while the solution is open
+    toggle_lang(page)      # language switch while the solution is open
     assert page.locator('#solHead').inner_text().startswith('Solved in') and page.locator('#solPrev').inner_text() == '‹ Prev'
-    page.locator('#game .lang-btn').click()
+    toggle_lang(page)
     # persisted across a reload, and English restores exactly
     page.reload()
     assert page.evaluate("() => document.documentElement.lang") == 'th' and 'วิธีเล่น' in page.locator('.howto').inner_text()
-    page.locator('#menu .lang-btn').click()
+    toggle_lang(page)
     assert 'How it works' in page.locator('.howto').inner_text() and page.evaluate("() => JSON.parse(localStorage.getItem('hr_lang'))") == 'en'
     ctx.close()
     assert not errors, errors
@@ -279,37 +295,37 @@ def thai(p):
 
 def lang_switch(p):
     """EN | ไทย switch: the active side is visibly highlighted, and tapping flips it both ways on every screen."""
-    ctx = p.chromium.launch().new_context(viewport={'width': 360, 'height': 780}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    ctx = launch(p).new_context(viewport={'width': 360, 'height': 780}, device_scale_factor=2, has_touch=True, is_mobile=True)
     page = ctx.new_page(); errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
     page.goto(URL)
     bg = lambda sel: page.evaluate("(s) => getComputedStyle(document.querySelector(s)).backgroundColor", sel)
-    lit = lambda side, scope: bg(f'{scope} .lang-btn .{side}') != 'rgba(0, 0, 0, 0)'
+    lit = lambda side, scope: bg(f'#settings .lang-btn .{side}') != 'rgba(0, 0, 0, 0)'
     for scope in ('#menu',):
         assert lit('en', scope) and not lit('th', scope), 'English side lit at start'
-    assert page.locator('#menu .lang-btn').inner_text().replace('\n', ' ').split() == ['EN', 'TH']
+    assert page.locator('#settings .lang-btn span').all_text_contents() == ['EN', 'TH']
     for turn in range(3):                          # menu: en -> th -> en -> th
-        page.locator('#menu .lang-btn').tap()
+        toggle_lang(page)
         want_th = turn % 2 == 0
         assert lit('th', '#menu') == want_th and lit('en', '#menu') != want_th
         assert ('วิธีเล่น' in page.locator('.howto').inner_text()) == want_th
         assert page.evaluate("() => document.documentElement.lang") == ('th' if want_th else 'en')
     page.locator('.lv').nth(3).tap(); page.click('#startBtn')   # in Thai: game bar switch flips back and forth
     for want_th in (False, True, False):
-        page.locator('#game .lang-btn').tap()
+        toggle_lang(page)
         assert lit('th', '#game') == want_th and (page.locator('#hintBtn').inner_text() == 'คำใบ้') == want_th
         assert ('Drag blocks' in page.locator('#status').inner_text()) != want_th
     page.screenshot(path=f'{SHOTS}/lang_switch_360.png')
-    hb = page.locator('#game .lang-btn').bounding_box(); title = page.locator('#lvTitle').bounding_box()
-    assert hb['x'] >= title['x'] + 20, 'switch not on top of the level title'
+    gb = page.locator('#game .settings-btn').bounding_box(); rb = page.locator('#restartBtn').bounding_box(); title = page.locator('#lvTitle').bounding_box()
+    assert rb['x'] >= title['x'] and gb['x'] > rb['x'] + rb['width'] - 1, 'restart + gear sit right of the title, not overlapping'
     assert page.evaluate("() => document.documentElement.scrollWidth") <= 360
     ctx.close(); assert not errors, errors
 
 def all_hints(p):
     """Open every level in English and Thai, tap Hint twice: the text is complete, specific and fully translated."""
     import re
-    ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=1, has_touch=True, is_mobile=True)
+    ctx = launch(p).new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=1, has_touch=True, is_mobile=True)
     page = ctx.new_page(); errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
@@ -317,7 +333,7 @@ def all_hints(p):
     bad = re.compile(r'undefined|NaN|null|\[object')
     stats = {'goal_with_space': 0, 'goal_clear': 0, 'free': 0, 'generic_setup': 0, 'n': 0}
     for th in (False, True):
-        if th: page.locator('#menu .lang-btn').click()
+        if th: toggle_lang(page)
         for idx in range(100):
             lv(page, idx).click(); page.click('#startBtn')
             for tap in (1, 2):
@@ -344,7 +360,7 @@ def all_hints(p):
 
 def trend(p):
     """After a hint was used each move says closer / no progress / further; no such line without a hint."""
-    ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=1, has_touch=True, is_mobile=True)
+    ctx = launch(p).new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=1, has_touch=True, is_mobile=True)
     page = ctx.new_page(); errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
@@ -375,12 +391,12 @@ def trend(p):
     assert worse, 'a worse move exists'
     g3 = do(worse, g2)
     st = page.locator('#status').inner_text(); assert st.startswith('✗ Further'), st
-    page.locator('#menu .lang-btn, #game .lang-btn').first.click() if False else page.locator('#game .lang-btn').click()
+    toggle_lang(page)
     assert page.locator('#status').inner_text().startswith('✗ ไกลขึ้น'), 'feedback follows the language'
-    page.locator('#game .lang-btn').click()
+    toggle_lang(page)
     page.click('#undoBtn'); page.wait_for_timeout(300)
     assert 'to go' in page.locator('#status').inner_text() and '✗' not in page.locator('#status').inner_text()
-    page.click('#restartBtn'); assert 'Drag blocks' in page.locator('#status').inner_text(), 'restart clears the line'
+    page.click('#restartBtn'); page.click('#rsYes'); assert 'Drag blocks' in page.locator('#status').inner_text(), 'restart clears the line'
     ctx.close(); assert not errors, errors
 
 def updates(p):
@@ -400,7 +416,7 @@ def updates(p):
         old = re.search(r'huarong-([0-9a-f]{7})', rd('sw.js')).group(1)
         wr('index.html', rd('index.html').replace(old, newhash).replace('</body>', f'<!--{marker}--></body>'))
         if with_sw: wr('sw.js', rd('sw.js').replace(old, newhash))
-    ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, has_touch=True, is_mobile=True)
+    ctx = launch(p).new_context(viewport={'width': 412, 'height': 860}, has_touch=True, is_mobile=True)
     page = ctx.new_page(); errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' and 'Failed to load resource' not in m.text else None)
@@ -448,13 +464,13 @@ def updates(p):
 def menu_pages(p):
     """Level list is paged (20 per page), remembers where you were, and header buttons do not cover the title."""
     for w in (412, 320):
-        ctx = p.chromium.launch().new_context(viewport={'width': w, 'height': 800}, device_scale_factor=2, has_touch=True, is_mobile=True)
+        ctx = launch(p).new_context(viewport={'width': w, 'height': 800}, device_scale_factor=2, has_touch=True, is_mobile=True)
         page = ctx.new_page(); errors = []
         page.on('pageerror', lambda e: errors.append(str(e)))
         page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
         page.goto(URL)
         h1 = page.locator('#menu h1').bounding_box()
-        for sel in ('#menu .lang-btn', '#aboutBtn', '#menu .skin-btn'):
+        for sel in ('#menu .settings-btn', '#aboutBtn', '#refreshBtn'):
             b = page.locator(sel).bounding_box()
             assert b['y'] + b['height'] <= h1['y'] + 1 or b['x'] + b['width'] <= h1['x'] or b['x'] >= h1['x'] + h1['width'], f'{sel} overlaps the title at {w}px'
         sw = page.evaluate("() => document.documentElement.scrollWidth")
@@ -482,7 +498,7 @@ def menu_pages(p):
 def about(p):
     """? button: 'about this game' panel with the story, in English or Thai; closes three ways."""
     import re
-    ctx = p.chromium.launch().new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    ctx = launch(p).new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
     page = ctx.new_page(); errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
@@ -516,15 +532,90 @@ def about(p):
     page.click('#aboutClose'); assert page.locator('#about').is_hidden()
     page.click('#aboutBtn'); page.keyboard.press('Escape'); assert page.locator('#about').is_hidden()
     page.click('#aboutBtn'); page.mouse.click(5, 5); assert page.locator('#about').is_hidden(), 'backdrop tap closes'
-    page.locator('#menu .lang-btn').click()      # back to English; panel is English again
+    toggle_lang(page)      # back to English; panel is English again
     page.click('#aboutBtn'); assert 'The story' in page.locator('#about').inner_text() and page.locator('#aPrev').is_disabled()
     ctx.close()
     assert not errors, errors
+
+def controls(p):
+    """Undo/Redo pair, Hint+Solution pair, Restart away from Undo and behind a confirm, settings panel holds the rest."""
+    ctx = launch(p).new_context(viewport={'width': 360, 'height': 780}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.add_init_script("window.__vib = []; navigator.vibrate = function (ms) { window.__vib.push(ms); return true; };")
+    page.goto(URL)
+    # game bar no longer carries skin / sound / vibration / language buttons: only the gear
+    lv(page, 5).click()
+    for sel in ('#game .skin-btn', '#game .lang-btn', '#game #muteBtn', '#game #hapBtn'): assert page.locator(sel).count() == 0 or page.locator(sel).is_hidden(), sel
+    page.click('#startBtn')
+    box = lambda sel: page.locator(sel).bounding_box()
+    # grouping: undo+redo share a pill, hint+solution share a pill, restart is far from undo
+    assert page.locator('.grp:has(#undoBtn):has(#redoBtn)').count() == 1 and page.locator('.grp:has(#hintBtn):has(#solBtn)').count() == 1
+    u, r = box('#undoBtn'), box('#restartBtn')
+    far = abs((u['x'] + u['width'] / 2) - (r['x'] + r['width'] / 2)) + abs((u['y'] + u['height'] / 2) - (r['y'] + r['height'] / 2))
+    assert far > 150, f'restart too close to undo ({far:.0f}px)'
+    for sel in ('#undoBtn', '#redoBtn', '#hintBtn', '#solBtn', '#restartBtn'):
+        b = box(sel); assert b['height'] >= 40 and b['width'] >= 40, f'{sel} touch target {b}'
+    assert page.evaluate("() => document.documentElement.scrollWidth") <= 360
+    # restart with no moves: nothing to lose, no prompt
+    page.click('#restartBtn'); assert page.locator('#rsAsk').is_hidden()
+    # make two moves from the optimal line
+    sol = page.evaluate("() => Solver.solve(LEVELS[5].g.split('').map(Number))")
+    def play(m):
+        bx = page.locator('#board').bounding_box(); cs = (bx['width'] - 4 - 16) / 4
+        d = {'R': (2, 2), 'V': (1, 2), 'H': (2, 1), 'S': (1, 1)}[m['t']]
+        sx = bx['x'] + 2 + 8 + (m['c'] + d[0] / 2) * cs; sy = bx['y'] + 2 + 8 + (m['r'] + d[1] / 2) * cs
+        page.mouse.move(sx, sy); page.mouse.down()
+        for i in range(1, 7): page.mouse.move(sx + m['dc'] * m['k'] * cs * i / 6, sy + m['dr'] * m['k'] * cs * i / 6)
+        page.mouse.up(); page.wait_for_timeout(250)
+    snap = lambda: page.evaluate("() => G_state()") if False else page.locator('.piece').evaluate_all("els => els.map(e => e.style.transform).join('|')")
+    s0 = snap(); play(sol[0]); s1 = snap(); play(sol[1]); s2 = snap()
+    assert page.locator('#moves').inner_text() == '2' and s0 != s1 != s2
+    assert page.locator('#undoBtn').is_enabled() and page.locator('#redoBtn').is_disabled()
+    page.click('#undoBtn'); page.wait_for_timeout(250)
+    assert snap() == s1 and page.locator('#moves').inner_text() == '1' and page.locator('#redoBtn').is_enabled()
+    page.click('#redoBtn'); page.wait_for_timeout(250)
+    assert snap() == s2 and page.locator('#moves').inner_text() == '2' and page.locator('#redoBtn').is_disabled(), 'redo restores the move'
+    page.click('#undoBtn'); page.click('#undoBtn'); page.wait_for_timeout(250)
+    assert snap() == s0 and page.locator('#undoBtn').is_disabled() and page.locator('#redoBtn').is_enabled()
+    page.click('#redoBtn'); page.wait_for_timeout(250); page.click('#undoBtn'); page.wait_for_timeout(250)
+    play(sol[0])   # a new move after undo drops the redo branch
+    assert page.locator('#redoBtn').is_disabled(), 'new move clears redo'
+    # restart now has something to lose: confirm first, "keep playing" changes nothing
+    page.click('#restartBtn')
+    assert page.locator('#rsAsk').is_visible() and '1 move' in page.locator('#rsBody').inner_text()
+    page.screenshot(path=f'{SHOTS}/restart_confirm.png')
+    page.click('#rsNo'); assert page.locator('#rsAsk').is_hidden() and page.locator('#moves').inner_text() != '0'
+    page.click('#restartBtn'); page.click('#rsYes')
+    assert page.locator('#moves').inner_text() == '0' and snap() == s0 and page.locator('#undoBtn').is_disabled() and page.locator('#redoBtn').is_disabled()
+    # Thai confirm
+    play(sol[0]); toggle_lang(page); page.click('#restartBtn')
+    assert 'เริ่มด่านนี้ใหม่' in page.locator('#rsAsk h2').inner_text() and page.locator('#rsYes').inner_text() == 'เริ่มใหม่'
+    assert page.locator('#undoBtn').inner_text() == 'ย้อนกลับ' and page.locator('#redoBtn').inner_text() == 'ทำซ้ำ'
+    page.click('#rsNo'); toggle_lang(page)
+    # settings panel: sound + vibration switches and skin options; gear opens, Done / backdrop / Esc close
+    settings(page)
+    assert page.locator('#muteBtn').get_attribute('aria-pressed') == 'true'
+    page.click('#muteBtn'); assert page.locator('#muteBtn').get_attribute('aria-pressed') == 'false' and page.evaluate("() => JSON.parse(localStorage.getItem('hr_muted'))") is True
+    page.click('#muteBtn'); assert page.locator('#muteBtn').get_attribute('aria-pressed') == 'true'
+    page.screenshot(path=f'{SHOTS}/settings.png')
+    page.click('#setClose'); assert page.locator('#settings').is_hidden()
+    page.locator('#game .settings-btn').click(); page.keyboard.press('Escape'); assert page.locator('#settings').is_hidden()
+    page.locator('#game .settings-btn').click(); page.mouse.click(5, 5); assert page.locator('#settings').is_hidden()
+    # solution viewer keeps redo history safe
+    page.click('#undoBtn'); page.wait_for_timeout(250); assert page.locator('#redoBtn').is_enabled()
+    page.click('#solBtn'); page.click('#solYes'); page.click('#solBack'); page.wait_for_timeout(250)
+    assert page.locator('#redoBtn').is_enabled(), 'redo survives a look at the solution'
+    ctx.close(); assert not errors, errors
+
 
 with sync_playwright() as p:
     if os.environ.get('HR_ONLY'):
         globals()[os.environ['HR_ONLY']](p); print('ONLY', os.environ['HR_ONLY'], 'OK'); sys.exit(0)
     features(p)
+    controls(p)
+    print('controls: undo/redo pair, hint+solution pair, restart confirm, settings panel OK')
     print('features: auto-place default, skins, two-step hints OK')
     lang_switch(p)
     print('language switch: EN | TH highlights the active side, flips both ways, fits at 360px')
