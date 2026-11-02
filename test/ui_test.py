@@ -880,7 +880,7 @@ def toggles(p):
     heads = page.locator('#settings .setgrp h3').all_inner_texts()
     assert [h.lower() for h in heads] == ['look & language', 'sound & feel', 'gameplay', 'your data'], heads
     ids = lambda i: page.locator('#settings .setgrp').nth(i).locator('.setrow').evaluate_all("rs => rs.map(r => r.id)")
-    assert ids(1) == ['muteBtn', 'hapBtn', 'motionBtn'] and ids(2) == ['autoPlaceBtn', 'autoStartBtn', 'timerBtn'] and ids(3) == ['backupBtn', 'resetAllBtn']
+    assert ids(1) == ['muteBtn', 'hapBtn', 'motionBtn'] and ids(2) == ['autoPlaceBtn', 'autoStartBtn', 'timerBtn'] and ids(3) == ['backupBtn', 'bkFreqBtn', 'resetAllBtn']
     sw = page.locator('#settings .setrow[role=switch]'); n = sw.count(); assert n >= 5
     for i in range(n):
         b = sw.nth(i); want = 'On' if b.get_attribute('aria-pressed') == 'true' else 'Off'
@@ -1097,6 +1097,95 @@ def resets_motion(p):
     ctx2.close(); assert not errors, errors
 
 
+def backup_reminder(p):
+    """Backup reminder: weekly by default, only nudges when something new is worth saving, Later snoozes a full period,
+    backing up resets it, Off silences it; dialog shows the last backup; share button; storage persistence is requested."""
+    ctx = launch(p).new_context(viewport={'width': 360, 'height': 780}, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    # count navigator.storage.persist() calls, and fake a share sheet that records what it was given
+    page.add_init_script("""window.__persist = 0; window.__shared = null;
+      try { navigator.storage.persist = function () { window.__persist++; return Promise.resolve(true); }; } catch (e) {}
+      navigator.share = function (d) { window.__shared = d; return Promise.resolve(); };
+      navigator.canShare = function () { return true; };""")
+    page.goto(URL)
+    DAY = 86400000
+    def reload_with(bk=None, progress=None, freq=None):
+        page.evaluate("([bk, pr, fr]) => { if (bk) localStorage.setItem('hr_bk', JSON.stringify(bk)); if (pr) localStorage.setItem('hr_progress', JSON.stringify(pr)); if (fr) localStorage.setItem('hr_bkfreq', JSON.stringify(fr)); }", [bk, progress, freq])
+        page.reload()
+    now = page.evaluate("() => Date.now()")
+    prog = lambda n: {str(i + 1): {'stars': 3, 'moves': 10, 'time': 5000} for i in range(n)}
+    assert page.evaluate("() => window.__persist") >= 1, 'asks the browser to keep the data'
+    assert page.locator('#bkNudge').is_hidden(), 'brand-new player: no banner'
+    # default is weekly
+    settings(page)
+    assert page.locator('#bkFreqVal').inner_text() == 'Weekly' and 'Not backed up' in page.locator('#bkFreqSub').inner_text()
+    page.locator('#bkFreqBtn').scroll_into_view_if_needed(); page.wait_for_timeout(400); page.screenshot(path=f'{SHOTS}/settings_bkfreq.png'); page.click('#setClose')
+    # a week has not passed: stars alone do not nudge
+    reload_with(bk={'at': 0, 'stars': 0, 'ds': [], 'streak': 0, 'snooze': 0, 'since': now - 3 * DAY}, progress=prog(4))
+    assert page.locator('#bkNudge').is_hidden(), 'too early'
+    # a week passed but fewer than 5 new stars: stay quiet (2 levels x 3 stars = 6 though, so use 1 level)
+    reload_with(bk={'at': 0, 'stars': 0, 'ds': [], 'streak': 0, 'snooze': 0, 'since': now - 8 * DAY}, progress=prog(1))
+    assert page.locator('#bkNudge').is_hidden(), 'only 3 new stars: no nudge'
+    # a week passed and 12 stars: banner appears, never backed up wording
+    reload_with(progress=prog(4))
+    assert page.locator('#bkNudge').is_visible(), 'banner shows'
+    txt = page.locator('#bkNudgeTxt').inner_text(); assert 'Only on this phone' in txt and '12 stars' in txt, txt
+    page.evaluate('() => window.scrollTo(0, 0)'); page.wait_for_timeout(300); page.screenshot(path=f'{SHOTS}/backup_nudge.png')
+    bx = page.locator('#bkNudge').bounding_box(); assert bx['x'] >= 0 and bx['x'] + bx['width'] <= 360, 'fits at 360px'
+    # Later hides it and snoozes a full period
+    page.click('#bkNudgeLater'); assert page.locator('#bkNudge').is_hidden()
+    page.reload(); assert page.locator('#bkNudge').is_hidden(), 'snoozed across reloads'
+    # snooze older than a week: back again
+    reload_with(bk={'at': 0, 'stars': 0, 'ds': [], 'streak': 0, 'snooze': now - 8 * DAY, 'since': now - 20 * DAY})
+    assert page.locator('#bkNudge').is_visible()
+    # Thai
+    toggle_lang(page)
+    th = page.locator('#bkNudgeTxt').inner_text(); assert 'มีเฉพาะในเครื่องนี้' in th and '12 ดาว' in th, th
+    assert page.locator('#bkNudgeGo').inner_text() == 'สำรอง' and page.locator('#bkNudgeLater').inner_text() == 'ไว้ทีหลัง'
+    settings(page); assert page.locator('#bkFreqVal').inner_text() == 'ทุกสัปดาห์'; page.click('#setClose'); toggle_lang(page)
+    # Back up opens the dialog; the dialog says never backed up; sharing counts as a backup
+    page.click('#bkNudgeGo'); assert page.locator('#backup').is_visible()
+    assert page.locator('#bkLast').inner_text() == 'Not backed up yet'
+    assert page.locator('#bkShareRow').is_visible()
+    page.click('#bkShare'); page.wait_for_timeout(200)
+    shared = page.evaluate("() => window.__shared"); assert shared and shared.get('title') == 'Huarong Road backup'
+    assert page.locator('#bkLast').inner_text() == 'Last backed up: today', page.locator('#bkLast').inner_text()
+    page.screenshot(path=f'{SHOTS}/backup_dialog.png')
+    page.click('#bkClose'); assert page.locator('#bkNudge').is_hidden(), 'backed up: banner gone'
+    # new stars after the backup: nothing until a week later and 5 more stars
+    reload_with(progress=prog(6)); assert page.locator('#bkNudge').is_hidden(), 'backed up today'
+    st = page.evaluate("() => JSON.parse(localStorage.getItem('hr_bk'))"); assert st['stars'] == 12 and st['at'] > 0
+    st['at'] = now - 8 * DAY; reload_with(bk=st)
+    assert page.locator('#bkNudge').is_visible() and 'New since your last backup' in page.locator('#bkNudgeTxt').inner_text() and page.locator('#bkNudgeTxt').inner_text().endswith('6 stars')
+    page.click('#bkNudgeLater')
+    # a new own stage is worth a nudge even with few stars
+    layout = page.evaluate("() => LEVELS[3].g")
+    reload_with(bk={'at': now - 8 * DAY, 'stars': 15, 'ds': [], 'streak': 0, 'snooze': 0, 'since': now - 30 * DAY},
+                progress=prog(5))
+    page.evaluate("(g) => localStorage.setItem('hr_designs', JSON.stringify([{n: 1, g: g, par: 20, at: 1}]))", layout); page.reload()
+    assert page.locator('#bkNudge').is_visible() and '1 stage' in page.locator('#bkNudgeTxt').inner_text(), page.locator('#bkNudgeTxt').inner_text()
+    # weekly -> monthly -> off -> weekly; monthly needs 30 days; off never nudges
+    settings(page); page.click('#bkFreqBtn'); assert page.locator('#bkFreqVal').inner_text() == 'Monthly'
+    page.click('#bkFreqBtn'); assert page.locator('#bkFreqVal').inner_text() == 'Off'
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_bkfreq'))") == 'off'
+    page.click('#setClose'); assert page.locator('#bkNudge').is_hidden()
+    reload_with(bk={'at': now - 40 * DAY, 'stars': 0, 'ds': [], 'streak': 0, 'snooze': 0, 'since': now - 50 * DAY}, progress=prog(5), freq='off')
+    assert page.locator('#bkNudge').is_hidden(), 'Off never nudges'
+    settings(page); page.click('#bkFreqBtn'); assert page.locator('#bkFreqVal').inner_text() == 'Weekly'; page.click('#setClose')
+    reload_with(bk={'at': now - 10 * DAY, 'stars': 0, 'ds': [], 'streak': 0, 'snooze': 0, 'since': now - 50 * DAY}, progress=prog(5), freq='monthly')
+    assert page.locator('#bkNudge').is_hidden(), '10 days is not a month'
+    reload_with(bk={'at': now - 35 * DAY, 'stars': 0, 'ds': [], 'streak': 0, 'snooze': 0, 'since': now - 50 * DAY})
+    assert page.locator('#bkNudge').is_visible(), '35 days is'
+    settings(page); assert 'Last backup 1 months ago' in page.locator('#bkFreqSub').inner_text() or 'months ago' in page.locator('#bkFreqSub').inner_text() or 'days ago' in page.locator('#bkFreqSub').inner_text()
+    page.click('#setClose')
+    # no share sheet in the browser: the button is hidden
+    ctx2 = launch(p).new_context(viewport={'width': 360, 'height': 780}, has_touch=True, is_mobile=True)
+    pg2 = ctx2.new_page(); pg2.add_init_script("try { Object.defineProperty(navigator, 'share', { value: undefined }); } catch (e) {}")
+    pg2.goto(URL); assert pg2.locator('#bkShareRow').is_hidden(); ctx2.close()
+    ctx.close(); assert not errors, errors
+
+
 with sync_playwright() as p:
     if os.environ.get('HR_ONLY'):
         globals()[os.environ['HR_ONLY']](p); print('ONLY', os.environ['HR_ONLY'], 'OK'); sys.exit(0)
@@ -1109,6 +1198,8 @@ with sync_playwright() as p:
     daily(p)
     design(p)
     resets_motion(p)
+    backup_reminder(p)
+    print('backup reminder: weekly default, only when new work is worth saving, Later snoozes, share sheet, storage persist')
     print('resets + motion: per-level reset with record, reset-all behind a tick, reduce motion')
     print('design stage: rules, duplicates, solver + grade, save/play/edit/delete, 50 cap, backup')
     print('daily: generated from the date, playable, streak + week row, day rollover, in backups')

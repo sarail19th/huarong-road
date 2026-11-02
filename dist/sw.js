@@ -1,4 +1,4 @@
-const C='huarong-b9e4751';
+const C='huarong-165443f';
 const FILES=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png','./icon-monochrome-512.png','./apple-touch-icon.png'];
 // cache:'reload' goes to the server, never the browser's HTTP cache, so a new version can't be filled with stale files
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>Promise.all(FILES.map(f=>fetch(f,{cache:'reload'}).then(r=>{if(!r.ok)throw new Error(f);return c.put(f,r)})))).then(()=>self.skipWaiting()))});

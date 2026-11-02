@@ -17,6 +17,12 @@
   var timerOn = store.get('hr_timer', true); // off = no-stress mode: the clock is hidden (time is still tracked quietly)
   var autoPlace = store.get('hr_auto', true);
   var autoStart = store.get('hr_autostart', false);
+var bkFreq = store.get('hr_bkfreq', 'weekly'); // backup reminder: weekly | monthly | off
+if (bkFreq !== 'monthly' && bkFreq !== 'off') bkFreq = 'weekly';
+var bk = store.get('hr_bk', null); // { at: last backup (ms), stars/ds/streak: what it held, snooze: last "Later" (ms), since: first run (ms) }
+if (!bk || typeof bk !== 'object') bk = { at: 0, stars: 0, ds: [], streak: 0, snooze: 0, since: Date.now() };
+if (!bk.since) bk.since = Date.now();
+store.set('hr_bk', bk);
   // Reduce motion: follows the phone's "remove animations" setting until the player flips the switch in Settings
   var motionPref = store.get('hr_motion', null);
   function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
@@ -180,7 +186,7 @@
   function showMenu() {
     clearTimer(); G = null; hideTip();
     showScreen('menu');
-    renderMenu(); loadDaily(); window.scrollTo(0, 0);
+    renderMenu(); renderNudge(); loadDaily(); window.scrollTo(0, 0);
   }
 
   /* ---------- daily puzzle: generated from today's date on the device (see daily.js) ---------- */
@@ -1040,7 +1046,7 @@
       moves: Math.min(G.moves, prev ? prev.moves : 1e9),
       time: Math.min(G.elapsed, prev ? prev.time : 1e12)
     };
-    if (rec) { progress[G.lv.id] = cur; store.set('hr_progress', progress); }
+    if (rec) { progress[G.lv.id] = cur; store.set('hr_progress', progress); keepStorage(); }
     var red = G.pieces.filter(function (p) { return p.t === 'R'; })[0], el = els.get(red.id);
     setTimeout(function () {
       el.style.transform = 'translate(' + (PAD + red.c * cell + GAP) + 'px,' + (PAD + (red.r + 2) * cell + GAP) + 'px)';
@@ -1157,7 +1163,7 @@
       b.setAttribute('aria-pressed', lang === 'th');
       b.setAttribute('aria-label', lang === 'th' ? 'ภาษา: ไทย (แตะเพื่อเปลี่ยนเป็น English)' : 'Language: English (tap for Thai)');
     });
-    renderMenu(); renderDaily(); if (!$('stages').classList.contains('hidden')) renderStages();
+    renderMenu(); renderDaily(); renderBkRow(); renderBkLast(); renderNudge(); if (!$('stages').classList.contains('hidden')) renderStages();
     Array.prototype.forEach.call(document.querySelectorAll('.setrow[role=switch]'), renderSwitchText);
     if (!G) return;
     if (G.phase === 'design') { $('lvTitle').textContent = G.editing ? L('Edit stage ', 'แก้ไขด่าน ') + G.editing : L('Design stage', 'ออกแบบด่าน'); renderAll(); designCheck(); renderStages(); return; }
@@ -1236,18 +1242,18 @@
     });
     Object.keys(d.seen || {}).forEach(function (id) { seen[id] = 1; });
     store.set('hr_progress', progress); store.set('hr_seen', seen);
-    renderMenu(); $('bkOut').value = backupCode(); $('bkIn').value = '';
+    renderMenu(); renderNudge(); $('bkOut').value = backupCode(); $('bkIn').value = '';
     var total = Object.keys(progress).reduce(function (t, id) { return t + progress[id].stars; }, 0);
     bkSay(L('Restored ' + levels + ' levels · you now have ' + total + ' stars', 'กู้คืนแล้ว ' + levels + ' ด่าน · ตอนนี้มี ' + total + ' ดาว'));
   }
   $('backupBtn').onclick = function () {
-    showSettings(false); $('bkOut').value = backupCode(); $('bkIn').value = ''; bkSay('');
+    showSettings(false); $('bkOut').value = backupCode(); $('bkIn').value = ''; bkSay(''); renderBkLast();
     openDlg('backup');
   };
   $('bkClose').onclick = function () { closeDlg('backup'); };
   $('backup').addEventListener('click', function (e) { if (e.target === this) closeDlg('backup'); });
   $('bkCopy').onclick = function () {
-    var t = $('bkOut'), ok = function () { bkSay(L('Code copied', 'คัดลอกรหัสแล้ว')); };
+    var t = $('bkOut'), ok = function () { bkSay(L('Code copied', 'คัดลอกรหัสแล้ว')); markBacked(); };
     t.select();
     if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t.value).then(ok, function () { try { document.execCommand('copy'); ok(); } catch (e) {} });
     else { try { document.execCommand('copy'); ok(); } catch (e) { bkSay(L('Select the code and copy it', 'เลือกรหัสแล้วคัดลอก'), true); } }
@@ -1256,7 +1262,7 @@
     var a = document.createElement('a'), url = URL.createObjectURL(new Blob([$('bkOut').value], { type: 'text/plain' }));
     a.href = url; a.download = 'huarong-road-backup-' + new Date().toISOString().slice(0, 10) + '.txt';
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-    bkSay(L('Backup file saved', 'บันทึกไฟล์สำรองแล้ว'));
+    bkSay(L('Backup file saved', 'บันทึกไฟล์สำรองแล้ว')); markBacked();
   };
   $('bkOpen').onclick = function () { $('bkFile').value = ''; $('bkFile').click(); };
   $('bkFile').onchange = function () {
@@ -1264,6 +1270,86 @@
     var r = new FileReader(); r.onload = function () { restoreFrom(r.result); }; r.readAsText(f);
   };
   $('bkRestore').onclick = function () { restoreFrom($('bkIn').value); };
+
+  /* ---------- backup safety net: keep storage, share sheet, and a gentle reminder ---------- */
+  // 1. Ask the browser not to clear our data when the phone runs low on space (installed apps are usually granted this silently)
+  var kept = false;
+  function keepStorage() {
+    if (kept || !(navigator.storage && navigator.storage.persist)) return;
+    try { navigator.storage.persist().then(function (ok) { kept = !!ok; }, function () {}); } catch (e) {}
+  }
+  // 2. Share sheet: sends the backup file to Drive, Gmail, LINE... (hidden where the browser has no share sheet)
+  if (!navigator.share) $('bkShareRow').style.display = 'none';
+  $('bkShare').onclick = function () {
+    var text = $('bkOut').value, name = 'huarong-road-backup-' + new Date().toISOString().slice(0, 10) + '.txt', job;
+    try {
+      var file = new File([text], name, { type: 'text/plain' });
+      job = navigator.canShare && navigator.canShare({ files: [file] })
+        ? navigator.share({ files: [file], title: 'Huarong Road backup' })
+        : navigator.share({ title: 'Huarong Road backup', text: text });
+    } catch (e) { job = Promise.reject(e); }
+    job.then(function () { bkSay(L('Backup shared', 'แชร์ไฟล์สำรองแล้ว')); markBacked(); }, function (e) {
+      if (e && e.name === 'AbortError') return; // the player closed the sheet: not an error, not a backup
+      bkSay(L('Could not share. Use Copy code or Save file.', 'แชร์ไม่ได้ ใช้ “คัดลอกรหัส” หรือ “บันทึกเป็นไฟล์” แทน'), true);
+    });
+  };
+  // 3. Reminder: a banner on the menu, only when something new is worth saving and the period has passed
+  var DAY = 864e5, PERIOD = { weekly: 7 * DAY, monthly: 30 * DAY };
+  function totalStars() { return Object.keys(progress).reduce(function (t, id) { return t + (progress[id] && progress[id].stars || 0); }, 0); }
+  function saveBk() { store.set('hr_bk', bk); }
+  function markBacked() {
+    bk.at = Date.now(); bk.stars = totalStars(); bk.ds = designs.map(function (d) { return d.g; }); bk.streak = streak(); bk.snooze = 0;
+    saveBk(); renderBkLast(); renderBkRow(); renderNudge();
+  }
+  function agoText(ts) {
+    var d = Math.max(0, Math.floor((Date.now() - ts) / DAY));
+    if (d === 0) return L('today', 'วันนี้');
+    if (d === 1) return L('yesterday', 'เมื่อวาน');
+    if (d < 45) return L(d + ' days ago', d + ' วันที่แล้ว');
+    var m = Math.round(d / 30); return L(m + ' months ago', m + ' เดือนที่แล้ว');
+  }
+  function renderBkLast() {
+    $('bkLast').textContent = bk.at ? L('Last backed up: ', 'สำรองล่าสุด: ') + agoText(bk.at) : L('Not backed up yet', 'ยังไม่เคยสำรอง');
+  }
+  var FREQ_NAME = { weekly: ['Weekly', 'ทุกสัปดาห์'], monthly: ['Monthly', 'ทุกเดือน'], off: ['Off', 'ปิด'] };
+  function renderBkRow() {
+    $('bkFreqVal').textContent = L(FREQ_NAME[bkFreq][0], FREQ_NAME[bkFreq][1]);
+    $('bkFreqSub').textContent = bk.at ? L('Last backup ', 'สำรองล่าสุด ') + agoText(bk.at) : L('Not backed up yet', 'ยังไม่เคยสำรอง');
+    $('bkFreqBtn').setAttribute('aria-label', L('Backup reminder: ', 'เตือนให้สำรอง: ') + L(FREQ_NAME[bkFreq][0], FREQ_NAME[bkFreq][1]) + L('. Tap to change.', ' แตะเพื่อเปลี่ยน'));
+  }
+  $('bkFreqBtn').onclick = function () {
+    bkFreq = bkFreq === 'weekly' ? 'monthly' : bkFreq === 'monthly' ? 'off' : 'weekly';
+    store.set('hr_bkfreq', bkFreq); bk.snooze = Date.now(); saveBk(); renderBkRow(); renderNudge();
+  };
+  // What is new since the last backup (null = nothing worth a nudge)
+  function bkNews() {
+    var stars = totalStars();
+    if (stars < bk.stars) { bk.stars = stars; saveBk(); } // records were reset: count from the lower level
+    var ns = stars - bk.stars, nd = designs.filter(function (d) { return (bk.ds || []).indexOf(d.g) < 0; }).length, sk = streak();
+    var streakNew = sk >= 7 && sk > (bk.streak || 0);
+    if (ns < 5 && nd < 1 && !streakNew) return null;
+    var parts = [];
+    if (ns > 0) parts.push(L(ns + (ns === 1 ? ' star' : ' stars'), ns + ' ดาว'));
+    if (nd > 0) parts.push(L(nd + (nd === 1 ? ' stage' : ' stages'), nd + ' ด่านออกแบบ'));
+    if (streakNew) parts.push(L(sk + '-day streak', 'ต่อเนื่อง ' + sk + ' วัน'));
+    return parts.join(', ');
+  }
+  function nudgeDue() {
+    if (bkFreq === 'off') return null;
+    var ref = Math.max(bk.at || 0, bk.snooze || 0, bk.since || 0);
+    if (Date.now() - ref < PERIOD[bkFreq]) return null;
+    return bkNews();
+  }
+  function renderNudge() {
+    var what = nudgeDue(), box = $('bkNudge');
+    if (!what) { box.classList.add('hidden'); return; }
+    $('bkNudgeTxt').textContent = bk.at ? L('New since your last backup: ', 'ใหม่หลังการสำรองครั้งล่าสุด: ') + what : L('Only on this phone: ', 'มีเฉพาะในเครื่องนี้: ') + what;
+    box.classList.remove('hidden');
+  }
+  $('bkNudgeGo').onclick = function () { $('backupBtn').onclick(); };
+  $('bkNudgeLater').onclick = function () { bk.snooze = Date.now(); saveBk(); renderNudge(); };
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && !$('menu').classList.contains('hidden')) renderNudge(); });
+  keepStorage();
 
   /* ---------- reset all progress: Settings -> bottom row -> dialog that needs a tick before it works ---------- */
   $('resetAllBtn').onclick = function () {
@@ -1280,12 +1366,12 @@
   $('raYes').onclick = function () {
     if (!$('raCheck').checked) return;
     progress = {}; seen = {}; store.set('hr_progress', progress); store.set('hr_seen', seen);
-    closeDlg('raAsk'); renderMenu(); renderDaily(); if (G) renderBest();
+    closeDlg('raAsk'); renderMenu(); renderDaily(); renderNudge(); if (G) renderBest();
     toast(L('All progress reset', 'รีเซ็ตความคืบหน้าทั้งหมดแล้ว'));
   };
 
   /* ---------- settings panel: skin, sound, vibration, language ---------- */
-  function showSettings(on) { if (on) openDlg('settings'); else closeDlg('settings'); }
+  function showSettings(on) { if (on) { renderBkRow(); openDlg('settings'); } else closeDlg('settings'); }
   Array.prototype.forEach.call(document.querySelectorAll('.settings-btn'), function (b) { b.onclick = function () { showSettings(true); }; });
   $('setClose').onclick = function () { showSettings(false); };
   $('settings').addEventListener('click', function (e) { if (e.target === this) showSettings(false); });

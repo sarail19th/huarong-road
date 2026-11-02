@@ -37,6 +37,7 @@
   <symbol id="i-reset" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.95 8.95 0 0 0 13 21a9 9 0 0 0 0-18z"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></symbol>
   <symbol id="i-help" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
 </svg>
 
@@ -45,6 +46,10 @@
   <div class="updbar hidden" id="updbar" role="status">
     <span data-th="มีเวอร์ชันใหม่พร้อมแล้ว">A new version is ready</span>
     <button class="btn go sm" id="updBtn" data-th="อัปเดต">Update</button>
+  </div>
+  <div class="updbar bknudge hidden" id="bkNudge" role="status">
+    <span class="msg" id="bkNudgeTxt"></span>
+    <span class="acts"><button class="btn go sm" id="bkNudgeGo" data-th="สำรอง">Back up</button><button class="btn sm" id="bkNudgeLater" data-th="ไว้ทีหลัง">Later</button></span>
   </div>
   <div class="brand">
     <div class="brandbar">
@@ -239,6 +244,7 @@
       <h3 data-th="ข้อมูลของคุณ">Your data</h3>
       <div class="setlist">
         <button class="setrow" id="backupBtn"><svg class="ico" aria-hidden="true"><use href="#i-save"/></svg><span class="lbl"><span data-th="สำรองความคืบหน้า">Back up progress</span></span><svg class="ico chev side" aria-hidden="true"><use href="#i-chev"/></svg></button>
+        <button class="setrow" id="bkFreqBtn"><svg class="ico" aria-hidden="true"><use href="#i-bell"/></svg><span class="lbl two"><span data-th="เตือนให้สำรอง">Backup reminder</span><small class="sub" id="bkFreqSub"></small></span><span class="st val" id="bkFreqVal"></span></button>
         <button class="setrow danger" id="resetAllBtn"><svg class="ico" aria-hidden="true"><use href="#i-reset"/></svg><span class="lbl two"><span data-th="รีเซ็ตเกมทั้งหมด">Reset all progress</span><small class="sub" data-th="ลบดาว สถิติ และวันต่อเนื่องทั้งหมด">Clears every star, best score and streak</small></span><svg class="ico chev side" aria-hidden="true"><use href="#i-chev"/></svg></button>
       </div>
     </section>
@@ -250,7 +256,9 @@
   <div class="card settings backup" role="dialog" aria-modal="true" aria-labelledby="bkTitle" tabindex="-1">
     <h2 id="bkTitle" data-th="สำรองความคืบหน้า">Back up progress</h2>
     <p class="bknote" data-th="ดาวของคุณเก็บไว้ในเครื่องนี้เท่านั้น บันทึกรหัสหรือไฟล์สำรองไว้ แล้วนำมากู้คืนที่นี่หรือในเครื่องอื่นได้ ใช้ได้แม้ไม่มีอินเทอร์เน็ต">Your stars are stored only on this device. Save a backup code or file, then restore it here or on another phone. Works offline.</p>
+    <p class="bklast" id="bkLast"></p>
     <h4 data-th="บันทึก">Save</h4>
+    <div class="row" id="bkShareRow"><button class="btn go" id="bkShare" data-th="แชร์ไปที่ไดรฟ์ แชท อีเมล…">Share to Drive, chat, email…</button></div>
     <textarea id="bkOut" rows="3" readonly aria-label="Backup code"></textarea>
     <div class="row"><button class="btn" id="bkCopy" data-th="คัดลอกรหัส">Copy code</button><button class="btn" id="bkSave" data-th="บันทึกเป็นไฟล์">Save file</button></div>
     <h4 data-th="กู้คืน">Restore</h4>
