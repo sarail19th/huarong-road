@@ -1026,7 +1026,7 @@ store.set('hr_bk', bk);
   function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
   applyMotion(); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = '165443f'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = '927cbf9'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
@@ -1782,7 +1782,7 @@ store.set('hr_bk', bk);
   function doRestart() {
     if (!G || !G.initial) return;
     G.pieces = G.initial.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; });
-    hideTip(); G.trend = null; G.moves = 0; G.hist = []; G.redo = []; G.phase = 'play'; document.body.dataset.phase = 'play';
+    hideTip(); G.trend = null; G.hints = 0; G.moves = 0; G.hist = []; G.redo = []; G.phase = 'play'; document.body.dataset.phase = 'play'; // a restart is a fresh attempt: hint use and its closer/further feedback start over too
     G.t0 = Date.now(); $('moves').textContent = '0'; $('time').textContent = '0:00';
     clearTimer(); timerId = setInterval(tick, 250);
     clearBoard(); renderAll();

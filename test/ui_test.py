@@ -382,7 +382,7 @@ def trend(p):
         for i in range(1, 7): page.mouse.move(sx + move['dc'] * move['k'] * cs * i / 6, sy + move['dr'] * move['k'] * cs * i / 6)
         page.mouse.up(); page.wait_for_timeout(400)
         return page.evaluate("([g, m]) => Solver.slide(g, {t: m.t, r: m.r, c: m.c}, m.dr, m.dc, m.k)", [g, move])
-    best = page.evaluate("(g) => Solver.solve(g)", grid)
+    best = page.evaluate("(g) => Solver.solve(g)", grid); first = best[0]
     # no hint used yet: the good move gets no on-track line
     g1 = do(best[0], grid)
     assert 'Drag blocks' in page.locator('#status').inner_text(), 'no feedback line before any hint'
@@ -402,6 +402,9 @@ def trend(p):
     page.click('#undoBtn'); page.wait_for_timeout(300)
     assert 'to go' in page.locator('#status').inner_text() and '✗' not in page.locator('#status').inner_text()
     page.click('#restartBtn'); page.click('#rsYes'); assert 'Drag blocks' in page.locator('#status').inner_text(), 'restart clears the line'
+    assert page.locator('#tip').is_hidden() and page.locator('#board [data-focus]').count() == 0, 'restart clears the hint tip and outline'
+    do(first, grid); assert page.locator('#moves').inner_text() == '1'   # a fresh attempt: no hint used, so no closer/further line either
+    assert 'Drag blocks' in page.locator('#status').inner_text(), 'hint use is forgotten after restart'
     ctx.close(); assert not errors, errors
 
 def updates(p):

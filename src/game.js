@@ -784,7 +784,7 @@ store.set('hr_bk', bk);
   function doRestart() {
     if (!G || !G.initial) return;
     G.pieces = G.initial.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; });
-    hideTip(); G.trend = null; G.moves = 0; G.hist = []; G.redo = []; G.phase = 'play'; document.body.dataset.phase = 'play';
+    hideTip(); G.trend = null; G.hints = 0; G.moves = 0; G.hist = []; G.redo = []; G.phase = 'play'; document.body.dataset.phase = 'play'; // a restart is a fresh attempt: hint use and its closer/further feedback start over too
     G.t0 = Date.now(); $('moves').textContent = '0'; $('time').textContent = '0:00';
     clearTimer(); timerId = setInterval(tick, 250);
     clearBoard(); renderAll();
