@@ -298,6 +298,9 @@ html[lang=th] .about p,html[lang=th] .about ul.facts li,html[lang=th] .about ul.
 .upd-btn .ico{width:14px;height:14px}
 .upd-btn:active{transform:scale(.95)}
 .ver b{font-weight:600;letter-spacing:.5px}
+.offl{margin:8px 0 0;text-align:center;font-size:12px;font-weight:600;color:var(--muted)}
+.offl.ok{color:var(--ok)}
+.offl.warn{color:var(--amber)}
 .src{margin:4px 0 0;text-align:center;font-size:11.5px}
 .src a{color:var(--muted);text-decoration:underline}
 
@@ -527,6 +530,7 @@ html[data-motion=reduce] .piece[data-hint]{filter:brightness(1.2)}
   <div id="levels"></div>
   <div class="row pgnav"><button class="btn" id="pgPrev"></button><button class="btn" id="pgNext"></button></div>
   <p class="ver"><span data-th="เวอร์ชัน">Version</span> <b id="verId"></b><button class="upd-btn" id="refreshBtn" aria-label="Update the app to the latest version" title="Update the app (get latest version)"><svg class="ico" aria-hidden="true"><use href="#i-download"/></svg><span data-th="อัปเดต">Update</span></button></p>
+  <p class="offl" id="offl" role="status" aria-live="polite" hidden></p>
   <p class="src"><a href="https://github.com/sarail19th/huarong-road" target="_blank" rel="noopener noreferrer">Source on GitHub</a> · <a href="https://github.com/sarail19th/huarong-road/blob/main/NOTICE.md" target="_blank" rel="noopener noreferrer">Icon credits</a></p>
 </section>
 
@@ -1026,7 +1030,7 @@ store.set('hr_bk', bk);
   function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
   applyMotion(); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = '3447a99'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = 'badee4c'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
@@ -2161,7 +2165,7 @@ store.set('hr_bk', bk);
       b.setAttribute('aria-pressed', lang === 'th');
       b.setAttribute('aria-label', lang === 'th' ? 'ภาษา: ไทย (แตะเพื่อเปลี่ยนเป็น English)' : 'Language: English (tap for Thai)');
     });
-    renderMenu(); renderDaily(); renderBkRow(); renderBkLast(); renderNudge(); if (!$('stages').classList.contains('hidden')) renderStages();
+    renderOffline();     renderMenu(); renderDaily(); renderBkRow(); renderBkLast(); renderNudge(); if (!$('stages').classList.contains('hidden')) renderStages();
     Array.prototype.forEach.call(document.querySelectorAll('.setrow[role=switch]'), renderSwitchText);
     if (!G) return;
     if (G.phase === 'design') { $('lvTitle').textContent = G.editing ? L('Edit stage ', 'แก้ไขด่าน ') + G.editing : L('Design stage', 'ออกแบบด่าน'); renderAll(); designCheck(); renderStages(); return; }
@@ -2419,6 +2423,36 @@ store.set('hr_bk', bk);
   $('refreshBtn').onclick = refreshApp;
   $('updBtn').onclick = function () { location.reload(); }; // the new worker already holds the new files
 
+  // "Ready for offline" line (bottom of the menu): asks the worker whether every file is saved (it re-saves missing ones online first).
+  var offState = '';
+  function renderOffline() {
+    var el = $('offl'); if (!el) return;
+    el.hidden = !offState;
+    el.className = 'offl' + (offState === 'ok' ? ' ok' : offState === 'no' ? ' warn' : '');
+    el.textContent = offState === 'ok' ? L('✓ Ready to play offline', '✓ พร้อมเล่นแบบออฟไลน์')
+      : offState === 'no' ? L('⚠ Not saved for offline yet. Stay online a moment.', '⚠ ยังไม่ได้บันทึกสำหรับออฟไลน์ ออนไลน์ค้างไว้สักครู่')
+      : offState === 'wait' ? L('Saving for offline…', 'กำลังบันทึกสำหรับออฟไลน์…') : '';
+  }
+  var offTimer = 0, offTries = 0;
+  function checkOffline() {
+    if (!hasSW) return;
+    if (!offState) { offState = 'wait'; renderOffline(); }
+    navigator.serviceWorker.ready.then(function (reg) {
+      var w = navigator.serviceWorker.controller || reg.active; if (!w) return;
+      clearTimeout(offTimer);
+      offTimer = setTimeout(function () { if (offState === 'wait') { offState = 'no'; renderOffline(); } }, 4000); // an old worker never answers
+      w.postMessage({ type: 'offline?' });
+    });
+  }
+  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', function (e) {
+    if (!e.data || e.data.type !== 'offline') return;
+    clearTimeout(offTimer); offState = e.data.ok ? 'ok' : 'no'; renderOffline();
+    if (!e.data.ok && offTries++ < 3) setTimeout(checkOffline, 5000); // still downloading? ask again
+    else if (e.data.ok) offTries = 0;
+  });
+  window.addEventListener('online', function () { offTries = 0; checkOffline(); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) checkOffline(); });
+
   function initUpdates() {
     $('verId').textContent = BUILD;
     var prev = null; try { prev = sessionStorage.getItem('hr_refreshed'); sessionStorage.removeItem('hr_refreshed'); } catch (e) {}
@@ -2429,6 +2463,7 @@ store.set('hr_bk', bk);
     if (!hasSW) return;
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (reg) {
       var check = function () { reg.update().catch(function () {}); };
+      checkOffline();
       document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
       check();
     }).catch(function () {});

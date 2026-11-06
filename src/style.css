@@ -286,6 +286,9 @@ html[lang=th] .about p,html[lang=th] .about ul.facts li,html[lang=th] .about ul.
 .upd-btn .ico{width:14px;height:14px}
 .upd-btn:active{transform:scale(.95)}
 .ver b{font-weight:600;letter-spacing:.5px}
+.offl{margin:8px 0 0;text-align:center;font-size:12px;font-weight:600;color:var(--muted)}
+.offl.ok{color:var(--ok)}
+.offl.warn{color:var(--amber)}
 .src{margin:4px 0 0;text-align:center;font-size:11.5px}
 .src a{color:var(--muted);text-decoration:underline}
 

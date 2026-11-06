@@ -32,6 +32,12 @@ const ok = (c, m) => { if (!c) fail(m); };
     await page.evaluate(() => navigator.serviceWorker.register('/other/sw.js', { scope: '/other/' }).then(() => navigator.serviceWorker.ready));
     ok(JSON.stringify(await regs()) === '["/huarong-road/","/other/"]', 'setup: both workers registered, got ' + await regs());
 
+    // 0) the "Ready for offline" line: fills in once saved, and re-saves a wiped cache by itself
+    await page.waitForFunction(() => /Ready/.test(document.getElementById('offl').textContent), null, { timeout: 15000 }).catch(() => fail('offline line never said Ready: ' + '(see menu)'));
+    await page.evaluate(() => caches.keys().then((ks) => Promise.all(ks.filter((k) => k.startsWith('huarong-')).map((k) => caches.delete(k)))));
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await page.waitForFunction(() => caches.keys().then((k) => k.some((x) => x.startsWith('huarong-'))) && /Ready/.test(document.getElementById('offl').textContent), null, { timeout: 15000 }).catch(() => fail('wiped cache was not re-saved by the offline check'));
+
     // 1) a new build ships: the worker upgrades
     ver = 'aaaaaaa';
     await page.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration('/huarong-road/'); await r.update(); });

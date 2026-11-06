@@ -1163,7 +1163,7 @@ store.set('hr_bk', bk);
       b.setAttribute('aria-pressed', lang === 'th');
       b.setAttribute('aria-label', lang === 'th' ? 'ภาษา: ไทย (แตะเพื่อเปลี่ยนเป็น English)' : 'Language: English (tap for Thai)');
     });
-    renderMenu(); renderDaily(); renderBkRow(); renderBkLast(); renderNudge(); if (!$('stages').classList.contains('hidden')) renderStages();
+    renderOffline();     renderMenu(); renderDaily(); renderBkRow(); renderBkLast(); renderNudge(); if (!$('stages').classList.contains('hidden')) renderStages();
     Array.prototype.forEach.call(document.querySelectorAll('.setrow[role=switch]'), renderSwitchText);
     if (!G) return;
     if (G.phase === 'design') { $('lvTitle').textContent = G.editing ? L('Edit stage ', 'แก้ไขด่าน ') + G.editing : L('Design stage', 'ออกแบบด่าน'); renderAll(); designCheck(); renderStages(); return; }
@@ -1421,6 +1421,36 @@ store.set('hr_bk', bk);
   $('refreshBtn').onclick = refreshApp;
   $('updBtn').onclick = function () { location.reload(); }; // the new worker already holds the new files
 
+  // "Ready for offline" line (bottom of the menu): asks the worker whether every file is saved (it re-saves missing ones online first).
+  var offState = '';
+  function renderOffline() {
+    var el = $('offl'); if (!el) return;
+    el.hidden = !offState;
+    el.className = 'offl' + (offState === 'ok' ? ' ok' : offState === 'no' ? ' warn' : '');
+    el.textContent = offState === 'ok' ? L('✓ Ready to play offline', '✓ พร้อมเล่นแบบออฟไลน์')
+      : offState === 'no' ? L('⚠ Not saved for offline yet. Stay online a moment.', '⚠ ยังไม่ได้บันทึกสำหรับออฟไลน์ ออนไลน์ค้างไว้สักครู่')
+      : offState === 'wait' ? L('Saving for offline…', 'กำลังบันทึกสำหรับออฟไลน์…') : '';
+  }
+  var offTimer = 0, offTries = 0;
+  function checkOffline() {
+    if (!hasSW) return;
+    if (!offState) { offState = 'wait'; renderOffline(); }
+    navigator.serviceWorker.ready.then(function (reg) {
+      var w = navigator.serviceWorker.controller || reg.active; if (!w) return;
+      clearTimeout(offTimer);
+      offTimer = setTimeout(function () { if (offState === 'wait') { offState = 'no'; renderOffline(); } }, 4000); // an old worker never answers
+      w.postMessage({ type: 'offline?' });
+    });
+  }
+  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', function (e) {
+    if (!e.data || e.data.type !== 'offline') return;
+    clearTimeout(offTimer); offState = e.data.ok ? 'ok' : 'no'; renderOffline();
+    if (!e.data.ok && offTries++ < 3) setTimeout(checkOffline, 5000); // still downloading? ask again
+    else if (e.data.ok) offTries = 0;
+  });
+  window.addEventListener('online', function () { offTries = 0; checkOffline(); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) checkOffline(); });
+
   function initUpdates() {
     $('verId').textContent = BUILD;
     var prev = null; try { prev = sessionStorage.getItem('hr_refreshed'); sessionStorage.removeItem('hr_refreshed'); } catch (e) {}
@@ -1431,6 +1461,7 @@ store.set('hr_bk', bk);
     if (!hasSW) return;
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (reg) {
       var check = function () { reg.update().catch(function () {}); };
+      checkOffline();
       document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
       check();
     }).catch(function () {});
