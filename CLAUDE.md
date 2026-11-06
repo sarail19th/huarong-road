@@ -36,6 +36,7 @@ node build.js          # produce dist/
 python3 gen/icons.py   # icons into dist/ (run after build)
 python3 gen/shots.py   # manifest screenshots into dist/ (run after build; PW_CHROMIUM=<chromium path> if needed)
 node test/pwa_test.js  # manifest / icons / screenshots / service-worker list
+node test/shared_origin_test.js  # an update (worker upgrade or the Update pill) must not touch other apps' caches/workers on the shared github.io origin; still opens offline
 python3 test/ui_test.py
 ```
 Serve `dist/` over https (or localhost) for the service worker to register; opening the file directly also works but skips the PWA parts.
@@ -45,6 +46,7 @@ Serve `dist/` over https (or localhost) for the service worker to register; open
 - Keep `par` equal to the true BFS optimum; star rating depends on it (<= par = 3 stars, <= 1.4x par = 2).
 - UI changes: rebuild and run `python3 test/ui_test.py`.
 - New guidance text (hints, status, solution, about) needs a Thai version too: use `L(en, th)` in JS or `data-th` in HTML.
+- Other apps live on the same github.io origin and share Cache Storage and the worker list: only ever delete caches starting `huarong-` and only unregister the worker whose scope is this app's. Run `node test/shared_origin_test.js` after touching `build.js`'s worker or `refreshApp`.
 - Never block pinch zoom in the viewport meta (`user-scalable=no` fails accessibility audits); the board uses `touch-action:none` and the body `touch-action:manipulation` instead.
 - Piece animations must not scale (pieces are positioned with `transform: translate`, scaling shifts them).
 
