@@ -1393,12 +1393,23 @@ store.set('hr_bk', bk);
     btn.classList.add('spin'); toast(L('Refreshing…', 'กำลังรีเฟรช…'));
     fetch(url + '?r=' + Date.now(), { cache: 'no-store' }).then(function (r) {
       if (!r.ok) throw new Error('http ' + r.status);
-      var jobs = [];
-      if (window.caches) jobs.push(caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }));
-      jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (x) { return x.unregister(); })); }));
+      // Only touch this app's own caches and worker: other apps on the same origin share Cache Storage and registrations.
+      var scope = new URL('./', location.href).href, jobs = [];
+      if (window.caches) jobs.push(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k.indexOf('huarong-') === 0; }).map(function (k) { return caches.delete(k); })); }));
+      jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.filter(function (x) { return x.scope === scope; }).map(function (x) { return x.unregister(); })); }));
       return Promise.all(jobs);
     }).then(function () {
       return fetch(url, { cache: 'reload' }).catch(function () {}); // refresh the browser's own copy of the page too
+    }).then(function () {
+      // install a fresh worker and wait until its offline copy is complete, so going offline right after is safe
+      return navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (reg) {
+        return new Promise(function (res) {
+          var w = reg.installing || reg.waiting || reg.active;
+          if (!w || w.state === 'activated') return res();
+          var t = setTimeout(res, 15000);
+          w.addEventListener('statechange', function () { if (w.state === 'activated' || w.state === 'redundant') { clearTimeout(t); res(); } });
+        });
+      }).catch(function () {});
     }).then(function () {
       try { sessionStorage.setItem('hr_refreshed', BUILD); } catch (e) {}
       location.reload();
