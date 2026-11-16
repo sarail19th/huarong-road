@@ -223,16 +223,11 @@
       <span class="lbl"><svg class="ico" aria-hidden="true"><use href="#i-palette"/></svg><span data-th="ธีม">Skin</span></span>
       <div class="skopts" id="skopts"></div>
     </div>
-        <div class="setrow col hidden" id="custEd">
-      <span class="lbl"><svg class="ico" aria-hidden="true"><use href="#i-palette"/></svg><span data-th="สกินที่ตั้งเอง">Custom skin</span></span>
-      <div class="custbtns"><select id="custBase" aria-label="Start from"></select><button type="button" class="btn sm" id="custReset" data-th="รีเซ็ต">Reset</button></div>
-      <div class="cust" id="custRows"></div>
-      <p class="custwarn hidden" id="custWarn" role="status"></p>
-      <span class="custhint" id="icoLabel"></span>
-      <div class="icopick" id="icoPick"></div>
-      <button type="button" class="btn icono" id="icoNone" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg><span data-th="ไม่มีไอคอน">No icon</span></button>
-      <p class="custhint" data-th="สามเหลี่ยมและวงแหวนคือแบบดั้งเดิม สีไอคอนปรับให้อ่านง่ายโดยอัตโนมัติ">Triangle and ring are the originals. Icon colour adjusts automatically so it stays readable.</p>
+        <div class="setrow col hidden" id="mineRow">
+      <span class="lbl"><svg class="ico" aria-hidden="true"><use href="#i-palette"/></svg><span id="mineHead">My themes</span></span>
+      <div class="skopts" id="mythemes"></div>
     </div>
+        <button class="setrow" id="custBtn" type="button"><svg class="ico" aria-hidden="true"><use href="#i-palette"/></svg><span class="lbl two"><span id="custBtnT">Customize</span><small class="sub" data-th="เปลี่ยนสี ไอคอน และกรอบของบล็อก">Change block colours, icons and frames</small></span><svg class="ico chev side" aria-hidden="true"><use href="#i-chev"/></svg></button>
       </div>
     </section>
     <section class="setgrp">
@@ -281,6 +276,36 @@
   </div>
 </div>
 
+<div class="overlay hidden full" id="themeEd">
+  <div class="card tedcard" role="dialog" aria-modal="true" aria-labelledby="teTitle" tabindex="-1">
+    <div class="tehead"><button type="button" class="btn sm" id="teBack">‹ Back</button><h2 id="teTitle">Customize</h2></div>
+    <p class="custhint" id="teBase"></p>
+    <label class="telab"><span data-th="ชื่อธีม">Theme name</span><input id="teName" type="text" maxlength="24" autocomplete="off"></label>
+    <div class="cpwrap tepv" id="tePrev" aria-hidden="true"><div id="teBoard" class="teboard"></div></div>
+    <p class="custwarn hidden" id="teWarn" role="status"></p>
+    <h3 class="teh" data-th="สี">Colours</h3>
+    <div class="cust" id="teRows"></div>
+    <h3 class="teh" id="teBlockH"></h3>
+    <div class="tetabs" id="teTabs" role="group"></div>
+    <span class="custhint" data-th="ไอคอน">Icon</span>
+    <div class="icopick" id="icoPick"></div>
+    <button type="button" class="btn icono" id="icoNone" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg><span data-th="ไม่มีไอคอน">No icon</span></button>
+    <div class="cust" id="teIcRow"></div>
+    <span class="custhint" data-th="กรอบ">Frame</span>
+    <div class="frpick" id="frPick"></div>
+    <h3 class="teh" data-th="สไตล์">Style</h3>
+    <span class="custhint" data-th="รูปแบบไอคอน">Icon style</span>
+    <div class="tetabs two" id="teSolid" role="group"></div>
+    <div class="cust" id="teFrcRow"></div>
+    <div class="tebtns">
+      <button type="button" class="btn go" id="teSave">Save theme</button>
+      <button type="button" class="btn" id="teSaveNew">Save as new</button>
+      <button type="button" class="btn" id="teReset">Reset to original</button>
+      <button type="button" class="btn dangerbtn" id="teDel">Delete</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay hidden" id="colorDlg">
   <div class="card cpick" role="dialog" aria-modal="true" aria-labelledby="cpTitle" tabindex="-1">
     <div class="cphead"><span class="cpprev" id="cpPrev"></span><div class="cpt"><h2 id="cpTitle"></h2><small id="cpHex"></small></div></div>
@@ -301,7 +326,7 @@
       <div class="row cpmini"><button type="button" class="btn" id="cpSoft" data-th="อ่อนลง">Make softer</button><button type="button" class="btn" id="cpRich" data-th="เข้มขึ้น">Make richer</button></div>
       <p class="custhint" data-th="แถบเลื่อนอยู่ในช่วงที่ดูสบายตา สีจึงไม่จัดเกินไป ใช้ “สีอื่นๆ” ในชุดสีถ้าต้องการค่าสีที่แน่นอน">Sliders stay inside a pleasant range, so colors never turn neon. Use More colors in Swatches for an exact value.</p>
     </div>
-    <div class="row"><button type="button" class="btn" id="cpNo" data-th="ยกเลิก">Cancel</button><button type="button" class="btn go" id="cpYes" data-th="ใช้สีนี้">Use color</button></div>
+    <div class="row"><button type="button" class="btn" id="cpNo" data-th="ยกเลิก">Cancel</button><button type="button" class="btn hidden" id="cpAuto" data-th="อัตโนมัติ">Auto</button><button type="button" class="btn go" id="cpYes" data-th="ใช้สีนี้">Use color</button></div>
   </div>
 </div>
 

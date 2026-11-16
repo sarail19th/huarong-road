@@ -682,54 +682,97 @@ def new_skins(p):
     assert page.locator('.piece.tR svg polygon').count() == 2 and page.locator('.piece.tV i').count() >= 1, 'classic keeps triangle + rings'
     page.click('#backBtn')
     set_skin(page, 'tech'); assert css('color-scheme') == 'light'
-    # Custom: editor hidden for other skins, shown for Custom; colour, icon, persistence, reset, start-from
-    settings(page); assert page.locator('#custEd').is_hidden()
-    page.locator('#settings .skopt[data-sk=custom]').click(); assert page.locator('#custEd').is_visible()
+    # Hearts (Queen of Hearts): card faces, queen on the red block, spades on tall/wide, hearts on small, card frames, brighter LED panel
+    set_skin(page, 'hearts'); lv(page, 5).click()
+    assert page.locator('.piece.tR[data-fr=card] .cm.tl').inner_text().startswith('Q'), 'queen corner mark'
+    assert page.locator('.piece.tV[data-fr=card] svg').count() >= 1 and page.locator('.piece.tS[data-fr=card] svg').count() >= 1
+    led = css('--ledbg'); assert led and led != '#000', 'LED panel themed'
+    page.click('#backBtn')
+    # Customize flow: pick a skin, tap Customize (no "Start from" list, no inline editor), full-screen editor
+    set_skin(page, 'tech'); assert css('color-scheme') == 'light'
+    settings(page)
+    assert page.locator('#custEd').count() == 0 and page.locator('#settings .skopt[data-sk=custom]').count() == 0, 'old Custom tile and inline editor are gone'
+    assert page.locator('#mineRow').is_hidden(), 'My themes hidden until something is saved'
+    assert 'Customize' in page.inner_text('#custBtnT') and 'Modern Tech' in page.inner_text('#custBtnT')
+    page.click('#custBtn'); page.wait_for_selector('#themeEd:not(.hidden)')
+    assert 'Based on Modern Tech' in page.inner_text('#teBase') and page.input_value('#teName') == 'My Modern Tech'
     def pick(key, hexv):  # colour dialog: tap a swatch, then Use color
         page.click(f'#cc_{key}'); page.wait_for_selector('#colorDlg:not(.hidden)')
         page.click(f'#cpSw .cps[data-c="{hexv}"]'); page.click('#cpYes'); page.wait_for_selector('#colorDlg.hidden', state='attached')
     pick('bg', '#1A1F2B'); pick('board', '#0A1016'); pick('R', '#F4B6C2'); pick('T', '#2F80ED'); pick('S', '#F7E3A1')
-    assert css('--bg') == '#1a1f2b' and css('color-scheme') == 'dark' and css('--text') == '#e8edf3', 'dark custom background picks light text'
     assert page.locator('#cc_R .chx').inner_text() == '#F4B6C2', 'row shows the chosen colour'
-    # the phone's picker is not used: the rows are buttons, and Cancel keeps the old colour
-    assert page.evaluate("() => document.querySelectorAll('#custRows input[type=color]').length") == 0
+    assert css('--bg') != '#1a1f2b', 'editing does not repaint the app until saved'
+    # Cancel keeps the old colour; fine-tune stays soft; More colors reaches the phone picker value
     page.click('#cc_R'); page.click('#cpSw .cps[data-c="#E63946"]'); page.click('#cpNo')
-    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_custom')).R") == '#F4B6C2', 'cancel keeps the colour'
-    # fine-tune: sliders stay in the soft range, preview follows, Use saves
+    assert page.locator('#cc_R .chx').inner_text() == '#F4B6C2', 'cancel keeps the colour'
     page.click('#cc_R'); page.click('#cpTabF')
     page.evaluate("() => { const s = document.getElementById('cpS'); s.value = 100; s.dispatchEvent(new Event('input')); const l = document.getElementById('cpL'); l.value = 0; l.dispatchEvent(new Event('input')); }")
-    hexv = page.inner_text('#cpHex')
     import re as _re
-    assert _re.fullmatch(r'#[0-9A-F]{6}', hexv) and hexv != '#F4B6C2', 'fine-tune changes the colour'
+    hexv = page.inner_text('#cpHex'); assert _re.fullmatch(r'#[0-9A-F]{6}', hexv) and hexv != '#F4B6C2', 'fine-tune changes the colour'
     page.click('#cpSoft'); assert page.inner_text('#cpHex') != hexv, 'make softer'
-    page.click('#cpYes'); assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_custom')).R").upper() != '#F4B6C2'
-    # More colors still reaches the phone picker's value
+    page.click('#cpYes')
     page.click('#cc_R'); page.evaluate("() => { const n = document.getElementById('cpNative'); n.value = '#336699'; n.dispatchEvent(new Event('input')); }")
     assert page.inner_text('#cpHex') == '#336699'; page.click('#cpYes')
     pick('R', '#F4B6C2')
-    page.locator('#icoPick button').nth(4).click()  # diamond on the red block
-    saved = page.evaluate("() => JSON.parse(localStorage.getItem('hr_custom'))")
-    assert saved['R'] == '#F4B6C2' and saved['icons']['R'] == 'diamond', 'custom saved'
-    page.locator('.cic[data-k=T]').click(); page.locator('#icoPick button').nth(6).click()  # ring on tall blocks
-    # No icon: a labelled button (the old X tile is gone), per block type
-    assert page.locator('#icoPick button').count() == 7 and page.locator('#icoNone').inner_text().strip() == 'No icon'
-    page.locator('.cic[data-k=S]').click(); page.click('#icoNone')
-    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_custom')).icons.S") == 'none' and page.locator('#icoNone').get_attribute('aria-pressed') == 'true'
+    # icons, frames, icon colour, solid style per block type
+    page.click('#icoPick button[data-i=spade]')
+    page.click('#teTabs button[data-k=T]'); page.click('#icoPick button[data-i=diamond]'); page.click('#frPick button[data-f=ring]')
+    page.click('#teTabs button[data-k=S]'); page.click('#icoNone'); page.click('#frPick button[data-f=double]')
+    assert page.locator('#icoNone').get_attribute('aria-pressed') == 'true' and page.locator('#icoNone').inner_text().strip() == 'No icon'
+    assert page.locator('#teBoard .piece.tS .fl').count() == 4 and page.locator('#teBoard .piece.tV i').count() == 2, 'preview shows frames'
+    page.click('#teTabs button[data-k=R]'); page.click('#frPick button[data-f=stripes]'); page.click('#teSolid button[data-s="1"]')
+    assert page.locator('#teBoard .piece.tR svg').get_attribute('fill') == 'currentColor', 'solid style'
+    page.click('#cc_ic'); page.click('#cpSw .cps[data-c="#B5382C"]'); page.click('#cpYes')
+    assert page.inner_text('#cc_ic .chx') == '#B5382C' and page.locator('#ca_ic').is_enabled()
+    page.click('#ca_ic'); assert page.inner_text('#cc_ic .chx') == 'Auto', 'Auto resets the icon colour'
+    page.click('#cc_frc'); page.click('#cpSw .cps[data-c="#F7E3A1"]'); page.click('#cpYes')
+    # two block colours that look alike (same icon + frame) warn
+    page.click('#teTabs button[data-k=S]'); page.click('#icoPick button[data-i=diamond]'); page.click('#frPick button[data-f=ring]')
+    pick('S', '#2F80ED'); assert page.locator('#teWarn').is_visible(), 'contrast warning'
+    pick('S', '#F7E3A1'); assert page.locator('#teWarn').is_hidden()
+    # unsaved changes: Back asks twice; Reset restores the starting look
+    page.click('#teBack'); assert 'Discard' in page.inner_text('#teBack'); assert page.locator('#themeEd').is_visible()
+    page.click('#teReset'); assert page.locator('#cc_R .chx').inner_text() == '#F26A1B'
+    pick('R', '#F4B6C2'); page.fill('#teName', 'Night card')
+    page.click('#teSave'); page.wait_for_selector('#themeEd.hidden', state='attached')
+    th = page.evaluate("() => JSON.parse(localStorage.getItem('hr_themes'))")
+    assert len(th) == 1 and th[0]['name'] == 'Night card' and th[0]['R'] == '#F4B6C2' and th[0]['base'] == 'tech'
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_skin'))") == 'my:' + th[0]['id']
+    assert page.evaluate("() => document.documentElement.dataset.skin") == 'custom' and css('--pR') != ''
+    assert page.locator('#mineRow').is_visible() and '1/6' in page.inner_text('#mineHead') and 'Edit Night card' in page.inner_text('#custBtnT')
     page.click('#setClose'); lv(page, 5).click()
-    assert page.locator('.piece.tR svg').count() == 1 and page.locator('.piece.tV i').count() >= 1, 'custom icons drawn on the board'
-    assert page.locator('.piece.tS').first.inner_html() == '', 'no icon leaves the small blocks blank'
-    page.reload(); assert css('--bg') == '#1a1f2b', 'custom survives reload'
-    # two block colours that are nearly the same show the contrast warning
-    settings(page)
-    pick('T', '#F7E3A1'); assert page.locator('#custWarn').is_visible(), 'contrast warning'
-    page.locator('#custBase').select_option('gold'); assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_custom')).R") == '#d4a017', 'start from gold'
-    page.click('#custReset'); assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_custom')).bg") == '#E9DCC3', 'reset'
-    # leaving Custom removes its inline variables
-    page.locator('#settings .skopt[data-sk=classic]').click()
-    assert page.evaluate("() => document.documentElement.getAttribute('style')") in (None, ''), 'no leftover custom variables'
-    # Thai labels in the editor
-    page.locator('#settings .skopt[data-sk=custom]').click(); page.locator('#settings .lang-btn').click()
-    assert 'บล็อกแดง' in page.locator('#custRows').inner_text() and page.locator('#icoNone').inner_text().strip() == 'ไม่มีไอคอน', 'editor in Thai'
+    n_poly = page.evaluate("() => document.querySelectorAll('#board .piece.tR svg polygon').length"); n_ring = page.evaluate("() => document.querySelectorAll('#board .piece.tV i').length")
+    assert n_poly == 2 and n_ring >= 1, f'tech art kept after Reset to original ({n_poly}, {n_ring})'
+    page.click('#backBtn'); page.reload()
+    assert page.evaluate("() => document.documentElement.dataset.skin") == 'custom', 'saved theme survives reload'
+    # edit it, save as new (2/6), switch between them, delete (two taps) falls back to a built-in skin
+    settings(page); page.click('#custBtn'); page.wait_for_selector('#themeEd:not(.hidden)')
+    assert page.input_value('#teName') == 'Night card' and page.locator('#teSaveNew').is_visible() and page.locator('#teDel').is_visible()
+    page.fill('#teName', 'Night card 2'); page.click('#teSaveNew'); page.wait_for_selector('#themeEd.hidden', state='attached')
+    th = page.evaluate("() => JSON.parse(localStorage.getItem('hr_themes'))"); assert [t['name'] for t in th] == ['Night card', 'Night card 2']
+    assert page.locator('#mythemes .skopt').count() == 2
+    page.locator('#mythemes .skopt').first.click()
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_skin'))") == 'my:' + th[0]['id']
+    # the six-slot limit
+    for i in range(4):
+        page.click('#custBtn'); page.fill('#teName', f'T{i}'); page.click('#teSaveNew'); page.wait_for_selector('#themeEd.hidden', state='attached')
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_themes')).length") == 6
+    page.click('#custBtn'); page.click('#teSaveNew'); assert 'slots' in page.inner_text('#toast') and page.locator('#themeEd').is_visible(), 'slot limit toast'
+    # themes travel with a backup code, and restoring merges
+    page.click('#teBack'); page.click('#teBack') if page.locator('#themeEd:not(.hidden)').count() else None
+    code = page.evaluate("() => { const b = document.getElementById('backupBtn'); b.click(); return document.getElementById('bkOut').value; }")
+    assert code.startswith('HR1.'); import base64, json as _json
+    assert len(_json.loads(base64.b64decode(code[4:]))['themes']) == 6, 'backup carries themes'
+    page.click('#bkClose')
+    settings(page); page.click('#custBtn'); page.click('#teDel'); assert 'again' in page.inner_text('#teDel'); page.click('#teDel')
+    page.wait_for_selector('#themeEd.hidden', state='attached')
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_themes')).length") == 5
+    assert page.evaluate("() => document.documentElement.dataset.skin") in ('tech', 'classic'), 'deleting the active theme falls back'
+    assert page.evaluate("() => document.documentElement.getAttribute('style')") in (None, ''), 'no leftover theme variables'
+    # Thai labels in the editor and the colour dialog
+    page.locator('#settings .lang-btn').click(); page.click('#custBtn')
+    assert 'กรอบ' in page.locator('#frPick').inner_text() or 'วงแหวน' in page.locator('#frPick').inner_text()
+    assert page.locator('#icoNone').inner_text().strip() == 'ไม่มีไอคอน' and 'บล็อกแดง' in page.locator('#teRows').inner_text(), 'editor in Thai'
     page.click('#cc_R'); assert 'ชุดสี' in page.locator('#cpTabS').inner_text() and 'สีบล็อกแดง' in page.inner_text('#cpTitle'), 'colour dialog in Thai'; page.click('#cpNo')
     assert not errs, errs
     ctx.close()
@@ -1285,7 +1328,7 @@ with sync_playwright() as p:
     print('controls: undo/redo pair, hint+solution pair, restart confirm, settings panel OK')
     print('features: auto-place default, skins, two-step hints OK')
     new_skins(p)
-    print('new skins: Paper/Tech light skins, block icons, Custom editor (colours, icons, persist, warn, reset, Thai)')
+    print('new skins: Paper/Tech/Hearts, Customize editor (colours, icons, frames, 6 saved themes, backup, delete, Thai)')
     lang_switch(p)
     print('language switch: EN | TH highlights the active side, flips both ways, fits at 360px')
     all_hints(p)

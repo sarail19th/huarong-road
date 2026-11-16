@@ -8,6 +8,7 @@
   --led-r:#ff3b3b;--led-b:#2f8cff;--led-y:#ffd23a;
   --edge:#262b33;--board:#07080a;--device:#0b0c0f;--bdR:initial;--bdV:initial;--bdS:initial;--shR:initial;--shV:initial;
   --text2:#c9d2de;--danger:#ff6a6f;--onacc:#10131a;
+  --ledbg:#202632;--ledbd:#465060;--ledoff:#39414f;
   color-scheme:dark;
 }
 /* Skins: <html data-skin> picks one, and the Settings preview tiles carry their own data-skin so every style is shown live.
@@ -86,6 +87,7 @@
   --shV:inset 0 -5px 0 rgba(43,27,12,.22),inset 0 2px 0 rgba(255,255,255,.3),0 3px 4px rgba(0,0,0,.3);
   --ricon:rgba(255,247,230,.9);--ringR:rgba(255,247,230,.5);--ringV:rgba(43,27,12,.7);--ringS:rgba(43,27,12,.65);
   --led-r:#B5382C;--led-b:#D9A441;--led-y:#8E9F6B;
+  --ledbg:#6b5139;--ledbd:#2b1b0c;--ledoff:#87694b;
   color-scheme:light;
 }
 [data-skin=tech]{
@@ -98,7 +100,20 @@
   --shV:inset 0 -5px 0 rgba(27,31,36,.22),inset 0 2px 0 rgba(255,255,255,.35),0 2px 3px rgba(27,31,36,.25);
   --ricon:rgba(27,31,36,.8);--ringR:rgba(27,31,36,.4);--ringV:rgba(255,255,255,.85);--ringS:rgba(27,31,36,.6);
   --led-r:#F26A1B;--led-b:#2F6FDB;--led-y:#B9C0CA;
+  --ledbg:#5b6574;--ledbd:#2f3640;--ledoff:#7a8493;
   color-scheme:light;
+}
+[data-skin=hearts]{
+  --bg:#1a0a10;--panel:#33121c;--panel2:#44192a;--line:#74303f;--text:#fbf1e0;--muted:#dcbcc2;--text2:#efdcd8;--danger:#ff8a93;--onacc:#2a1204;
+  --yellow:#e6bf5a;--green:#3ddc84;--ok:#3ddc84;--amber:#ffb020;--exit-rgb:230,191,90;--bg-a:154,29,58;--bg-b:230,191,90;
+  --pR:linear-gradient(145deg,#fff6df,#ecd9a8);--pV:linear-gradient(145deg,#fffaf0,#f1e5c9);--pS:linear-gradient(145deg,#fffaf0,#f1e5c9);
+  --edge:#0c0407;--board:#6c1127;--device:#150709;
+  --bdR:1px solid #b79a5a;--bdV:1px solid #b79a5a;--bdS:1px solid #b79a5a;
+  --shR:inset 0 -4px 0 rgba(120,80,20,.22),0 2px 5px rgba(0,0,0,.55);--shV:inset 0 -4px 0 rgba(120,80,20,.18),0 2px 5px rgba(0,0,0,.55);
+  --ricon:#b8892a;--ringR:#c9a13b;--ringV:#c9a13b;--ringS:#c9a13b;
+  --icR:#b8892a;--icV:#1d1f24;--icS:#b3203b;--qh:#b3203b;--frR:#c9a13b;--frV:#c9a13b;--frS:#c9a13b;
+  --led-r:#f0cf7a;--led-b:#e9e4d6;--led-y:#ff6a80;
+  --ledbg:#5a1429;--ledbd:#c9a13b;--ledoff:#86304a;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{min-height:100%;background:var(--bg)}
@@ -163,8 +178,8 @@ html:not([lang=th]) .lang-btn .en,html[lang=th] .lang-btn .th{background:var(--y
 .stat b{font-size:18px;font-variant-numeric:tabular-nums}
 .device{background:var(--device,#0b0c0f);border:1px solid var(--edge,#262b33);border-radius:26px;padding:14px 14px 18px;box-shadow:0 14px 40px rgba(0,0,0,.5)}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.led{display:grid;grid-template-columns:repeat(4,13px);grid-template-rows:repeat(5,13px);gap:2px;background:#000;border:2px solid #23272e;border-radius:8px;padding:5px}
-.led i{border-radius:3px;background:#17191d;transition:background .15s}
+.led{display:grid;grid-template-columns:repeat(4,13px);grid-template-rows:repeat(5,13px);gap:2px;background:var(--ledbg);border:2px solid var(--ledbd);border-radius:8px;padding:5px}
+.led i{border-radius:3px;background:var(--ledoff);transition:background .15s}
 .led i.R{background:var(--led-r);box-shadow:0 0 5px var(--led-r)}
 .led i.B{background:var(--led-b);box-shadow:0 0 5px var(--led-b)}
 .led i.Y{background:var(--led-y);box-shadow:0 0 5px var(--led-y)}
@@ -195,25 +210,45 @@ html:not([lang=th]) .lang-btn .en,html[lang=th] .lang-btn .th{background:var(--y
 .piece{position:absolute;left:0;top:0;border-radius:12px;transition:transform .13s ease-out,opacity .5s,box-shadow .2s;
   box-shadow:inset 0 -5px 0 rgba(0,0,0,.22),inset 0 2px 0 rgba(255,255,255,.28),0 2px 6px rgba(0,0,0,.5);touch-action:none}
 .piece.drag{transition:none;z-index:5}
-.piece i{position:absolute;border:3px solid var(--ringV);border-radius:999px;pointer-events:none}
+.piece i{position:absolute;border:3px solid var(--fc,var(--ringV));border-radius:999px;pointer-events:none}
 .piece svg{position:absolute;inset:14%;width:72%;height:72%;pointer-events:none}
 .piece svg polygon{stroke:currentColor}
 /* icons picked in Skin settings: drawn with currentColor so each block type uses its own ring/icon colour */
-.piece.tR svg{color:var(--ricon)}
+.piece.tR{--ic:var(--icR,var(--ricon));--fc:var(--frR,var(--ringR))}
+.piece.tV,.piece.tH{--ic:var(--icV,var(--ringV));--fc:var(--frV,var(--ringV))}
+.piece.tS{--ic:var(--icS,var(--ringS));--fc:var(--frS,var(--ringS))}
+.piece svg{color:var(--ic)}
 .piece.tR i{inset:18%}
-.piece.tV svg,.piece.tH svg{color:var(--ringV)}
-.piece.tS svg{color:var(--ringS)}
 .piece.tV svg{inset:auto;left:20%;top:50%;width:60%;height:auto;aspect-ratio:1;transform:translateY(-50%)}
 .piece.tH svg{inset:auto;top:20%;left:50%;height:60%;width:auto;aspect-ratio:1;transform:translateX(-50%)}
 .piece.tS svg{inset:22%;width:56%;height:56%}
 .piece.tR{background:var(--pR);border:var(--bdR,0);box-shadow:var(--shR,inset 0 -5px 0 rgba(0,0,0,.22),inset 0 2px 0 rgba(255,255,255,.28),0 2px 6px rgba(0,0,0,.5))}
 .piece.tV,.piece.tH{background:var(--pV);border:var(--bdV,0);box-shadow:var(--shV,inset 0 -5px 0 rgba(0,0,0,.22),inset 0 2px 0 rgba(255,255,255,.28),0 2px 6px rgba(0,0,0,.5))}
 .piece.tS{background:var(--pS);border:var(--bdS,0)}
-.piece.tR i{border-color:var(--ringR)}
-.piece.tS i{border-color:var(--ringS)}
 .piece.tV i{inset:12% 34%}
 .piece.tH i{inset:34% 12%}
 .piece.tS i{inset:28%}
+.piece .fl{position:absolute;inset:5px;border:2px solid var(--fc);border-radius:8px;pointer-events:none}
+.piece .fl.f2{inset:10px;border-width:1.5px;border-radius:5px}
+.piece[data-fr=card] .fl{border-width:1.5px}
+.piece .cm{position:absolute;display:flex;flex-direction:column;align-items:center;gap:1px;font:700 13px/1 Georgia,'Times New Roman',serif;color:var(--ic);pointer-events:none}
+.piece .cm svg{position:static;inset:auto;width:10px;height:10px;transform:none;aspect-ratio:auto}
+.piece .cm.tl{top:8px;left:9px}
+.piece .cm.br{bottom:8px;right:9px;transform:rotate(180deg)}
+.piece svg .qh{stroke:var(--qh,currentColor)}
+.piece svg[fill=currentColor] .qh{fill:var(--qh,currentColor)}
+/* a ring frame sits behind the icon: the icon shrinks to fit inside it */
+.piece[data-fr=ring].tR svg{inset:30%;width:40%;height:40%}
+.piece[data-fr=ring].tR i{inset:14%}
+.piece[data-fr=ring].tV i,.piece[data-fr=ring].tH i{inset:12% 20%}
+.piece[data-fr=ring].tH i{inset:20% 12%}
+.piece[data-fr=ring].tV svg{left:36%;width:28%}
+.piece[data-fr=ring].tH svg{top:36%;height:28%}
+.piece[data-fr=ring].tS i{inset:18%}
+.piece[data-fr=ring].tS svg{inset:34%;width:32%;height:32%}
+/* with a frame line the icon keeps clear of it */
+.piece[data-fr=stripes] svg,.piece[data-fr=double] svg,.piece[data-fr=card] svg{margin:0}
+.piece[data-fr=double].tS svg,.piece[data-fr=stripes].tS svg,.piece[data-fr=card].tS svg{inset:28%;width:44%;height:44%}
 .piece.pop{transition:none;animation:pop .22s ease-out}
 @keyframes pop{from{opacity:0}to{opacity:1}}
 .piece.ok{box-shadow:inset 0 -5px 0 rgba(0,0,0,.22),0 0 0 3px var(--ok),0 0 14px rgba(var(--exit-rgb),.6)}
@@ -511,7 +546,7 @@ input.cpr::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:
 .crow .cic{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);display:inline-flex;align-items:center;justify-content:center;padding:0}
 .crow .cic.on{border:3px solid var(--yellow)}
 .crow .cic svg{width:24px;height:24px}
-.icopick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.icopick{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 .icopick button{min-height:46px;background:var(--panel);border:2px solid var(--line);border-radius:10px;color:var(--text);display:flex;align-items:center;justify-content:center;padding:0}
 .icopick button.on{border-color:var(--yellow)}
 .icopick svg{width:26px;height:26px}
@@ -520,6 +555,33 @@ input.cpr::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:
 .custbtns select{flex:1;min-height:44px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:0 10px;font:inherit;font-size:13.5px}
 .custhint{margin:0;font-size:12px;line-height:1.4;color:var(--muted)}
 .setlist .skopt{padding:4px 3px 5px}
+.skn{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ---------- theme editor (full-screen page) ---------- */
+#colorDlg{z-index:30}
+.overlay.full{align-items:stretch;padding:0;background:var(--bg);overflow-y:auto;z-index:25}
+.overlay.full .card.tedcard{max-width:520px;margin:0 auto;border-radius:0;border:0;background:var(--bg);text-align:left;padding:12px 16px 28px;display:flex;flex-direction:column;gap:10px;animation:none;min-height:100%}
+.tehead{display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--bg);padding:6px 0;z-index:2}
+.tehead h2{margin:0 0 0 auto;font-size:19px}
+.tehead .btn.sm{margin:0}
+.tehead .btn.warn,.tebtns .btn.warn{border-color:var(--danger);color:var(--danger)}
+.teh{margin:8px 0 0;font-size:13px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.telab{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.telab input{min-height:46px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px}
+.tepv{display:flex;justify-content:center;padding:12px;border-radius:14px;background:var(--device);border:1px solid var(--edge)}
+.teboard{position:relative;background:var(--board);border:2px solid var(--edge);border-radius:14px;flex:none}
+.tetabs{display:flex;gap:6px}
+.tetabs button{flex:1;min-height:44px;background:var(--panel);color:var(--text);border:2px solid var(--line);border-radius:10px;font-size:13px;font-weight:600;padding:0 6px}
+.tetabs button.on{border-color:var(--yellow);background:var(--panel2)}
+.frpick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.frpick button{min-height:44px;background:var(--panel);color:var(--text);border:2px solid var(--line);border-radius:10px;font-size:13px;font-weight:600;padding:0 6px}
+.frpick button.on{border-color:var(--yellow);background:var(--panel2)}
+.cauto{flex:none;min-width:84px}
+.cauto:disabled{opacity:.4}
+.tebtns{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px}
+.tebtns .btn.go{grid-column:1/-1}
+.tebtns .btn.dangerbtn{color:var(--danger);border-color:var(--line)}
+.tebtns .btn.hidden{display:none}
+.card.cpick>.row .btn.hidden{display:none}
 
 /* ---------- My stages page ---------- */
 .stsum{display:flex;gap:8px;margin-bottom:10px}

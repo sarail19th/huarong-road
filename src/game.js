@@ -30,6 +30,43 @@ store.set('hr_bk', bk);
   applyMotion(); // on = opening a level skips the setup phase and starts playing at once
   var BUILD = '__BUILD__'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
+  var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null, autoTimer = null;
+  var els = new Map();
+  var ledCells = [];
+  /* ---------- block art: icons, frames and saved themes ---------- */
+  // What is drawn on a block = an icon (outline or solid), optionally inside a frame (ring / edge stripe / double stripe / card).
+  // Built-in skins carry their own art (SKINS[].icons / frames / solid); saved themes carry it in the theme itself.
+  var ICON_PATHS = { // 24x24, drawn with currentColor (the colour comes from the skin's --icR/--icV/--icS, or the ring colours)
+    crown: '<path d="m2 6 4 5 6-7 6 7 4-5-2 13H4zM5 21h14"/>',
+    star: '<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3L7 14.2 2 9.3l6.9-1z"/>',
+    heart: '<path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7z"/>',
+    diamond: '<path d="m12 2 10 10-10 10L2 12z"/>',
+    bolt: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
+    spade: '<path d="M12 2C9 7 4 9.5 4 14a4 4 0 0 0 6.4 3.2C10.2 19 9.6 20.4 8 22h8c-1.6-1.6-2.2-3-2.4-4.8A4 4 0 0 0 20 14c0-4.5-5-7-8-12z"/>',
+    club: '<path d="M12 2.5a4.2 4.2 0 0 0-2.7 7.4A4.6 4.6 0 1 0 11 16.6c0 2-.6 3.6-2.2 5.4h6.4c-1.6-1.8-2.2-3.4-2.2-5.4a4.6 4.6 0 1 0 1.7-6.7A4.2 4.2 0 0 0 12 2.5z"/>',
+    queen: '<path d="M5 3.5l3.2 3.2L12 2l3.8 4.7L19 3.5 18 10.5H6z"/><path class="qh" d="M12 22.5 5.8 16.3a3.6 3.6 0 0 1 6.2-3.4 3.6 3.6 0 0 1 6.2 3.4z"/>',
+    tri: '<path d="M12 3 22 20H2z"/><path d="M12 9.5 16 17H8z"/>',
+    none: '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>'
+  };
+  var ICON_ORDER = ['tri', 'crown', 'star', 'heart', 'diamond', 'bolt', 'spade', 'club', 'queen'];
+  var ICON_NAME = { tri: ['Triangle', 'สามเหลี่ยม'], crown: ['Crown', 'มงกุฎ'], star: ['Star', 'ดาว'], heart: ['Heart', 'หัวใจ'], diamond: ['Diamond', 'เพชร'], bolt: ['Bolt', 'สายฟ้า'], spade: ['Spade', 'โพดำ'], club: ['Club', 'ดอกจิก'], queen: ['Queen', 'ราชินี'], none: ['None', 'ไม่มี'] };
+  var FRAMES = ['none', 'ring', 'stripes', 'double', 'card'];
+  var FRAME_NAME = { none: ['None', 'ไม่มี'], ring: ['Ring', 'วงแหวน'], stripes: ['Edge stripe', 'เส้นขอบ'], double: ['Double', 'สองชั้น'], card: ['Card', 'ไพ่'] };
+  var HEX = /^#[0-9a-f]{6}$/i;
+  function iconSvg(id) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON_PATHS[id] + '</svg>'; }
+  var PRESETS = { // colours of the built-in skins: what "Customize" starts from
+    classic: { bg: '#0d1117', board: '#07080a', R: '#e63946', T: '#2f80ed', S: '#f5b82e' },
+    blossom: { bg: '#0b0709', board: '#22141d', R: '#ff80b0', T: '#f5b9d1', S: '#5e3a55' },
+    neon: { bg: '#020503', board: '#07170d', R: '#2ee000', T: '#145a29', S: '#c3f59a' },
+    ocean: { bg: '#050d14', board: '#07151f', R: '#ff5a36', T: '#146a99', S: '#6fd0e8' },
+    sunset: { bg: '#0f0713', board: '#150a1b', R: '#ff9f1c', T: '#5a2d9c', S: '#f15bb5' },
+    forest: { bg: '#060c08', board: '#0a140c', R: '#f08c00', T: '#1f6b2b', S: '#c8b98a' },
+    mono: { bg: '#0a0a0a', board: '#0e0e0e', R: '#f4f4f4', T: '#3a3a3a', S: '#9c9c9c' },
+    gold: { bg: '#0a0804', board: '#100c05', R: '#d4a017', T: '#6e4a14', S: '#e6d3a0' },
+    paper: { bg: '#E9DCC3', board: '#8B6B4A', R: '#B5382C', T: '#D9A441', S: '#8E9F6B' },
+    tech: { bg: '#E6E9ED', board: '#D3D8DF', R: '#F26A1B', T: '#2F6FDB', S: '#B9C0CA' },
+    hearts: { bg: '#1a0a10', board: '#6c1127', R: '#F0DDAA', T: '#FBF1DC', S: '#F3E3C0', icR: '#B8892A', icT: '#1D1F24', icS: '#B3203B', frc: '#C9A13B' }
+  };
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
     { id: 'blossom', name: 'Blossom', theme: '#0b0709' },
@@ -41,80 +78,101 @@ store.set('hr_bk', bk);
     { id: 'gold', name: 'Gold', theme: '#0a0804' },
     { id: 'paper', name: 'Paper', full: 'Comfort Paper', theme: '#E9DCC3', icons: { R: 'crown', T: 'star', S: 'heart' } },
     { id: 'tech', name: 'Tech', full: 'Modern Tech', theme: '#E6E9ED', icons: { R: 'tri', T: 'ring', S: 'diamond' } },
-    { id: 'custom', name: 'Custom', theme: '#E9DCC3' }
+    { id: 'hearts', name: 'Hearts', full: 'Queen of Hearts', theme: '#1a0a10', icons: { R: 'queen', T: 'spade', S: 'heart' }, frames: { R: 'card', T: 'card', S: 'card' }, solid: true }
   ];
-  var skin = store.get('hr_skin', 'classic');
-
-  var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null, autoTimer = null;
-  var els = new Map();
-  var ledCells = [];
-  var RSVG = '<svg viewBox="0 0 100 100"><polygon points="50,12 90,84 10,84" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="6" stroke-linejoin="round"/><polygon points="50,38 68,70 32,70" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="5" stroke-linejoin="round"/></svg>';
-  /* ---------- block icons + the Custom skin ---------- */
-  // Each skin picks what is drawn on a block: 'tri' (the original red triangle), 'ring' (the original ring), or an outline icon. Custom lets the player choose.
-  var ICON_PATHS = { // 24x24 outlines, drawn with currentColor (the colour comes from the skin's --ricon / --ringV / --ringS)
-    crown: '<path d="m2 6 4 5 6-7 6 7 4-5-2 13H4zM5 21h14"/>',
-    star: '<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3L7 14.2 2 9.3l6.9-1z"/>',
-    heart: '<path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7z"/>',
-    diamond: '<path d="m12 2 10 10-10 10L2 12z"/>',
-    bolt: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
-    tri: '<path d="M12 3 22 20H2z"/><path d="M12 9.5 16 17H8z"/>',
-    ring: '<circle cx="12" cy="12" r="8"/>',
-    none: '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>'
-  };
-  var ICON_ORDER = ['tri', 'crown', 'star', 'heart', 'diamond', 'bolt', 'ring', 'none'];
-  var ICON_NAME = { tri: ['Triangle', 'สามเหลี่ยม'], crown: ['Crown', 'มงกุฎ'], star: ['Star', 'ดาว'], heart: ['Heart', 'หัวใจ'], diamond: ['Diamond', 'เพชร'], bolt: ['Bolt', 'สายฟ้า'], ring: ['Ring', 'วงแหวน'], none: ['None', 'ไม่มี'] };
-  function iconSvg(id) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON_PATHS[id] + '</svg>'; }
-  var PRESETS = { // palettes of the built-in skins, used by Custom's "Start from"
-    classic: { bg: '#0d1117', board: '#07080a', R: '#e63946', T: '#2f80ed', S: '#f5b82e' },
-    blossom: { bg: '#0b0709', board: '#22141d', R: '#ff80b0', T: '#f5b9d1', S: '#5e3a55' },
-    neon: { bg: '#020503', board: '#07170d', R: '#2ee000', T: '#145a29', S: '#c3f59a' },
-    ocean: { bg: '#050d14', board: '#07151f', R: '#ff5a36', T: '#146a99', S: '#6fd0e8' },
-    sunset: { bg: '#0f0713', board: '#150a1b', R: '#ff9f1c', T: '#5a2d9c', S: '#f15bb5' },
-    forest: { bg: '#060c08', board: '#0a140c', R: '#f08c00', T: '#1f6b2b', S: '#c8b98a' },
-    mono: { bg: '#0a0a0a', board: '#0e0e0e', R: '#f4f4f4', T: '#3a3a3a', S: '#9c9c9c' },
-    gold: { bg: '#0a0804', board: '#100c05', R: '#d4a017', T: '#6e4a14', S: '#e6d3a0' },
-    paper: { bg: '#E9DCC3', board: '#8B6B4A', R: '#B5382C', T: '#D9A441', S: '#8E9F6B' },
-    tech: { bg: '#E6E9ED', board: '#D3D8DF', R: '#F26A1B', T: '#2F6FDB', S: '#B9C0CA' }
-  };
-  var CUSTOM_DEF = { bg: '#E9DCC3', board: '#8B6B4A', R: '#B5382C', T: '#D9A441', S: '#8E9F6B', icons: { R: 'crown', T: 'star', S: 'heart' } };
-  function normCustom(c) {
-    var o = JSON.parse(JSON.stringify(CUSTOM_DEF));
-    if (!c || typeof c !== 'object') return o;
-    ['bg', 'board', 'R', 'T', 'S'].forEach(function (k) { if (typeof c[k] === 'string' && /^#[0-9a-f]{6}$/i.test(c[k])) o[k] = c[k]; });
-    if (c.icons && typeof c.icons === 'object') ['R', 'T', 'S'].forEach(function (k) { if (ICON_PATHS[c.icons[k]]) o.icons[k] = c.icons[k]; });
+  var skin = store.get('hr_skin', 'classic'); // a built-in id, or 'my:<id>' for a saved theme
+  function blankArt() { return { icons: { R: 'none', T: 'none', S: 'none' }, frames: { R: 'none', T: 'none', S: 'none' }, icR: '', icT: '', icS: '', frc: '', solid: false }; }
+  function normArt(a, o) { // copy the valid art fields of a onto o; the old 'ring' icon became the Ring frame
+    ['R', 'T', 'S'].forEach(function (k) {
+      var ic = a.icons && a.icons[k], fr = a.frames && a.frames[k];
+      if (ic === 'ring') { ic = 'none'; if (!fr) fr = 'ring'; }
+      if (ICON_PATHS[ic]) o.icons[k] = ic;
+      if (FRAMES.indexOf(fr) >= 0) o.frames[k] = fr;
+    });
+    ['icR', 'icT', 'icS', 'frc'].forEach(function (k) { if (typeof a[k] === 'string' && HEX.test(a[k])) o[k] = a[k]; });
+    if (a.solid === true) o.solid = true;
     return o;
   }
-  var custom = normCustom(store.get('hr_custom', null));
-  var editIco = 'R'; // which block type the icon picker edits
-  function skinDef() { return SKINS.filter(function (x) { return x.id === skin; })[0] || SKINS[0]; }
-  function skinIcons() { var d = skinDef(); return d.id === 'custom' ? custom.icons : (d.icons || { R: 'tri', T: 'ring', S: 'ring' }); }
-  function pieceInner(t) {
-    var id = skinIcons()[t === 'R' ? 'R' : t === 'S' ? 'S' : 'T'];
-    if (id === 'ring') return '<i></i>';
-    if (id === 'none') return '';
-    if (id === 'tri') return RSVG;
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON_PATHS[id] + '</svg>';
+  function builtinArt(sk) { return normArt({ icons: sk.icons || { R: 'tri', T: 'ring', S: 'ring' }, frames: sk.frames, solid: sk.solid }, blankArt()); }
+  var THEME_DEF = { id: '', name: '', base: 'paper', bg: '#E9DCC3', board: '#8B6B4A', R: '#B5382C', T: '#D9A441', S: '#8E9F6B',
+    icR: '', icT: '', icS: '', frc: '', icons: { R: 'crown', T: 'star', S: 'heart' }, frames: { R: 'none', T: 'none', S: 'none' }, solid: false };
+  var MAX_THEMES = 6;
+  function normTheme(c) {
+    var o = JSON.parse(JSON.stringify(THEME_DEF));
+    if (!c || typeof c !== 'object') return o;
+    ['bg', 'board', 'R', 'T', 'S'].forEach(function (k) { if (typeof c[k] === 'string' && HEX.test(c[k])) o[k] = c[k]; });
+    if (typeof c.id === 'string') o.id = c.id.slice(0, 24);
+    if (typeof c.name === 'string') o.name = c.name.slice(0, 24);
+    if (typeof c.base === 'string' && PRESETS[c.base]) o.base = c.base;
+    return normArt(c, o);
   }
+  function themeFromSkin(id) { // a draft that looks exactly like a built-in skin, ready to be changed
+    var sk = SKINS.filter(function (x) { return x.id === id; })[0] || SKINS[0], a = builtinArt(sk);
+    var o = normTheme(Object.assign({ base: sk.id }, PRESETS[sk.id], { icons: a.icons, frames: a.frames, solid: a.solid }));
+    return o;
+  }
+  var themes = (function () {
+    var arr = store.get('hr_themes', []); if (!Array.isArray(arr)) arr = [];
+    var out = arr.map(normTheme).filter(function (t) { return t.id; }).slice(0, MAX_THEMES);
+    var legacy = store.get('hr_custom', null); // the single Custom skin of earlier versions becomes the first saved theme
+    if (legacy && typeof legacy === 'object' && out.length < MAX_THEMES) {
+      var t = normTheme(legacy); t.id = 'legacy'; t.name = 'My theme'; out.push(t);
+      if (skin === 'custom') skin = 'my:legacy';
+      store.set('hr_themes', out); store.set('hr_skin', skin);
+    }
+    if (legacy !== null) try { localStorage.removeItem('hr_custom'); } catch (e) {}
+    return out;
+  })();
+  function saveThemes() { store.set('hr_themes', themes); }
+  var artNow = null;
+  function activeTheme() { if (skin.indexOf('my:') !== 0) return null; var id = skin.slice(3); return themes.filter(function (t) { return t.id === id; })[0] || null; }
+  function skinDef() {
+    var t = activeTheme(); if (t) return { id: 'custom', name: t.name, theme: t.bg };
+    return SKINS.filter(function (x) { return x.id === skin; })[0] || SKINS[0];
+  }
+  function curArt() {
+    if (!artNow) { var t = activeTheme(); artNow = t ? t : builtinArt(skinDef()); }
+    return artNow;
+  }
+  var RSVG = '<svg viewBox="0 0 100 100"><polygon points="50,12 90,84 10,84" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="6" stroke-linejoin="round"/><polygon points="50,38 68,70 32,70" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="5" stroke-linejoin="round"/></svg>';
+  var PIP = { spade: 'spade', club: 'club', heart: 'heart', diamond: 'diamond', queen: 'heart' };
+  function pieceInner(t, art) { // frame (behind) + corner marks + icon
+    art = art || curArt();
+    var k = t === 'R' ? 'R' : t === 'S' ? 'S' : 'T', id = art.icons[k], fr = art.frames[k], h = '';
+    if (fr === 'ring') h += '<i></i>';
+    if (fr === 'stripes' || fr === 'card') h += '<b class="fl"></b>';
+    if (fr === 'double') h += '<b class="fl"></b><b class="fl f2"></b>';
+    if (fr === 'card' && k !== 'S') {
+      var mark = (id === 'queen' ? 'Q' : '') + (PIP[id] ? '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' + ICON_PATHS[PIP[id]] + '</svg>' : '');
+      if (mark) h += '<b class="cm tl">' + mark + '</b><b class="cm br">' + mark + '</b>';
+    }
+    if (id === 'tri') h += RSVG;
+    else if (id !== 'none') h += '<svg viewBox="0 0 24 24" fill="' + (art.solid ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON_PATHS[id] + '</svg>';
+    return h;
+  }
+  function paintPiece(el, t, art) { art = art || curArt(); el.dataset.fr = art.frames[t === 'R' ? 'R' : t === 'S' ? 'S' : 'T']; el.innerHTML = pieceInner(t, art); }
   function refreshIcons() {
-    Array.prototype.forEach.call(document.querySelectorAll('.piece'), function (el) {
-      var m = /\bt([RVHS])\b/.exec(el.className); if (m) el.innerHTML = pieceInner(m[1]);
+    Array.prototype.forEach.call(document.querySelectorAll('#board .piece'), function (el) {
+      var m = /\bt([RVHS])\b/.exec(el.className); if (m) paintPiece(el, m[1]);
     });
   }
-  // colour maths for the Custom skin: five colours in, every CSS variable of a skin out
+  // colour maths for saved themes: a few colours in, every CSS variable of a skin out
   function rgbOf(h) { return [1, 3, 5].map(function (i) { return parseInt(h.substr(i, 2), 16); }); }
   function hexOf(a) { return '#' + a.map(function (v) { v = Math.max(0, Math.min(255, Math.round(v))); return (v < 16 ? '0' : '') + v.toString(16); }).join(''); }
   function mixHex(a, b, k) { var x = rgbOf(a), y = rgbOf(b); return hexOf(x.map(function (v, i) { return v + (y[i] - v) * k; })); }
   function lumOf(h) { var c = rgbOf(h).map(function (v) { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; }
   function contrastOf(a, b) { var x = lumOf(a), y = lumOf(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
   function onColor(h) { return contrastOf(h, '#ffffff') >= contrastOf(h, '#14171c') ? 'rgba(255,255,255,.9)' : 'rgba(20,23,28,.8)'; }
+  function autoOn(h) { return contrastOf(h, '#ffffff') >= contrastOf(h, '#14171c') ? '#ffffff' : '#14171c'; }
   function gradOf(c) { return 'linear-gradient(145deg,' + mixHex(c, '#ffffff', .22) + ',' + mixHex(c, '#000000', .18) + ')'; }
   function customVars(c) {
     var dark = contrastOf(c.bg, '#ffffff') >= contrastOf(c.bg, '#14171c');
     var text = dark ? '#e8edf3' : '#1b1f24', hair = dark ? 'initial' : '1px solid rgba(0,0,0,.35)';
     var accent = contrastOf(c.R, c.bg) >= 3 ? c.R : text;
     var ringOf = function (h, a) { return onColor(h).replace(/[\d.]+\)$/, a + ')'); };
+    var ledbg = mixHex(c.board, dark ? '#ffffff' : '#000000', dark ? .12 : .4);
     return {
-      '--bg': c.bg, '--panel': mixHex(c.bg, dark ? '#ffffff' : '#ffffff', dark ? .06 : .45), '--panel2': mixHex(c.bg, dark ? '#ffffff' : '#000000', dark ? .12 : .05),
+      '--bg': c.bg, '--panel': mixHex(c.bg, '#ffffff', dark ? .06 : .45), '--panel2': mixHex(c.bg, dark ? '#ffffff' : '#000000', dark ? .12 : .05),
       '--line': mixHex(c.bg, dark ? '#ffffff' : '#000000', dark ? .2 : .25), '--text': text, '--text2': mixHex(text, c.bg, .2), '--muted': mixHex(text, c.bg, .32),
       '--yellow': accent, '--onacc': onColor(accent).replace(/rgba\((\d+),(\d+),(\d+),[\d.]+\)/, 'rgb($1,$2,$3)'),
       '--green': dark ? '#3ddc84' : '#6BB36A', '--ok': dark ? '#3ddc84' : '#2E7D32', '--amber': dark ? '#ffb020' : '#C77700',
@@ -124,6 +182,9 @@ store.set('hr_bk', bk);
       '--edge': mixHex(c.board, dark ? '#ffffff' : '#000000', dark ? .2 : .45), '--board': c.board, '--device': mixHex(c.board, '#000000', dark ? .45 : .25),
       '--bdR': hair, '--bdV': hair, '--bdS': hair, '--shR': 'initial', '--shV': 'initial',
       '--ricon': ringOf(c.R, .9), '--ringR': ringOf(c.R, .5), '--ringV': ringOf(c.T, .75), '--ringS': ringOf(c.S, .7),
+      '--icR': c.icR || 'initial', '--icV': c.icT || 'initial', '--icS': c.icS || 'initial', '--qh': c.icS || 'initial',
+      '--frR': c.frc || 'initial', '--frV': c.frc || 'initial', '--frS': c.frc || 'initial',
+      '--ledbg': ledbg, '--ledbd': mixHex(ledbg, '#ffffff', .28), '--ledoff': mixHex(ledbg, '#ffffff', .2),
       '--led-r': c.R, '--led-b': c.T, '--led-y': c.S, 'color-scheme': dark ? 'dark' : 'light'
     };
   }
@@ -131,9 +192,14 @@ store.set('hr_bk', bk);
   function clearVars(el, vars) { Object.keys(vars).forEach(function (k) { el.style.removeProperty(k); }); }
   function customWarning(c) {
     var pairs = [['R', 'T'], ['R', 'S'], ['T', 'S']];
-    for (var i = 0; i < pairs.length; i++) if (contrastOf(c[pairs[i][0]], c[pairs[i][1]]) < 1.2) return L('Some blocks look alike. Try colours that differ more in lightness.', 'บางบล็อกสีใกล้กันเกินไป ลองเลือกสีที่สว่างต่างกันมากขึ้น');
+    for (var i = 0; i < pairs.length; i++) {
+      var a = pairs[i][0], b = pairs[i][1];
+      if (contrastOf(c[a], c[b]) < 1.2 && c.icons[a === 'R' ? 'R' : a] === c.icons[b] && c.frames[a] === c.frames[b]) return L('Some blocks look alike. Try colours that differ more in lightness.', 'บางบล็อกสีใกล้กันเกินไป ลองเลือกสีที่สว่างต่างกันมากขึ้น');
+    }
     var w = ['R', 'T', 'S'].filter(function (k) { return contrastOf(c[k], c.board) < 1.12; });
     if (w.length) return L('A block colour is too close to the board colour.', 'สีบล็อกใกล้กับสีกระดานเกินไป');
+    var ic = [['icR', 'R'], ['icT', 'T'], ['icS', 'S']].filter(function (p) { return c[p[0]] && c.icons[p[1]] !== 'none' && contrastOf(c[p[0]], c[p[1]]) < 1.5; });
+    if (ic.length) return L('An icon colour is hard to see on its block.', 'สีไอคอนมองยากบนบล็อกของมัน');
     return '';
   }
 
@@ -210,7 +276,7 @@ store.set('hr_bk', bk);
     if (e.key === 'Escape') {
       e.preventDefault();
       if (top.id === 'win') return; // the win card needs a real choice
-      if (top.id === 'about') showAbout(false); else if (top.id === 'settings') showSettings(false); else closeDlg(top.id);
+      if (top.id === 'themeEd') teBack(); else if (top.id === 'about') showAbout(false); else if (top.id === 'settings') showSettings(false); else closeDlg(top.id);
     } else if (e.key === 'Tab') {
       var f = focusables($(top.id)); if (!f.length) return;
       var i = f.indexOf(document.activeElement);
@@ -659,7 +725,7 @@ store.set('hr_bk', bk);
       if (!el) {
         el = document.createElement('div');
         el.className = 'piece t' + p.t + ' pop'; el.dataset.id = p.id;
-        el.innerHTML = pieceInner(p.t);
+        paintPiece(el, p.t);
         board.appendChild(el); els.set(p.id, el);
         setTimeout(function () { el.classList.remove('pop'); }, 260);
       }
@@ -1253,7 +1319,7 @@ store.set('hr_bk', bk);
       b.setAttribute('aria-pressed', lang === 'th');
       b.setAttribute('aria-label', lang === 'th' ? 'ภาษา: ไทย (แตะเพื่อเปลี่ยนเป็น English)' : 'Language: English (tap for Thai)');
     });
-    renderOffline();     renderCustom(); renderMenu(); renderDaily(); renderBkRow(); renderBkLast(); renderNudge(); if (!$('stages').classList.contains('hidden')) renderStages();
+    renderOffline();     renderMyThemes(); if (ed) renderEd(); renderMenu(); renderDaily(); renderBkRow(); renderBkLast(); renderNudge(); if (!$('stages').classList.contains('hidden')) renderStages();
     Array.prototype.forEach.call(document.querySelectorAll('.setrow[role=switch]'), renderSwitchText);
     if (!G) return;
     if (G.phase === 'design') { $('lvTitle').textContent = G.editing ? L('Edit stage ', 'แก้ไขด่าน ') + G.editing : L('Design stage', 'ออกแบบด่าน'); renderAll(); designCheck(); renderStages(); return; }
@@ -1277,94 +1343,200 @@ store.set('hr_bk', bk);
     clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.add('hidden'); }, 1400);
   }
   var appliedVars = null;
-  function applyCustomLook() {
+  function applyThemeVars() { // a saved theme paints the whole app through inline variables on <html>
     var root = document.documentElement;
     if (appliedVars) { clearVars(root, appliedVars); appliedVars = null; }
-    var tile = document.querySelector('.skprev[data-skin=custom]');
-    var vars = customVars(custom);
-    if (tile) setVars(tile, vars);
-    if (skin === 'custom') { setVars(root, vars); appliedVars = vars; }
-    var meta = document.querySelector('meta[name=theme-color]'); if (meta && skin === 'custom') meta.setAttribute('content', custom.bg);
+    var t = activeTheme();
+    if (t) { var vars = customVars(t); setVars(root, vars); appliedVars = vars; }
   }
   function applySkin() {
-    var sk = skinDef();
-    skin = sk.id; document.documentElement.dataset.skin = sk.id;
+    var sk = skinDef(); if (!activeTheme()) skin = sk.id; // a deleted/unknown theme falls back to a built-in skin
+    document.documentElement.dataset.skin = sk.id;
     var meta = document.querySelector('meta[name=theme-color]'); if (meta) meta.setAttribute('content', sk.theme);
-    applyCustomLook(); refreshIcons(); renderCustom();
+    artNow = null; applyThemeVars(); refreshIcons(); renderMyThemes();
     return sk;
   }
   function renderSkinOpts() {
-    Array.prototype.forEach.call($('skopts').children, function (b) {
-      var on = b.dataset.sk === skin; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+    ['skopts', 'mythemes'].forEach(function (id) {
+      Array.prototype.forEach.call($(id).children, function (b) {
+        var on = b.dataset.sk === skin; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+      });
     });
   }
+  function pickSkin(id) { skin = id; store.set('hr_skin', skin); applySkin(); }
   SKINS.forEach(function (sk) {
     var b = document.createElement('button'); b.className = 'skopt'; b.dataset.sk = sk.id;
-    b.innerHTML = '<span class="skprev" data-skin="' + sk.id + '"><i class="r"></i><i class="v"></i><i class="s"></i><i class="a"></i></span><span>' + sk.name + '</span>';
+    b.innerHTML = '<span class="skprev" data-skin="' + sk.id + '"><i class="r"></i><i class="v"></i><i class="s"></i><i class="a"></i></span><span class="skn">' + sk.name + '</span>';
     b.setAttribute('aria-label', 'Skin: ' + (sk.full || sk.name));
-    b.onclick = function () { skin = sk.id; store.set('hr_skin', skin); applySkin(); renderSkinOpts(); };
+    b.onclick = function () { pickSkin(sk.id); };
     $('skopts').appendChild(b);
   });
-  renderSkinOpts();
-
-  /* ---------- Custom skin editor (Settings > Skin > Custom) ---------- */
-  var CROWS = [
-    { k: 'R', en: 'Red block', th: 'บล็อกแดง', ico: true },
-    { k: 'T', en: 'Tall & wide blocks', th: 'บล็อกตั้งและบล็อกนอน', ico: true },
-    { k: 'S', en: 'Small blocks', th: 'บล็อกเล็ก', ico: true },
-    { k: 'board', en: 'Board', th: 'กระดาน' },
-    { k: 'bg', en: 'Background', th: 'พื้นหลัง' }
-  ];
-  function saveCustom() { store.set('hr_custom', custom); }
-  function renderCustom() {
-    var ed = $('custEd'); if (!ed) return;
-    ed.classList.toggle('hidden', skin !== 'custom');
-    if (skin !== 'custom') return;
-    var rows = $('custRows');
-    if (!rows.children.length) {
-      CROWS.forEach(function (r) {
-        var row = document.createElement('div'); row.className = 'crow';
-        row.innerHTML = '<span class="cn"></span><button type="button" class="cswatch" id="cc_' + r.k + '"><span class="csw"></span><span class="chx"></span></button>' + (r.ico ? '<button type="button" class="cic" data-k="' + r.k + '"></button>' : '');
-        rows.appendChild(row);
-        row.querySelector('.cswatch').onclick = function () { openColor(r.k); };
-        if (r.ico) row.querySelector('.cic').onclick = function () { editIco = r.k; renderCustom(); };
-      });
-      var base = $('custBase');
-      base.onchange = function () {
-        var id = this.value; this.value = ''; if (!PRESETS[id]) return;
-        var ic = SKINS.filter(function (x) { return x.id === id; })[0].icons || { R: 'tri', T: 'ring', S: 'ring' };
-        custom = normCustom(Object.assign({}, PRESETS[id], { icons: ic })); saveCustom(); applyCustomLook(); refreshIcons(); renderCustom();
-        toast(L('Colours copied from ', 'คัดลอกสีจาก ') + (SKINS.filter(function (x) { return x.id === id; })[0].full || id));
-      };
-      $('icoNone').onclick = function () { custom.icons[editIco] = 'none'; saveCustom(); refreshIcons(); renderCustom(); };
-      $('custReset').onclick = function () { custom = normCustom(null); saveCustom(); applyCustomLook(); refreshIcons(); renderCustom(); toast(L('Custom skin reset', 'รีเซ็ตสกินที่ตั้งเองแล้ว')); };
-    }
-    CROWS.forEach(function (r, i) {
-      var row = rows.children[i], lab = L(r.en, r.th);
-      row.querySelector('.cn').textContent = lab;
-      var sw = row.querySelector('.cswatch'); sw.querySelector('.csw').style.background = custom[r.k]; sw.querySelector('.chx').textContent = custom[r.k].toUpperCase();
-      sw.setAttribute('aria-label', L('Change color: ', 'เปลี่ยนสี: ') + lab + ' ' + custom[r.k].toUpperCase());
-      var cic = row.querySelector('.cic');
-      if (cic) {
-        cic.innerHTML = iconSvg(custom.icons[r.k]); cic.classList.toggle('on', editIco === r.k);
-        cic.setAttribute('aria-label', L('Icon for ', 'ไอคอนของ ') + lab); cic.setAttribute('aria-pressed', editIco === r.k);
-      }
+  function renderMyThemes() { // "My themes" row (only when something is saved) + the Customize / Edit button
+    $('mineRow').classList.toggle('hidden', !themes.length);
+    $('mineHead').textContent = L('My themes', 'ธีมของฉัน') + ' ' + themes.length + '/' + MAX_THEMES;
+    var g = $('mythemes'); g.innerHTML = '';
+    themes.forEach(function (t) {
+      var b = document.createElement('button'); b.className = 'skopt'; b.dataset.sk = 'my:' + t.id;
+      b.innerHTML = '<span class="skprev" data-skin="custom"><i class="r"></i><i class="v"></i><i class="s"></i><i class="a"></i></span><span class="skn"></span>';
+      b.querySelector('.skn').textContent = t.name; b.setAttribute('aria-label', L('My theme: ', 'ธีมของฉัน: ') + t.name);
+      setVars(b.querySelector('.skprev'), customVars(t));
+      b.onclick = function () { pickSkin('my:' + t.id); };
+      g.appendChild(b);
     });
-    var base = $('custBase');
-    base.innerHTML = '<option value="">' + L('Start from…', 'เริ่มจาก…') + '</option>' + SKINS.filter(function (x) { return x.id !== 'custom'; }).map(function (x) { return '<option value="' + x.id + '">' + (x.full || x.name) + '</option>'; }).join('');
-    var rowName = CROWS.filter(function (r) { return r.k === editIco; })[0];
-    $('icoLabel').textContent = L('Icon for ', 'ไอคอนของ ') + L(rowName.en.toLowerCase(), rowName.th);
-    var pick = $('icoPick'); pick.innerHTML = '';
-    var noIc = custom.icons[editIco] === 'none'; $('icoNone').classList.toggle('on', noIc); $('icoNone').setAttribute('aria-pressed', noIc);
-    ICON_ORDER.filter(function (id) { return id !== 'none'; }).forEach(function (id) {
-      var b = document.createElement('button'); b.type = 'button'; b.innerHTML = iconSvg(id);
-      var on = custom.icons[editIco] === id; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
-      b.setAttribute('aria-label', L(ICON_NAME[id][0], ICON_NAME[id][1]));
-      b.onclick = function () { custom.icons[editIco] = id; saveCustom(); refreshIcons(); renderCustom(); };
-      pick.appendChild(b);
-    });
-    renderCustomWarn();
+    var at = activeTheme(), sd = skinDef();
+    $('custBtnT').textContent = at ? L('Edit ', 'แก้ไข ') + at.name : L('Customize ', 'ปรับแต่ง ') + (sd.full || sd.name);
+    renderSkinOpts();
   }
+
+  /* ---------- theme editor: a full-screen page opened by Settings > Customize ---------- */
+  var ed = null; // { d: the draft theme, id: its saved id or null, orig: JSON at open, tab: R|T|S, discard, del }
+  var CNAME = { R: ['Red block', 'บล็อกแดง'], T: ['Tall & wide blocks', 'บล็อกตั้งและบล็อกนอน'], S: ['Small blocks', 'บล็อกเล็ก'], board: ['Board', 'กระดาน'], bg: ['Background', 'พื้นหลัง'],
+    icR: ['Red block icon', 'ไอคอนบล็อกแดง'], icT: ['Tall & wide icon', 'ไอคอนบล็อกตั้งและนอน'], icS: ['Small block icon', 'ไอคอนบล็อกเล็ก'], frc: ['Frame', 'เส้นกรอบ'] };
+  var ED_TABS = [['R', 'Red', 'แดง'], ['T', 'Tall & wide', 'ตั้ง/นอน'], ['S', 'Small', 'เล็ก']];
+  var ED_COLORS = ['R', 'T', 'S', 'board', 'bg'];
+  function edDirty() { return JSON.stringify(ed.d) !== ed.orig; }
+  function edChanged() { ed.discard = false; ed.del = false; renderEd(); }
+  function colorRow(box, key, auto) {
+    var row = document.createElement('div'); row.className = 'crow';
+    row.innerHTML = '<span class="cn" id="cn_' + key + '"></span><button type="button" class="cswatch" id="cc_' + key + '"><span class="csw"></span><span class="chx"></span></button>' + (auto ? '<button type="button" class="btn sm cauto" id="ca_' + key + '"></button>' : '');
+    box.appendChild(row);
+    $('cc_' + key).onclick = function () { openColor(key); };
+    if (auto) $('ca_' + key).onclick = function () { ed.d[key] = ''; edChanged(); };
+  }
+  function setSwatch(key, hex, text, label) {
+    var b = $('cc_' + key); b.querySelector('.csw').style.background = hex; b.querySelector('.chx').textContent = text;
+    b.setAttribute('aria-label', L('Change color: ', 'เปลี่ยนสี: ') + label + ' ' + text);
+  }
+  function segBtns(box, items, onPick) {
+    items.forEach(function (it) {
+      var b = document.createElement('button'); b.type = 'button'; b.dataset.v = it.v; if (it.cls) b.className = it.cls;
+      b.onclick = function () { onPick(it.v); }; box.appendChild(b); it.b = b;
+    });
+  }
+  var edBuilt = false;
+  function buildEd() {
+    if (edBuilt) return; edBuilt = true;
+    ED_COLORS.forEach(function (k) { colorRow($('teRows'), k, false); });
+    colorRow($('teIcRow'), 'ic', true); colorRow($('teFrcRow'), 'frc', true);
+    // the icon colour row works on the colour key of the selected block type (icR / icT / icS)
+    $('cc_ic').onclick = function () { openColor('ic' + ed.tab); };
+    $('ca_ic').onclick = function () { ed.d['ic' + ed.tab] = ''; edChanged(); };
+    ED_TABS.forEach(function (t) {
+      var b = document.createElement('button'); b.type = 'button'; b.dataset.k = t[0];
+      b.onclick = function () { ed.tab = t[0]; renderEd(); }; $('teTabs').appendChild(b);
+    });
+    ICON_ORDER.forEach(function (id) {
+      var b = document.createElement('button'); b.type = 'button'; b.dataset.i = id; b.innerHTML = iconSvg(id);
+      b.setAttribute('aria-label', L(ICON_NAME[id][0], ICON_NAME[id][1]));
+      b.onclick = function () { ed.d.icons[ed.tab] = id; edChanged(); }; $('icoPick').appendChild(b);
+    });
+    $('icoNone').onclick = function () { ed.d.icons[ed.tab] = 'none'; edChanged(); };
+    FRAMES.forEach(function (f) {
+      var b = document.createElement('button'); b.type = 'button'; b.dataset.f = f;
+      b.onclick = function () { ed.d.frames[ed.tab] = f; edChanged(); }; $('frPick').appendChild(b);
+    });
+    [['0', 'Outline', 'เส้นขอบ'], ['1', 'Solid', 'ทึบ']].forEach(function (s) {
+      var b = document.createElement('button'); b.type = 'button'; b.dataset.s = s[0];
+      b.onclick = function () { ed.d.solid = s[0] === '1'; edChanged(); }; $('teSolid').appendChild(b);
+    });
+    $('teName').oninput = function () { ed.d.name = this.value.slice(0, 24); ed.discard = false; ed.del = false; renderEdBtns(); };
+    $('teBack').onclick = teBack;
+    $('teSave').onclick = function () { saveTheme(false); };
+    $('teSaveNew').onclick = function () { saveTheme(true); };
+    $('teDel').onclick = function () {
+      if (!ed.id) return;
+      if (!ed.del) { ed.del = true; renderEdBtns(); return; }
+      var id = ed.id, d = ed.d;
+      themes = themes.filter(function (t) { return t.id !== id; }); saveThemes();
+      if (skin === 'my:' + id) { skin = SKINS.some(function (x) { return x.id === d.base; }) ? d.base : 'classic'; store.set('hr_skin', skin); }
+      closeThemeEd(); applySkin(); toast(L('Theme deleted', 'ลบธีมแล้ว'));
+    };
+    $('teReset').onclick = function () {
+      var saved = ed.id && themes.filter(function (t) { return t.id === ed.id; })[0];
+      var name = ed.d.name;
+      ed.d = saved ? normTheme(saved) : themeFromSkin(ed.d.base);
+      if (!saved) ed.d.name = name;
+      edChanged(); toast(L('Back to the original', 'กลับเป็นแบบเดิมแล้ว'));
+    };
+  }
+  function defaultName(base) { var sk = SKINS.filter(function (x) { return x.id === base; })[0] || SKINS[0]; return (L('My ', 'ของฉัน ') + (sk.full || sk.name)).slice(0, 24); }
+  function openThemeEd() {
+    buildEd();
+    var t = activeTheme(), d = t ? normTheme(t) : themeFromSkin(skin);
+    if (!t) d.name = defaultName(d.base);
+    ed = { d: d, id: t ? t.id : null, orig: '', tab: 'R', discard: false, del: false };
+    ed.orig = JSON.stringify(ed.d);
+    renderEd(); openDlg('themeEd', '#teName');
+  }
+  function closeThemeEd() { closeDlg('themeEd'); ed = null; }
+  function teBack() {
+    if (!ed) return;
+    if (edDirty() && !ed.discard) { ed.discard = true; renderEdBtns(); setTimeout(function () { if (ed && ed.discard) { ed.discard = false; renderEdBtns(); } }, 3500); return; }
+    closeThemeEd();
+  }
+  function saveTheme(asNew) {
+    var d = normTheme(ed.d); d.name = (d.name || '').trim() || defaultName(d.base);
+    var id = !asNew && ed.id ? ed.id : null;
+    if (!id) {
+      if (themes.length >= MAX_THEMES) { toast(L('All 6 slots are used. Delete one first.', 'ครบ 6 ช่องแล้ว ลบอันเก่าก่อน')); return; }
+      id = 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    }
+    d.id = id;
+    var i = -1; themes.forEach(function (t, n) { if (t.id === id) i = n; });
+    if (i >= 0) themes[i] = d; else themes.push(d);
+    saveThemes(); closeThemeEd(); pickSkin('my:' + id);
+    toast(L('Saved: ', 'บันทึกแล้ว: ') + d.name);
+  }
+  function renderEdBtns() {
+    $('teBack').textContent = ed.discard ? L('Discard changes?', 'ทิ้งการเปลี่ยนแปลง?') : L('‹ Back', '‹ กลับ');
+    $('teBack').classList.toggle('warn', !!ed.discard);
+    $('teSave').textContent = ed.id ? L('Save changes', 'บันทึกการเปลี่ยนแปลง') : L('Save theme', 'บันทึกธีม');
+    $('teSaveNew').classList.toggle('hidden', !ed.id); $('teSaveNew').textContent = L('Save as new', 'บันทึกเป็นอันใหม่');
+    $('teDel').classList.toggle('hidden', !ed.id); $('teDel').textContent = ed.del ? L('Tap again to delete', 'แตะอีกครั้งเพื่อลบ') : L('Delete', 'ลบ');
+    $('teDel').classList.toggle('warn', !!ed.del);
+    $('teReset').textContent = L('Reset to original', 'กลับเป็นแบบเดิม');
+  }
+  function renderEd() {
+    var d = ed.d, tab = ed.tab, base = SKINS.filter(function (x) { return x.id === d.base; })[0] || SKINS[0];
+    $('teTitle').textContent = ed.id ? L('Edit theme', 'แก้ไขธีม') : L('Customize', 'ปรับแต่ง');
+    $('teBase').textContent = L('Based on ', 'ตั้งต้นจาก ') + (base.full || base.name);
+    if ($('teName') !== document.activeElement) $('teName').value = d.name;
+    $('teName').placeholder = defaultName(d.base);
+    ED_COLORS.forEach(function (k) { var nm = L(CNAME[k][0], CNAME[k][1]); $('cn_' + k).textContent = nm; setSwatch(k, d[k], d[k].toUpperCase(), nm); });
+    Array.prototype.forEach.call($('teTabs').children, function (b, i) {
+      b.textContent = L(ED_TABS[i][1], ED_TABS[i][2]); var on = b.dataset.k === tab; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+    });
+    var blockName = L(CNAME[tab][0], CNAME[tab][1]).toLowerCase();
+    $('teBlockH').textContent = L('Look of ', 'หน้าตาของ ') + (lang === 'th' ? CNAME[tab][1] : blockName);
+    Array.prototype.forEach.call($('icoPick').children, function (b) { var on = d.icons[tab] === b.dataset.i; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    var noIc = d.icons[tab] === 'none'; $('icoNone').classList.toggle('on', noIc); $('icoNone').setAttribute('aria-pressed', noIc);
+    var ick = 'ic' + tab, icv = d[ick];
+    $('cn_ic').textContent = L('Icon color', 'สีไอคอน'); setSwatch('ic', icv || autoOn(d[tab]), icv ? icv.toUpperCase() : L('Auto', 'อัตโนมัติ'), L('Icon color', 'สีไอคอน'));
+    $('ca_ic').textContent = L('Auto', 'อัตโนมัติ'); $('ca_ic').disabled = !icv;
+    Array.prototype.forEach.call($('frPick').children, function (b) {
+      var f = b.dataset.f, on = d.frames[tab] === f; b.textContent = L(FRAME_NAME[f][0], FRAME_NAME[f][1]); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+    });
+    $('cn_frc').textContent = L('Frame color', 'สีเส้นกรอบ'); setSwatch('frc', d.frc || autoOn(d.T), d.frc ? d.frc.toUpperCase() : L('Auto', 'อัตโนมัติ'), L('Frame color', 'สีเส้นกรอบ'));
+    $('ca_frc').textContent = L('Auto', 'อัตโนมัติ'); $('ca_frc').disabled = !d.frc;
+    Array.prototype.forEach.call($('teSolid').children, function (b) {
+      var on = (b.dataset.s === '1') === !!d.solid; b.textContent = b.dataset.s === '1' ? L('Solid', 'ทึบ') : L('Outline', 'เส้นขอบ'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+    });
+    var w = customWarning(d); $('teWarn').textContent = w; $('teWarn').classList.toggle('hidden', !w);
+    renderEdPrev(); renderEdBtns();
+  }
+  function renderEdPrev() {
+    var d = ed.d, wrap = $('tePrev'), U = 52, bd = $('teBoard');
+    setVars(wrap, customVars(d));
+    bd.style.width = (4 * U + 8) + 'px'; bd.style.height = (3 * U + 8) + 'px'; bd.innerHTML = '';
+    [['R', 0, 0, 2, 2], ['V', 2, 0, 1, 2], ['V', 3, 0, 1, 2], ['H', 0, 2, 2, 1], ['S', 2, 2, 1, 1], ['S', 3, 2, 1, 1]].forEach(function (p) {
+      var el = document.createElement('div'); el.className = 'piece t' + p[0];
+      el.style.width = (p[3] * U - 6) + 'px'; el.style.height = (p[4] * U - 6) + 'px';
+      el.style.transform = 'translate(' + (4 + p[1] * U + 3) + 'px,' + (4 + p[2] * U + 3) + 'px)';
+      paintPiece(el, p[0], d); bd.appendChild(el);
+    });
+  }
+  $('custBtn').onclick = openThemeEd;
+
   /* ---------- colour picker dialog: ready-made swatches, or fine-tune with soft sliders (the phone's own picker is bright pure RGB) ---------- */
   var SWATCH_SETS = [
     { en: 'Pastel', th: 'พาสเทล', c: ['#F4B6C2', '#F9CFA8', '#F7E3A1', '#C8E6B0', '#A8DCD1', '#B5D5F5', '#C9BFF0', '#E8C4EE', '#D7CCC8', '#CFD8DC'] },
@@ -1409,11 +1581,11 @@ store.set('hr_bk', bk);
   }
   function cpPaint() { // hex, preview and (in the swatch tab) the ticked swatch
     $('cpHex').textContent = cp.cur.toUpperCase(); $('cpPrev').style.background = cp.cur;
-    var tmp = JSON.parse(JSON.stringify(custom)); tmp[cp.key] = cp.cur; setVars($('cpWrap'), customVars(tmp));
+    var tmp = JSON.parse(JSON.stringify(ed.d)); tmp[cp.key] = cp.cur; setVars($('cpWrap'), customVars(tmp));
   }
   function renderColor() {
-    var row = CROWS.filter(function (r) { return r.k === cp.key; })[0];
-    $('cpTitle').textContent = L(row.en + ' color', 'สี' + row.th);
+    var row = CNAME[cp.key];
+    $('cpTitle').textContent = L(row[0] + ' color', 'สี' + row[1]);
     var fine = cp.tab === 'F';
     $('cpTabS').classList.toggle('on', !fine); $('cpTabS').setAttribute('aria-selected', !fine);
     $('cpTabF').classList.toggle('on', fine); $('cpTabF').setAttribute('aria-selected', fine);
@@ -1436,7 +1608,12 @@ store.set('hr_bk', bk);
     }
     cpPaint();
   }
-  function openColor(key) { cp = { key: key, cur: custom[key], tab: 'S' }; renderColor(); openDlg('colorDlg', '#cpYes'); }
+  function openColor(key) {
+    var auto = key === 'frc' ? autoOn(ed.d.T) : /^ic/.test(key) ? autoOn(ed.d[key.slice(2)]) : '';
+    cp = { key: key, cur: ed.d[key] || auto, tab: 'S' };
+    $('cpAuto').classList.toggle('hidden', !auto);
+    renderColor(); openDlg('colorDlg', '#cpYes');
+  }
   ['cpH', 'cpS', 'cpL'].forEach(function (id) {
     $(id).oninput = function () { var v = cpSlide(); cp.cur = hslToHex(v[0], v[1], v[2]); cpTracks(); cpPaint(); };
   });
@@ -1447,13 +1624,13 @@ store.set('hr_bk', bk);
   $('cpMore').onclick = function () { var n = $('cpNative'); n.value = cp.cur; n.click(); };
   $('cpNative').oninput = $('cpNative').onchange = function () { if (/^#[0-9a-f]{6}$/i.test(this.value)) { cp.cur = this.value; renderColor(); } };
   $('cpNo').onclick = function () { closeDlg('colorDlg'); };
-  $('cpYes').onclick = function () { custom[cp.key] = cp.cur; saveCustom(); applyCustomLook(); renderCustom(); closeDlg('colorDlg'); };
+  $('cpAuto').onclick = function () { ed.d[cp.key] = ''; closeDlg('colorDlg'); edChanged(); };
+  $('cpYes').onclick = function () { ed.d[cp.key] = cp.cur; closeDlg('colorDlg'); edChanged(); };
   $('colorDlg').addEventListener('click', function (e) { if (e.target === this) closeDlg('colorDlg'); });
-  function renderCustomWarn() { var w = customWarning(custom), el = $('custWarn'); el.textContent = w; el.classList.toggle('hidden', !w); }
 
   /* ---------- progress backup: a code or a small file, works offline; restoring merges and never loses anything ---------- */
   function backupCode() {
-    var data = { v: 1, at: new Date().toISOString().slice(0, 10), progress: progress, seen: seen, designs: designs };
+    var data = { v: 1, at: new Date().toISOString().slice(0, 10), progress: progress, seen: seen, designs: designs, themes: themes };
     return 'HR1.' + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   }
   function readBackup(text) {
@@ -1478,6 +1655,14 @@ store.set('hr_bk', bk);
       designs.push({ n: n, g: x.g, par: x.par, at: x.at || Date.now() });
     });
     saveDesigns();
+    (d.themes || []).forEach(function (x) { // saved themes: add the ones not here yet (up to 6), never overwrite
+      var t = normTheme(x); if (!t.id || themes.length >= MAX_THEMES) return;
+      var same = function (y) { return JSON.stringify(Object.assign({}, y, { id: '' })) === JSON.stringify(Object.assign({}, t, { id: '' })); };
+      if (themes.some(same)) return;
+      if (themes.some(function (y) { return y.id === t.id; })) t.id = 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      themes.push(t);
+    });
+    saveThemes(); applySkin();
     var levels = 0;
     Object.keys(d.progress).forEach(function (id) {
       var a = d.progress[id], b = progress[id];
