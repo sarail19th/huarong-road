@@ -592,3 +592,35 @@ input.cpr::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:
 .btn.stnew .ico{width:18px;height:18px}
 .stempty p{margin:0 2px 12px;color:var(--muted);font-size:13.5px;line-height:1.55}
 .dscheck .tip2{display:block;margin-top:4px;color:var(--text);font-size:12.5px}
+
+/* ---------- logic lessons ---------- */
+.lscard .dsinfo{flex:1}
+.lsprog{height:6px;border-radius:3px;background:var(--panel2);border:1px solid var(--line);margin-top:6px;overflow:hidden}
+.lsprog i{display:block;height:100%;width:0;background:var(--yellow);border-radius:3px}
+.lsintro{margin:0 2px 12px;color:var(--muted);font-size:13.5px;line-height:1.55}
+.lsrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px;color:var(--text);min-height:64px}
+.lsrow.next{border-color:var(--yellow)}
+.lsrow .num{flex:none;width:38px;height:38px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.lsrow.done .num{background:var(--yellow);border-color:var(--yellow);color:var(--onacc)}
+.lsrow .txt{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0}
+.lsrow .txt b{font-size:14.5px}
+.lsrow .txt small{color:var(--muted);font-size:12px;line-height:1.35}
+.lsrow .go{flex:none;color:var(--muted);font-size:22px}
+.lsbar{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:8px}
+.lssegs{display:flex;gap:5px;margin-bottom:6px}
+.lssegs span{flex:1;height:7px;border-radius:4px;background:var(--panel2);border:1px solid var(--line)}
+.lssegs span.on{background:var(--yellow);border-color:var(--yellow)}
+.lsgoal{font-size:13.5px;line-height:1.4}
+.lsgoal b{font-weight:700}
+.lsnote{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--yellow);border-radius:12px;padding:9px 12px;margin-top:8px;font-size:13.5px;line-height:1.5}
+.lsnote b{display:block;margin-bottom:2px}
+.lsnote span{display:block}
+.lsnote em{display:block;margin-top:4px;color:var(--text2);font-style:normal;font-size:13px}
+.ghost{position:absolute;left:0;top:0;border:3px dashed var(--yellow);border-radius:12px;pointer-events:none;box-sizing:border-box;z-index:1}
+body[data-mode=lesson] .stats,body[data-mode=lesson] #solBtn,body[data-mode=lesson] #recLine{display:none!important}
+body[data-mode=lesson] .grp.help{justify-content:center}
+body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display:none!important}
+.btn.lstry{width:100%;margin:2px 0 8px}
+.lswhy{margin:8px 0 2px;padding:0;list-style:none;text-align:left;font-size:13.5px;line-height:1.5}
+.lswhy li{display:flex;gap:8px;margin-bottom:6px}
+.lswhy li i{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--yellow);display:flex;align-items:center;justify-content:center;font:700 11px/1 system-ui;font-style:normal}

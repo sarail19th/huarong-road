@@ -60,3 +60,35 @@ for (let n = 0; n < 14; n++, dk = Daily.addDays(dk, 1)) {
 }
 assert.notStrictEqual(Daily.generate('2026-11-02').g, Daily.generate('2026-11-09').g, 'different days differ');
 console.log(`OK: daily puzzle verified for 14 days (deterministic, par = optimum, weekday difficulty; slowest ${dailyMs} ms)`);
+
+// Logic lessons: one dedicated puzzle per tier. Not a level (or its mirror), solvable, par = optimum, par inside the tier,
+// checkpoints in order, each one forced on every optimal line, the last one is the exit.
+const LESSONS = require('../src/lessons.js');
+const TIER_MAX = { starter: [1, 8], easy: [9, 20], medium: [21, 40], hard: [41, 65], expert: [66, 90], master: [91, 1e9] };
+const mir = (g) => Sol.fromPieces(Sol.piecesOf(g).map((p) => ({ t: p.t, r: p.r, c: 4 - p.c - Sol.DIM[p.t].w }))).join('');
+const lvKeys = new Set(); LEVELS.forEach((l) => { lvKeys.add(l.g); lvKeys.add(mir(l.g.split('').map(Number))); });
+assert.strictEqual(LESSONS.length, 6, 'six lessons');
+const order = ['starter', 'easy', 'medium', 'hard', 'expert', 'master'];
+LESSONS.forEach((d, i) => {
+  const tag = `lesson ${i + 1}`, g = d.g.split('').map(Number);
+  assert.strictEqual(d.tier, order[i], `${tag}: tier order`);
+  assert.ok(!lvKeys.has(d.g), `${tag}: is a real level or its mirror`);
+  const path = Sol.solve(g);
+  assert.ok(path, `${tag}: unsolvable`);
+  assert.strictEqual(path.length, d.par, `${tag}: par ${d.par} != optimal ${path.length}`);
+  const [lo, hi] = TIER_MAX[d.tier];
+  assert.ok(d.par >= lo && d.par <= hi, `${tag}: par ${d.par} outside tier ${d.tier}`);
+  assert.ok(d.cps.length >= 1 && d.cps.length <= 7, `${tag}: checkpoint count`);
+  const last = d.cps[d.cps.length - 1];
+  assert.deepStrictEqual([last.r, last.c], [3, 1], `${tag}: last checkpoint is the exit`);
+  // red square after each optimal move; every checkpoint must show up on the canonical line, in order
+  let cur = g, at = 0; const reds = [];
+  path.forEach((m) => { cur = Sol.slide(cur, { t: m.t, r: m.r, c: m.c }, m.dr, m.dc, m.k); const k = cur.indexOf(1); reds.push([(k / 4) | 0, k % 4]); });
+  d.cps.forEach((c, j) => {
+    let f = -1;
+    for (let s = at; s < reds.length; s++) if (reds[s][0] === c.r && reds[s][1] === c.c) { f = s; break; }
+    assert.ok(f >= 0, `${tag}: checkpoint ${j + 1} not on the optimal line (in order)`);
+    at = f + 1;
+  });
+});
+console.log(`OK: ${LESSONS.length} lessons verified (pars ${LESSONS.map((d) => d.par).join(' ')})`);

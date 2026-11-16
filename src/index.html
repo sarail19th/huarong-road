@@ -65,6 +65,10 @@
     <div class="week" id="dWeek"></div>
     <button class="btn go" id="dPlay" disabled></button>
   </div>
+  <div class="dscard lscard" id="lsCard">
+    <div class="dsinfo"><b><svg class="ico" aria-hidden="true"><use href="#i-bulb"/></svg><span data-th="บทเรียนตรรกะ">Logic lessons</span></b><span id="lsCount"></span><div class="lsprog" aria-hidden="true"><i id="lsProg"></i></div></div>
+    <button class="btn" id="lsOpen" data-th="เปิด">Open</button>
+  </div>
   <div class="dscard" id="dsCard">
     <div class="dsinfo"><b><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg><span data-th="ออกแบบด่าน">Design stage</span></b><span id="dsCount"></span></div>
     <button class="btn" id="dsOpen" data-th="เปิด">Open</button>
@@ -110,6 +114,16 @@
   <div id="dsList"></div>
 </section>
 
+<section id="lessons" class="screen hidden">
+  <div class="hud">
+    <button class="icon-btn" id="lsBack" aria-label="Back" title="Back"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg></button>
+    <div class="title" data-th="บทเรียนตรรกะ">Logic lessons</div>
+    <button class="icon-btn settings-btn" aria-label="Settings" title="Settings"><svg class="ico" aria-hidden="true"><use href="#i-gear"/></svg></button>
+  </div>
+  <p class="lsintro" data-th="หนึ่งปริศนานำทางต่อหนึ่งระดับ ความยากเท่าด่านจริง แต่ละบทสอนหนึ่งแนวคิด ไม่มีดาว ไม่นับครั้ง ไม่จับเวลา">One guided puzzle per tier, at the same difficulty as the real levels. Each teaches one idea. No stars, no move count, no timer.</p>
+  <div id="lsList"></div>
+</section>
+
 <section id="game" class="screen hidden">
   <div class="hud">
     <button class="icon-btn" id="backBtn" aria-label="Back" title="Back"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg></button>
@@ -122,6 +136,7 @@
     <div class="stat"><small>Par</small><b id="par">0</b></div>
     <div class="stat hidden" id="bestStat"><small>Best</small><b id="best">–</b></div>
   </div>
+  <div class="lsbar hidden" id="lsBar"><div class="lssegs" id="lsSegs"></div><div class="lsgoal" id="lsGoal"></div></div>
   <div class="recline hidden" id="recLine"><span id="recText"></span><button class="linkbtn" id="recReset" data-th="รีเซ็ตสถิติด่านนี้">Reset record</button></div>
 
   <div class="device">
@@ -147,6 +162,7 @@
   </div>
 
   <div class="status" id="status"></div>
+  <div class="lsnote hidden" id="lsNote"><b id="lsNoteHead"></b><span id="lsNoteBody"></span><em id="lsNoteWhy"></em></div>
   <div class="tip hidden" id="tip"><b id="tipHead"></b><span id="tipBody"></span><em id="tipWhy"></em></div>
   <div class="solbar only-sol">
     <div class="solinfo"><b id="solHead"></b><span id="solBody"></span></div>
@@ -383,6 +399,7 @@
     <div class="big" id="winStars">★★★</div>
     <p id="winInfo"></p>
     <div class="dwin hidden" id="dWin"><div class="streakbig" id="dWinStreak"></div><div class="week" id="dWinWeek"></div><p class="next" id="dNext"></p></div>
+    <button class="btn go lstry hidden" id="lsTry"></button>
     <div class="row">
       <button class="btn" id="menuBtn">Levels</button>
       <button class="btn" id="replayBtn" data-th="เล่นซ้ำ">Replay</button>
@@ -393,6 +410,7 @@
 
 <script id="srcSolver">/*INLINE_SOLVER*/</script>
 <script>/*INLINE_LEVELS*/</script>
+<script>/*INLINE_LESSONS*/</script>
 <script id="srcDaily">/*INLINE_DAILY*/</script>
 <script>/*INLINE_GAME*/</script>
 </body>

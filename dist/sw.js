@@ -1,4 +1,4 @@
-const C='huarong-9e79061';
+const C='huarong-cebf975';
 const FILES=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png','./icon-monochrome-512.png','./apple-touch-icon.png'];
 // Other apps on the same origin (github.io) share Cache Storage: only ever delete our own 'huarong-' caches.
 // cache:'reload' goes to the server, never the browser's HTTP cache, so a new version can't be filled with stale files

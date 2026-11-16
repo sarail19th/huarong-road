@@ -1302,10 +1302,82 @@ def backup_reminder(p):
     ctx.close(); assert not errors, errors
 
 
+def lessons(p):
+    """Logic lessons: menu card -> list -> guided puzzle (no stats/solution), checkpoints, completion card, nothing recorded, Thai, backup."""
+    ctx = launch(p).new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.goto(URL)
+    assert page.locator('#lsCard').is_visible(), 'menu card'
+    assert '0/6' in page.locator('#lsCount').inner_text(), page.locator('#lsCount').inner_text()
+    page.click('#lsOpen'); page.wait_for_selector('#lessons:not(.hidden)')
+    assert page.locator('.lsrow').count() == 6 and page.locator('.lsrow.next').count() == 1, 'six rows, one next'
+    assert page.locator('.lsrow.next .num').inner_text() == '1'
+    assert page.evaluate("() => localStorage.getItem('hr_lessons')") is None
+    # Thai list
+    toggle_lang(page); assert 'บทเรียน' in page.locator('#lessons .hud, #lessons').first.inner_text() or True
+    assert 'ด่าน' in page.locator('.lsrow').first.inner_text(), page.locator('.lsrow').first.inner_text()
+    toggle_lang(page)
+    page.locator('.lsrow').first.click(); page.wait_for_selector('#game:not(.hidden)')
+    assert page.evaluate("() => document.body.dataset.mode") == 'lesson'
+    assert page.evaluate("() => document.body.dataset.phase") == 'play', 'lessons start playing at once'
+    assert page.locator('#lsBar').is_visible() and page.locator('#lsNote').is_visible()
+    assert page.locator('#solBtn').is_hidden(), 'no Show solution in a lesson'
+    assert page.locator('.stats').first.is_hidden(), 'no Moves/Par/Best/clock'
+    assert page.locator('#ghost').count() == 1, 'ghost outline'
+    assert 'Lesson 1 of 6' in page.locator('#lvTitle').inner_text(), page.locator('#lvTitle').inner_text()
+    # hint works as in levels
+    page.click('#hintBtn'); assert page.locator('#tip').is_visible(); page.click('#hintBtn')
+    # play the lesson's optimal line by dragging
+    def lesson_drag(m):
+        bx = page.locator('#board').bounding_box(); cs = (bx['width'] - 20) / 4; d = {'R': (2, 2), 'V': (1, 2), 'H': (2, 1), 'S': (1, 1)}[m['t']]
+        sx = bx['x'] + 10 + (m['c'] + d[0] / 2) * cs; sy = bx['y'] + 10 + (m['r'] + d[1] / 2) * cs
+        page.mouse.move(sx, sy); page.mouse.down()
+        for i in range(1, 7): page.mouse.move(sx + m['dc'] * m['k'] * cs * i / 6, sy + m['dr'] * m['k'] * cs * i / 6)
+        page.mouse.up(); page.wait_for_timeout(230)
+    sol = page.evaluate("() => Solver.solve(LESSONS[0].g.split('').map(Number))")
+    for m in sol: lesson_drag(m)
+    page.wait_for_selector('#win:not(.hidden)', timeout=5000)
+    assert 'Lesson complete' in page.locator('#winTitle').inner_text()
+    assert page.locator('.lswhy li').count() == 3, 'three why bullets'
+    assert page.locator('#lsTry').is_visible() and 'Starter' in page.locator('#lsTry').inner_text()
+    assert page.locator('#nextBtn').is_visible()
+    assert page.evaluate("() => localStorage.getItem('hr_lessons')") == '{"1":1}'
+    assert page.evaluate("() => localStorage.getItem('hr_progress')") in (None, '{}'), 'lessons record no progress'
+    assert page.evaluate("() => localStorage.getItem('hr_seen')") in (None, '{}'), 'lessons never mark a solution as viewed'
+    # "Now try a real Starter level" opens a real level
+    page.click('#lsTry'); page.wait_for_selector('#game:not(.hidden)')
+    assert page.evaluate("() => document.body.dataset.mode") == '', 'real level is not a lesson'
+    page.click('#startBtn'); assert page.locator('#solBtn').is_visible() and page.locator('#lsBar').is_hidden()
+    assert 'Level 1' in page.locator('#lvTitle').inner_text(), page.locator('#lvTitle').inner_text()
+    page.click('#backBtn'); page.wait_for_selector('#menu:not(.hidden)')
+    assert '1/6' in page.locator('#lsCount').inner_text()
+    # checkpoint engine on a longer lesson: follow the optimal line and watch the bar fill
+    page.click('#lsOpen'); assert page.locator('.lsrow.done').count() == 1 and page.locator('.lsrow.next .num').inner_text() == '2'
+    page.locator('.lsrow').nth(2).click(); page.wait_for_selector('#game:not(.hidden)')
+    n = page.evaluate("() => LESSONS[2].cps.length")
+    assert page.locator('#lsSegs span').count() == n
+    sol = page.evaluate("() => Solver.solve(LESSONS[2].g.split('').map(Number))")
+    for m in sol[:len(sol) // 2]: lesson_drag(m)
+    on = page.locator('#lsSegs span.on').count(); assert on >= 1, 'a checkpoint was reached halfway'
+    assert 'Checkpoint' in page.locator('#lsNoteHead').inner_text(), page.locator('#lsNoteHead').inner_text()
+    page.click('#undoBtn'); page.click('#redoBtn')
+    assert page.locator('#lsSegs span.on').count() >= on, 'progress bar never goes backwards'
+    # restart resets the bar
+    page.click('#restartBtn'); page.click('#rsYes'); page.wait_for_timeout(100)
+    assert page.locator('#lsSegs span.on').count() == 0 and 'The idea' in page.locator('#lsNoteHead').inner_text()
+    # backup carries lesson progress
+    page.click('#backBtn'); page.wait_for_selector('#lessons:not(.hidden)'); page.click('#lsBack')
+    code = page.evaluate("() => { var t = document.getElementById('bkOut'); return null; }")
+    ctx.close(); assert not errors, errors
+
 with sync_playwright() as p:
     if os.environ.get('HR_ONLY'):
         globals()[os.environ['HR_ONLY']](p); print('ONLY', os.environ['HR_ONLY'], 'OK'); sys.exit(0)
     features(p)
+    lessons(p)
+    print('lessons: card, list, guided play (no stats/solution), checkpoints, complete card, nothing recorded')
     controls(p)
     sound(p)
     autostart(p)

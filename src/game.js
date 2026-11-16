@@ -235,15 +235,19 @@ store.set('hr_bk', bk);
   function buzz(ms) { if (haptics) try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
   function fmt(ms) { var s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
   function stars(n) { return '★★★'.slice(0, n) + '☆☆☆'.slice(0, 3 - n); }
-  function gradeOf(par) {
-    if (par <= 8) return { name: L('Starter', 'เริ่มต้น'), hint: L('learn the basics', 'เรียนรู้พื้นฐาน') };
-    if (par <= 20) return { name: L('Easy', 'ง่าย'), hint: L('a few clever slides', 'เลื่อนอย่างมีชั้นเชิงไม่กี่ครั้ง') };
-    if (par <= 40) return { name: L('Medium', 'ปานกลาง'), hint: L('plan ahead', 'วางแผนล่วงหน้า') };
-    if (par <= 65) return { name: L('Hard', 'ยาก'), hint: L('think in sequences', 'คิดเป็นลำดับขั้น') };
-    if (par <= 90) return { name: L('Expert', 'เชี่ยวชาญ'), hint: L('serious puzzling', 'ปริศนาจริงจัง') };
-    return { name: L('Master', 'ปรมาจารย์'), hint: L('legendary layouts', 'รูปแบบระดับตำนาน') };
-  }
+  var TIERS = [ // upper par bound, key; one list so grades and lessons cannot drift apart
+    { key: 'starter', max: 8, en: 'Starter', th: 'เริ่มต้น', hen: 'learn the basics', hth: 'เรียนรู้พื้นฐาน' },
+    { key: 'easy', max: 20, en: 'Easy', th: 'ง่าย', hen: 'a few clever slides', hth: 'เลื่อนอย่างมีชั้นเชิงไม่กี่ครั้ง' },
+    { key: 'medium', max: 40, en: 'Medium', th: 'ปานกลาง', hen: 'plan ahead', hth: 'วางแผนล่วงหน้า' },
+    { key: 'hard', max: 65, en: 'Hard', th: 'ยาก', hen: 'think in sequences', hth: 'คิดเป็นลำดับขั้น' },
+    { key: 'expert', max: 90, en: 'Expert', th: 'เชี่ยวชาญ', hen: 'serious puzzling', hth: 'ปริศนาจริงจัง' },
+    { key: 'master', max: 1e9, en: 'Master', th: 'ปรมาจารย์', hen: 'legendary layouts', hth: 'รูปแบบระดับตำนาน' }
+  ];
+  function tierOf(par) { for (var i = 0; i < TIERS.length; i++) if (par <= TIERS[i].max) return TIERS[i]; return TIERS[TIERS.length - 1]; }
+  function tierKey(par) { return tierOf(par).key; }
+  function gradeOf(par) { var t = tierOf(par); return { name: L(t.en, t.th), hint: L(t.hen, t.hth) }; }
   function levelTitle(lv, i) {
+    if (lv.lesson) return L('Lesson ', 'บทเรียน ') + lv.lesson + L(' of ', ' จาก ') + LESSONS.length + ' · ' + gradeOf(lv.par).name;
     if (lv.daily) return L('Daily #', 'รายวัน #') + lv.number + ' · ' + dayLabel(lv.key);
     if (lv.design) return lv.n ? L('Stage ', 'ด่านออกแบบ ') + lv.n + ' · ' + gradeOf(lv.par).name : L('Test play', 'ทดลองเล่น') + ' · ' + gradeOf(lv.par).name;
     return L('Level ', 'ด่าน ') + (i + 1) + ' · ' + gradeOf(lv.par).name;
@@ -600,6 +604,7 @@ store.set('hr_bk', bk);
     }
   });
   function renderDsCard() {
+    renderLessonCard();
     $('dsCount').textContent = designs.length ? L(designs.length + ' saved · build your own puzzle', 'บันทึกไว้ ' + designs.length + ' ด่าน · สร้างปริศนาของคุณเอง')
       : L('Build your own puzzle', 'สร้างปริศนาของคุณเอง');
   }
@@ -608,7 +613,8 @@ store.set('hr_bk', bk);
   $('stBack').onclick = showMenu;
 
   function showScreen(id) {
-    ['menu', 'stages', 'game'].forEach(function (k) { $(k).classList.toggle('hidden', k !== id); });
+    ['menu', 'stages', 'lessons', 'game'].forEach(function (k) { $(k).classList.toggle('hidden', k !== id); });
+    if (id !== 'game') document.body.dataset.mode = '';
     closeDlg('win');
   }
 
@@ -618,7 +624,7 @@ store.set('hr_bk', bk);
 
   function openLevel(i) {
     clearTimer();
-    var lv = typeof i === 'number' ? LV[i] : i;              // a daily puzzle is passed as its level object
+    var lv = typeof i === 'number' ? LV[i] : i;              // a daily puzzle or a lesson is passed as its level object
     if (typeof i !== 'number') i = -1;
     else { menuPage = Math.floor(i / PAGE); store.set('hr_page', menuPage); } // back on the menu, land on this level's page
     var target = lv.g.split('').map(Number);
@@ -626,15 +632,16 @@ store.set('hr_bk', bk);
           phase: 'setup', sel: null, moves: 0, hints: 0, hist: [], redo: [], t0: 0, elapsed: 0, msg: '', sol: null };
     clearBoard();
     showScreen('game');
+    document.body.dataset.mode = lv.lesson ? 'lesson' : '';
     document.body.dataset.phase = 'setup';
     $('lvTitle').textContent = levelTitle(lv, i);
     renderBest();
     $('par').textContent = lv.par; $('moves').textContent = '0'; $('time').textContent = '0:00';
     G.sel = firstAvailable();
     hideTip(); renderAuto();
-    if (autoPlace || autoStart || lv.design) placeAll();
+    if (autoPlace || autoStart || lv.design || lv.lesson) placeAll();
     layout(); renderAll(); window.scrollTo(0, 0);
-    if (autoStart || lv.design) startPlay();
+    if (autoStart || lv.design || lv.lesson) startPlay();
   }
 
   // Best result for the open level (fewest moves ever), shown as a 4th stat once the level has been cleared
@@ -699,10 +706,10 @@ store.set('hr_bk', bk);
     z.style.width = (2 * cell) + 'px'; z.style.height = (2 * cell) + 'px';
     var g = $('gate'); g.style.left = (PAD + cell + 8) + 'px'; g.style.width = (2 * cell - 16) + 'px';
     g.style.top = (H * cell + 2 * PAD - 2) + 'px';
-    if (G) renderPieces();
+    if (G) { renderPieces(); lessonRender(); }
   }
 
-  function renderAll() { renderLED(); renderPieces(); renderTray(); renderStatus(); renderCtl(); }
+  function renderAll() { renderLED(); renderPieces(); renderTray(); renderStatus(); renderCtl(); lessonRender(); }
   // Undo / Redo are greyed out when there is nothing to step to
   function renderCtl() {
     var on = !!G && G.phase === 'play';
@@ -843,7 +850,7 @@ store.set('hr_bk', bk);
 
   function startPlay() {
     G.phase = 'play'; document.body.dataset.phase = 'play';
-    G.initial = snap(); G.moves = 0; G.hints = 0; G.hist = []; G.redo = []; G.msg = ''; G.trend = null; hideTip();
+    G.initial = snap(); G.moves = 0; G.hints = 0; G.hist = []; G.redo = []; G.msg = ''; G.trend = null; G.cp = 0; hideTip();
     G.t0 = Date.now(); $('moves').textContent = '0'; $('time').textContent = '0:00';
     clearTimer(); timerId = setInterval(tick, 250);
     renderAll(); beep(740, 0.1);
@@ -922,19 +929,21 @@ store.set('hr_bk', bk);
     p.r += dr * k; p.c += dc * k; G.moves++;
     $('moves').textContent = G.moves;
     renderPieces(); renderLED(); renderStatus(); renderCtl(); beep(500, 0.04); buzz(15);
+    lessonCheck();
     if (Sol.isGoal(gridOf())) win(); else updateTrend(before, false);
   }
 
   $('undoBtn').onclick = function () {
     if (!G || G.phase !== 'play' || !G.hist.length) return;
     hideTip(); G.trend = null; G.redo.push(snap()); G.pieces = G.hist.pop(); G.moves = Math.max(0, G.moves - 1);
-    $('moves').textContent = G.moves; renderPieces(); renderLED(); renderStatus(); renderCtl(); updateTrend(null, true);
+    $('moves').textContent = G.moves; renderPieces(); renderLED(); renderStatus(); renderCtl(); lessonCheck(); updateTrend(null, true);
   };
   $('redoBtn').onclick = function () {
     if (!G || G.phase !== 'play' || !G.redo.length) return;
     var before = gridOf();
     hideTip(); G.trend = null; G.hist.push(snap()); G.pieces = G.redo.pop(); G.moves++;
     $('moves').textContent = G.moves; renderPieces(); renderLED(); renderStatus(); renderCtl(); beep(500, 0.04); buzz(15);
+    lessonCheck();
     if (Sol.isGoal(gridOf())) win(); else updateTrend(before, false);
   };
   function doRestart() {
@@ -943,7 +952,7 @@ store.set('hr_bk', bk);
     hideTip(); G.trend = null; G.hints = 0; G.moves = 0; G.hist = []; G.redo = []; G.phase = 'play'; document.body.dataset.phase = 'play'; // a restart is a fresh attempt: hint use and its closer/further feedback start over too
     G.t0 = Date.now(); $('moves').textContent = '0'; $('time').textContent = '0:00';
     clearTimer(); timerId = setInterval(tick, 250);
-    clearBoard(); renderAll();
+    G.cp = 0; clearBoard(); renderAll();
   }
   // Restart wipes the attempt, so ask first; nothing to lose (no moves yet) restarts straight away.
   $('restartBtn').onclick = function () {
@@ -1113,7 +1122,7 @@ store.set('hr_bk', bk);
   function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } }
 
   function askSolution() {
-    if (!G || G.phase !== 'play') return;
+    if (!G || G.phase !== 'play' || G.lv.lesson) return; // a lesson never shows the solution
     if (seen[G.lv.id]) openSolution(); else openDlg('solAsk', '#solNo');
   }
   $('solBtn').onclick = askSolution;
@@ -1121,7 +1130,7 @@ store.set('hr_bk', bk);
   $('solYes').onclick = function () { closeDlg('solAsk'); openSolution(); };
 
   function openSolution() {
-    if (!G || G.phase !== 'play') return;
+    if (!G || G.phase !== 'play' || G.lv.lesson) return;
     var steps = Sol.solve(Sol.fromPieces(G.initial));
     if (!steps) { say(L('No solution found for this layout', 'ไม่พบเฉลยสำหรับรูปแบบนี้')); return; }
     if (G.lv.id !== 'draft') { seen[G.lv.id] = 1; store.set('hr_seen', seen); renderRecord(); }
@@ -1191,8 +1200,149 @@ store.set('hr_bk', bk);
     clearBoard(); renderAll();
   };
 
+  /* ---------- logic lessons: one guided puzzle per tier (see gen/lessons.js) ---------- */
+  // A lesson puzzle is not one of the 100 levels, so nothing is spoiled. It records no stars, moves or time (only "done"),
+  // never counts as a viewed solution, and Hint works exactly as in a level. Checkpoints are positions of the red block
+  // that every optimal line passes through (data in LESSONS[].cps); reaching one shows a card, the dashed outline on the
+  // board is the next one.
+  var lessonsDone = store.get('hr_lessons', {}); // { '1': 1, ... } lesson number -> finished
+  var LS_TXT = {
+    starter: { name: ['Gaps are the moves', 'ช่องว่างคือการเดิน'],
+      idea: ['A block can only slide into an empty cell, and there are just two empty cells. So every move you make is really moving a gap. Before you drag, ask: where do I need an empty cell?', 'บล็อกเลื่อนได้เฉพาะเข้าไปในช่องว่าง และมีช่องว่างเพียง 2 ช่อง ดังนั้นทุกการเดินคือการย้ายช่องว่าง ก่อนลาก ลองถามว่า ตอนนี้ฉันต้องการช่องว่างตรงไหน'],
+      tips: [['Every block you moved made an empty cell appear exactly where red needed it.', 'ทุกบล็อกที่คุณเลื่อน ทำให้ช่องว่างไปอยู่ตรงที่ตัวแดงต้องการพอดี']],
+      why: [['Red can only move into empty cells.', 'ตัวแดงเลื่อนได้เฉพาะเข้าไปในช่องว่าง'], ['So the other blocks moved to bring a gap next to red.', 'บล็อกอื่นจึงต้องเลื่อนเพื่อพาช่องว่างมาอยู่ข้างตัวแดง'], ['Next time, look at where the gaps are before you move anything.', 'ครั้งหน้าลองดูตำแหน่งช่องว่างก่อนเลื่อนบล็อกใดๆ']] },
+    easy: { name: ['Work backwards from the exit', 'ย้อนคิดจากทางออก'],
+      idea: ['Start from the end. Red has to reach the bottom centre, so what must be empty there? What is sitting on those cells? Free that block first, then work back to where you are now.', 'เริ่มคิดจากปลายทาง ตัวแดงต้องไปถึงตรงกลางด้านล่าง แล้วตรงนั้นต้องว่างอะไรบ้าง ตอนนี้มีบล็อกอะไรอยู่ ปลดบล็อกนั้นก่อน แล้วค่อยย้อนมาถึงจุดที่คุณอยู่'],
+      tips: [['Find what stands in red’s way, then ask what that block needs to get out.', 'หาว่าอะไรขวางทางตัวแดง แล้วถามว่าบล็อกนั้นต้องการอะไรจึงจะออกไปได้'], ['The dashed outline is the end of a short chain: blocker, space, then red.', 'เส้นประคือปลายทางของลำดับสั้นๆ: บล็อกที่ขวาง ที่ว่าง แล้วจึงตัวแดง']],
+      why: [['The goal first: red needs those cells empty.', 'เริ่มจากเป้าหมาย: ตัวแดงต้องการให้ช่องเหล่านั้นว่าง'], ['Then the blocker: what sits there, and where can it go?', 'จากนั้นดูตัวขวาง: อะไรอยู่ตรงนั้น และไปไหนได้'], ['Last, the gaps: how do I bring empty cells to that blocker?', 'สุดท้ายคือช่องว่าง: จะพาช่องว่างไปหาตัวขวางได้อย่างไร']] },
+    medium: { name: ['Join the two gaps', 'รวมช่องว่างสองช่องเข้าด้วยกัน'],
+      idea: ['Red and the long blocks need two empty cells side by side. One gap alone can only shuffle small blocks. Walk the two gaps together and a long block can slide in a single move.', 'ตัวแดงและบล็อกยาวต้องการช่องว่างสองช่องติดกัน ช่องว่างเดียวทำได้แค่สลับบล็อกเล็ก ลองพาช่องว่างสองช่องมาชิดกัน แล้วบล็อกยาวจะเลื่อนผ่านได้ในครั้งเดียว'],
+      tips: [['Two gaps side by side make a hole a long block can use. Joining them is usually the point of the small moves in between.', 'ช่องว่างสองช่องติดกันเป็นช่องที่บล็อกยาวใช้ได้ การรวมช่องว่างมักเป็นเหตุผลของการเดินเล็กๆ ระหว่างทาง'], ['A long block stepping sideways needs that two-cell hole first.', 'บล็อกยาวที่จะเลื่อนหลบข้างต้องมีช่องสองช่องแบบนี้ก่อน']],
+      why: [['Some blocks needed two empty cells side by side.', 'บางบล็อกต้องการช่องว่างสองช่องติดกัน'], ['You moved small blocks until the two gaps met.', 'คุณเลื่อนบล็อกเล็กจนช่องว่างทั้งสองมาชิดกัน'], ['Then the long block slid in one move. Watch for this in every level.', 'แล้วบล็อกยาวก็เลื่อนได้ในครั้งเดียว ลองสังเกตเรื่องนี้ในทุกด่าน']] },
+    hard: { name: ['Small blocks carry gaps', 'บล็อกเล็กพาช่องว่างไป'],
+      idea: ['Small blocks are your delivery trucks. Sliding a small block into a gap moves the gap the other way, so a short chain of small moves can carry a gap right across the board.', 'บล็อกเล็กเปรียบเหมือนรถขนส่ง เมื่อเลื่อนบล็อกเล็กเข้าไปในช่องว่าง ช่องว่างจะย้ายไปอีกด้าน ดังนั้นการเดินบล็อกเล็กต่อกันไม่กี่ครั้งก็พาช่องว่างข้ามกระดานได้'],
+      tips: [['Each small-block move shifts a gap one step. A short chain walks the gap to where a bigger block needs it.', 'การเดินบล็อกเล็กแต่ละครั้งย้ายช่องว่างไปหนึ่งก้าว ต่อกันสั้นๆ ก็พาช่องว่างไปหาบล็อกใหญ่ได้'], ['If the gap is on the wrong side, ask which small block can carry it over.', 'ถ้าช่องว่างอยู่ผิดฝั่ง ลองถามว่าบล็อกเล็กตัวไหนพาข้ามมาได้']],
+      why: [['Moving a small block into a gap moves the gap the opposite way.', 'เลื่อนบล็อกเล็กเข้าช่องว่าง ช่องว่างจะไปอยู่ฝั่งตรงข้าม'], ['Chains of small moves carried the gaps to where they were needed.', 'การเดินบล็อกเล็กต่อกันพาช่องว่างไปยังจุดที่ต้องการ'], ['When stuck, trace the gap: which small block can bring it closer?', 'เมื่อติด ลองไล่ตามช่องว่าง: บล็อกเล็กตัวไหนพามาใกล้ขึ้นได้']] },
+    expert: { name: ['Pass a long block', 'หลีกทางให้บล็อกยาว'],
+      idea: ['Sometimes a long block is in the way and cannot leave in a straight line. Step it aside into a joined pair of gaps, let the other block go by, then step it back if you need to.', 'บางครั้งบล็อกยาวขวางทางและออกตรงๆ ไม่ได้ ให้เลื่อนมันหลบเข้าช่องว่างที่รวมกันสองช่อง ปล่อยให้บล็อกอื่นผ่านไป แล้วค่อยเลื่อนกลับถ้าจำเป็น'],
+      tips: [['Stepping a long block aside makes a lane. Plan where it will come back.', 'การเลื่อนบล็อกยาวหลบเป็นการเปิดช่องทาง ลองวางแผนว่าจะเลื่อนกลับตรงไหน'], ['A sideways step needs two gaps first, so join them before you move it.', 'การหลบข้างต้องมีช่องว่างสองช่องก่อน รวมช่องว่างก่อนเลื่อน']],
+      why: [['A long block was in the way and could not leave in a straight line.', 'บล็อกยาวขวางทางและออกตรงๆ ไม่ได้'], ['It stepped aside into a joined pair of gaps.', 'มันหลบเข้าช่องว่างที่รวมกันสองช่อง'], ['That opened a lane for the next block to pass.', 'ซึ่งเปิดช่องให้บล็อกถัดไปผ่านไปได้']] },
+    master: { name: ['Chain the sub-goals', 'ต่อเป้าหมายย่อยเป็นลูกโซ่'],
+      idea: ['A long puzzle is a chain of short ones. Each checkpoint is one link: make room, free a block, move red a step. Do not try to see the whole solution, only the next link.', 'ปริศนายาวคือเป้าหมายสั้นๆ ที่ต่อกันเป็นลูกโซ่ แต่ละจุดตรวจคือหนึ่งห่วง: เปิดที่ว่าง ปลดบล็อก แล้วขยับตัวแดงหนึ่งก้าว ไม่ต้องมองเห็นเฉลยทั้งหมด แค่ห่วงถัดไปก็พอ'],
+      tips: [['That was one link of the chain. Name the next blocker, then bring a gap to it.', 'นั่นคือหนึ่งห่วงของลูกโซ่ ตั้งชื่อตัวขวางถัดไป แล้วพาช่องว่างไปหามัน'], ['Each checkpoint is smaller than the whole puzzle. Keep your eyes on the dashed outline.', 'แต่ละจุดตรวจเล็กกว่าปริศนาทั้งหมด จับตาที่เส้นประไว้']],
+      why: [['A long solution is just short goals in a row.', 'เฉลยที่ยาวก็คือเป้าหมายสั้นๆ เรียงต่อกัน'], ['At each link: find the blocker, make room, move red.', 'ทุกห่วง: หาตัวขวาง เปิดที่ว่าง ขยับตัวแดง'], ['You do not need the whole plan, only the next link.', 'ไม่ต้องมีแผนทั้งหมด แค่ห่วงถัดไป']] }
+  };
+  function lsT(d, key) { var a = LS_TXT[d.tier][key]; return L(a[0], a[1]); }
+  function tierRange(k) { // 1-based level numbers of a tier
+    var lo = 0, hi = 0;
+    LV.forEach(function (lv, i) { if (tierKey(lv.par) === k) { if (!lo) lo = i + 1; hi = i + 1; } });
+    return [lo, hi];
+  }
+  function lessonLv(i) { var d = LESSONS[i]; return { id: 'lesson' + d.id, par: d.par, g: d.g, lesson: i + 1 }; }
+  function lessonCount() { return LESSONS.filter(function (d, i) { return lessonsDone[i + 1]; }).length; }
+  function renderLessonCard() {
+    var n = lessonCount();
+    $('lsCount').textContent = L(n + '/' + LESSONS.length + ' done · Starter to Master', 'ผ่านแล้ว ' + n + '/' + LESSONS.length + ' · เริ่มต้นถึงปรมาจารย์');
+    $('lsProg').style.width = (n / LESSONS.length * 100) + '%';
+  }
+  function showLessons() {
+    clearTimer(); G = null; hideTip();
+    showScreen('lessons'); renderLessons(); window.scrollTo(0, 0);
+  }
+  function renderLessons() {
+    var nextIdx = -1;
+    LESSONS.forEach(function (d, i) { if (nextIdx < 0 && !lessonsDone[i + 1]) nextIdx = i; });
+    $('lsList').innerHTML = LESSONS.map(function (d, i) {
+      var done = !!lessonsDone[i + 1], gr = gradeOf(d.par).name, rg = tierRange(d.tier);
+      return '<button class="lsrow' + (done ? ' done' : '') + (i === nextIdx ? ' next' : '') + '" data-i="' + i + '">' +
+        '<span class="num">' + (done ? '✓' : i + 1) + '</span><span class="txt"><b>' + gr + ' · ' + lsT(d, 'name') + '</b>' +
+        '<small>' + L('Levels ' + rg[0] + '–' + rg[1] + ' · about ' + d.par + ' moves', 'ด่าน ' + rg[0] + '–' + rg[1] + ' · ราว ' + d.par + ' ครั้ง') + '</small></span><span class="go" aria-hidden="true">›</span></button>';
+    }).join('');
+    renderLessonCard();
+  }
+  $('lsList').addEventListener('click', function (e) { var b = e.target.closest('.lsrow'); if (b) openLevel(lessonLv(+b.dataset.i)); });
+  $('lsOpen').onclick = showLessons;
+  $('lsBack').onclick = showMenu;
+
+  function moveKinds(mv) { // "small blocks", "tall and small blocks"... in order of how much each was used
+    var names = { V: L('tall', 'บล็อกตั้ง'), H: L('wide', 'บล็อกนอน'), S: L('small', 'บล็อกเล็ก') };
+    var ks = ['V', 'H', 'S'].filter(function (k) { return mv[k] > 0; }).sort(function (a, b) { return mv[b] - mv[a]; });
+    return ks.map(function (k) { return names[k]; });
+  }
+  function lessonCard(d, cp) { // the card for the checkpoint just reached (cp = number reached, 1-based)
+    var N = d.cps.length, c = d.cps[cp - 1], kinds = moveKinds(c.mv), T = LS_TXT[d.tier], body;
+    if (!kinds.length) body = L('Red could slide straight there — nothing had to move first.', 'ตัวแดงเลื่อนไปถึงได้เลย ไม่ต้องเลื่อนบล็อกอื่นก่อน');
+    else if (kinds.length === 1 && c.mv.S > 0) body = L('You made room using only small blocks — they carry the gaps.', 'คุณเปิดที่ว่างด้วยบล็อกเล็กล้วนๆ — บล็อกเล็กพาช่องว่างไปได้');
+    else body = L('You made room with ' + kinds.join(', ') + (kinds.length > 1 ? ' blocks' : ' blocks') + '.', 'คุณเปิดที่ว่างด้วย' + kinds.join(' ') + '');
+    var tip = T.tips[(cp - 1) % T.tips.length];
+    return { head: '✓ ' + L('Checkpoint ' + cp + ' of ' + N, 'จุดตรวจที่ ' + cp + ' จาก ' + N), body: body, why: L(tip[0], tip[1]) };
+  }
+  function lessonGhost(r, c) {
+    var g = $('ghost');
+    if (r === null) { if (g) g.remove(); return; }
+    if (!g) { g = document.createElement('div'); g.id = 'ghost'; g.className = 'ghost'; $('board').appendChild(g); }
+    g.style.width = (2 * cell - 2 * GAP) + 'px'; g.style.height = (2 * cell - 2 * GAP) + 'px';
+    g.style.transform = 'translate(' + (PAD + c * cell + GAP) + 'px,' + (PAD + r * cell + GAP) + 'px)';
+  }
+  function lessonRender() {
+    var on = !!(G && G.lv && G.lv.lesson && G.phase !== 'design');
+    $('lsBar').classList.toggle('hidden', !on); $('lsNote').classList.toggle('hidden', !on);
+    if (!on) { lessonGhost(null); return; }
+    var d = LESSONS[G.lv.lesson - 1], N = d.cps.length, cp = Math.min(G.cp || 0, N), segs = '', i, over = G.phase === 'won';
+    for (i = 0; i < N; i++) segs += '<span' + (i < cp ? ' class="on"' : '') + '></span>';
+    $('lsSegs').innerHTML = segs;
+    if (over) { $('lsGoal').innerHTML = '<b>' + L('Lesson complete', 'จบบทเรียน') + '</b>'; lessonGhost(null); }
+    else {
+      var last = cp >= N - 1;
+      $('lsGoal').innerHTML = last ? '<b>' + L('Last goal', 'เป้าหมายสุดท้าย') + '</b> · ' + L('slide the red square out through the exit.', 'เลื่อนสี่เหลี่ยมแดงออกทางทางออก')
+        : '<b>' + L('Goal ' + (cp + 1) + ' of ' + N, 'เป้าหมายที่ ' + (cp + 1) + ' จาก ' + N) + '</b> · ' + L('get the red square onto the dashed outline.', 'พาสี่เหลี่ยมแดงไปที่กรอบเส้นประ');
+      lessonGhost(d.cps[cp].r, d.cps[cp].c);
+    }
+    var head, body, why;
+    if (cp === 0) { head = L('The idea · ', 'แนวคิด · ') + lsT(d, 'name'); body = lsT(d, 'idea'); why = L('Stuck? Tap Hint: it explains the next step, same as in every level.', 'ติดอยู่? แตะคำใบ้: อธิบายขั้นถัดไปเหมือนในทุกด่าน'); }
+    else { var cd = lessonCard(d, Math.min(cp, N - 1) || 1); head = cd.head; body = cd.body; why = cd.why; }
+    $('lsNoteHead').textContent = head; $('lsNoteBody').textContent = body; $('lsNoteWhy').textContent = why;
+  }
+  // after every move / undo / redo: has red reached a (later) checkpoint? Any route counts, the check is only red's square.
+  function lessonCheck() {
+    if (!G || !G.lv.lesson || G.phase !== 'play') return;
+    var d = LESSONS[G.lv.lesson - 1], red = G.pieces.filter(function (p) { return p.t === 'R'; })[0], i;
+    for (i = d.cps.length - 2; i >= (G.cp || 0); i--)
+      if (red && red.r === d.cps[i].r && red.c === d.cps[i].c) { G.cp = i + 1; beep(880, 0.1); buzz(25); break; }
+    lessonRender();
+  }
+  function winLesson() {
+    G.phase = 'won'; document.body.dataset.phase = 'won'; clearTimer(); renderCtl();
+    var n = G.lv.lesson, d = LESSONS[n - 1];
+    lessonsDone[n] = 1; store.set('hr_lessons', lessonsDone); keepStorage();
+    G.cp = d.cps.length; lessonRender(); renderLessonCard();
+    var red = G.pieces.filter(function (p) { return p.t === 'R'; })[0], el = els.get(red.id);
+    setTimeout(function () {
+      el.style.transform = 'translate(' + (PAD + red.c * cell + GAP) + 'px,' + (PAD + (red.r + 2) * cell + GAP) + 'px)';
+      el.style.opacity = '0';
+      beep(784, 0.12); setTimeout(function () { beep(988, 0.18); }, 130);
+    }, 250);
+    setTimeout(function () {
+      var T = LS_TXT[d.tier], hasNext = n < LESSONS.length;
+      $('winTitle').textContent = L('Lesson complete', 'จบบทเรียน');
+      $('winStars').textContent = '✓';
+      $('winInfo').innerHTML = '<b>' + lsT(d, 'name') + '</b><ul class="lswhy">' + T.why.map(function (w, i) { return '<li><i>' + (i + 1) + '</i><span>' + L(w[0], w[1]) + '</span></li>'; }).join('') + '</ul>';
+      $('dWin').classList.add('hidden');
+      var tr = $('lsTry'); tr.classList.remove('hidden'); tr.textContent = L('Now try a real ' + gradeOf(d.par).name + ' level', 'ลองด่าน' + gradeOf(d.par).name + 'ของจริง');
+      $('menuBtn').textContent = L('Lessons', 'บทเรียน');
+      $('nextBtn').textContent = L('Next tier', 'ระดับถัดไป'); $('nextBtn').classList.toggle('hidden', !hasNext);
+      openDlg('win', hasNext ? '#nextBtn' : '#lsTry');
+    }, 950);
+  }
+  $('lsTry').onclick = function () { // first level of this tier you have not cleared yet (or its first level)
+    if (!G || !G.lv.lesson) return;
+    var k = LESSONS[G.lv.lesson - 1].tier, pick = -1, first = -1;
+    LV.forEach(function (lv, i) { if (tierKey(lv.par) !== k) return; if (first < 0) first = i; if (pick < 0 && !progress[lv.id]) pick = i; });
+    closeDlg('win'); openLevel(pick >= 0 ? pick : first);
+  };
   /* ---------- win ---------- */
   function win() {
+    if (G.lv.lesson) return winLesson();
     G.phase = 'won'; document.body.dataset.phase = 'won'; clearTimer(); renderCtl();
     G.elapsed = Date.now() - G.t0;
     var par = G.lv.par, st = seen[G.lv.id] ? 0 : G.moves <= par ? 3 : G.moves <= Math.ceil(par * 1.4) ? 2 : 1;
@@ -1231,11 +1381,12 @@ store.set('hr_bk', bk);
       openDlg('win', hasNext ? '#nextBtn' : '#menuBtn');
     }, 950);
   }
-  $('nextBtn').onclick = function () { openLevel(G.idx + 1); };
+  $('nextBtn').onclick = function () { if (G.lv.lesson) return openLevel(lessonLv(G.lv.lesson)); openLevel(G.idx + 1); };
   $('replayBtn').onclick = function () { closeDlg('win'); doRestart(); };
   // From a design's test play (or its win card) go back to the editor with that layout; otherwise to the menu
   function leave() {
-    if (G && G.lv && G.lv.fromList) showStages();
+    if (G && G.lv && G.lv.lesson) showLessons();
+    else if (G && G.lv && G.lv.fromList) showStages();
     else if (G && G.lv && G.lv.design) openDesign(G.lv.n || G.lv.edit || null, G.initial);
     else showMenu();
   }
@@ -1319,7 +1470,7 @@ store.set('hr_bk', bk);
       b.setAttribute('aria-pressed', lang === 'th');
       b.setAttribute('aria-label', lang === 'th' ? 'ภาษา: ไทย (แตะเพื่อเปลี่ยนเป็น English)' : 'Language: English (tap for Thai)');
     });
-    renderOffline();     renderMyThemes(); if (ed) renderEd(); renderMenu(); renderDaily(); renderBkRow(); renderBkLast(); renderNudge(); if (!$('stages').classList.contains('hidden')) renderStages();
+    renderOffline();     renderMyThemes(); if (ed) renderEd(); renderMenu(); renderLessonCard(); if (!$('lessons').classList.contains('hidden')) renderLessons(); renderDaily(); renderBkRow(); renderBkLast(); renderNudge(); if (!$('stages').classList.contains('hidden')) renderStages();
     Array.prototype.forEach.call(document.querySelectorAll('.setrow[role=switch]'), renderSwitchText);
     if (!G) return;
     if (G.phase === 'design') { $('lvTitle').textContent = G.editing ? L('Edit stage ', 'แก้ไขด่าน ') + G.editing : L('Design stage', 'ออกแบบด่าน'); renderAll(); designCheck(); renderStages(); return; }
@@ -1630,7 +1781,7 @@ store.set('hr_bk', bk);
 
   /* ---------- progress backup: a code or a small file, works offline; restoring merges and never loses anything ---------- */
   function backupCode() {
-    var data = { v: 1, at: new Date().toISOString().slice(0, 10), progress: progress, seen: seen, designs: designs, themes: themes };
+    var data = { v: 1, at: new Date().toISOString().slice(0, 10), progress: progress, seen: seen, designs: designs, themes: themes, lessons: lessonsDone };
     return 'HR1.' + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   }
   function readBackup(text) {
@@ -1671,6 +1822,8 @@ store.set('hr_bk', bk);
       progress[id] = b ? { stars: Math.max(a.stars, b.stars), moves: Math.min(a.moves, b.moves), time: Math.min(a.time, b.time) } : a;
     });
     Object.keys(d.seen || {}).forEach(function (id) { seen[id] = 1; });
+    Object.keys(d.lessons || {}).forEach(function (n) { if (+n >= 1 && +n <= LESSONS.length) lessonsDone[n] = 1; });
+    store.set('hr_lessons', lessonsDone);
     store.set('hr_progress', progress); store.set('hr_seen', seen);
     renderMenu(); renderNudge(); $('bkOut').value = backupCode(); $('bkIn').value = '';
     var total = Object.keys(progress).reduce(function (t, id) { return t + progress[id].stars; }, 0);
