@@ -664,6 +664,52 @@ def controls(p):
     ctx.close(); assert not errors, errors
 
 
+def new_skins(p):
+    """Paper + Tech (light skins), per-skin block icons, and the Custom skin editor."""
+    ctx = launch(p).new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=1, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errs = []
+    page.on('pageerror', lambda e: errs.append(str(e)))
+    page.goto(URL)
+    css = lambda v: page.evaluate("(v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim()", v)
+    # light skins flip the colour scheme and text colour; the original icons stay the default for Classic
+    set_skin(page, 'paper')
+    assert page.evaluate("() => document.documentElement.dataset.skin") == 'paper' and css('color-scheme') == 'light'
+    lv(page, 5).click()
+    assert page.locator('.piece.tR svg').count() == 1 and page.locator('.piece.tV svg path').count() >= 1, 'paper: crown on red, star on tall blocks'
+    page.click('#backBtn')
+    set_skin(page, 'classic')
+    lv(page, 5).click()
+    assert page.locator('.piece.tR svg polygon').count() == 2 and page.locator('.piece.tV i').count() >= 1, 'classic keeps triangle + rings'
+    page.click('#backBtn')
+    set_skin(page, 'tech'); assert css('color-scheme') == 'light'
+    # Custom: editor hidden for other skins, shown for Custom; colour, icon, persistence, reset, start-from
+    settings(page); assert page.locator('#custEd').is_hidden()
+    page.locator('#settings .skopt[data-sk=custom]').click(); assert page.locator('#custEd').is_visible()
+    page.evaluate("""() => { const set = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input')); };
+      set('cc_bg', '#101820'); set('cc_R', '#ff4d6d'); set('cc_T', '#4cc9f0'); set('cc_S', '#ffd60a'); set('cc_board', '#0a1016'); }""")
+    assert css('--bg') == '#101820' and css('color-scheme') == 'dark' and css('--text') == '#e8edf3', 'dark custom background picks light text'
+    page.locator('#icoPick button').nth(4).click()  # diamond on the red block
+    saved = page.evaluate("() => JSON.parse(localStorage.getItem('hr_custom'))")
+    assert saved['R'] == '#ff4d6d' and saved['icons']['R'] == 'diamond', 'custom saved'
+    page.locator('.cic[data-k=T]').click(); page.locator('#icoPick button').nth(6).click()  # ring on tall blocks
+    page.click('#setClose'); lv(page, 5).click()
+    assert page.locator('.piece.tR svg').count() == 1 and page.locator('.piece.tV i').count() >= 1, 'custom icons drawn on the board'
+    page.reload(); assert css('--bg') == '#101820', 'custom survives reload'
+    # a near-identical pair of block colours shows the contrast warning
+    settings(page)
+    page.evaluate("""() => { const set = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input')); }; set('cc_T', '#4cc9f1'); set('cc_S', '#4cc9f0'); }""")
+    assert page.locator('#custWarn').is_visible(), 'contrast warning'
+    page.locator('#custBase').select_option('gold'); assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_custom')).R") == '#d4a017', 'start from gold'
+    page.click('#custReset'); assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_custom')).bg") == '#E9DCC3', 'reset'
+    # leaving Custom removes its inline variables
+    page.locator('#settings .skopt[data-sk=classic]').click()
+    assert page.evaluate("() => document.documentElement.getAttribute('style')") in (None, ''), 'no leftover custom variables'
+    # Thai labels in the editor
+    page.locator('#settings .skopt[data-sk=custom]').click(); page.locator('#settings .lang-btn').click()
+    assert 'บล็อกแดง' in page.locator('#custRows').inner_text(), 'editor in Thai'
+    assert not errs, errs
+    ctx.close()
+
 def skins_timer(p):
     """All skins visible at once (live previews), each selectable in one tap; timer switch hides the clock."""
     ctx = launch(p).new_context(viewport={'width': 360, 'height': 740}, device_scale_factor=2, has_touch=True, is_mobile=True)
@@ -1214,6 +1260,8 @@ with sync_playwright() as p:
     print('skins: all visible at once, one tap each; timer switch hides the clock')
     print('controls: undo/redo pair, hint+solution pair, restart confirm, settings panel OK')
     print('features: auto-place default, skins, two-step hints OK')
+    new_skins(p)
+    print('new skins: Paper/Tech light skins, block icons, Custom editor (colours, icons, persist, warn, reset, Thai)')
     lang_switch(p)
     print('language switch: EN | TH highlights the active side, flips both ways, fits at 360px')
     all_hints(p)

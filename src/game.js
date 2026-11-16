@@ -38,7 +38,10 @@ store.set('hr_bk', bk);
     { id: 'sunset', name: 'Sunset', theme: '#0f0713' },
     { id: 'forest', name: 'Forest', theme: '#060c08' },
     { id: 'mono', name: 'Mono', theme: '#0a0a0a' },
-    { id: 'gold', name: 'Gold', theme: '#0a0804' }
+    { id: 'gold', name: 'Gold', theme: '#0a0804' },
+    { id: 'paper', name: 'Paper', full: 'Comfort Paper', theme: '#E9DCC3', icons: { R: 'crown', T: 'star', S: 'heart' } },
+    { id: 'tech', name: 'Tech', full: 'Modern Tech', theme: '#E6E9ED', icons: { R: 'tri', T: 'ring', S: 'diamond' } },
+    { id: 'custom', name: 'Custom', theme: '#E9DCC3' }
   ];
   var skin = store.get('hr_skin', 'classic');
 
@@ -46,6 +49,93 @@ store.set('hr_bk', bk);
   var els = new Map();
   var ledCells = [];
   var RSVG = '<svg viewBox="0 0 100 100"><polygon points="50,12 90,84 10,84" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="6" stroke-linejoin="round"/><polygon points="50,38 68,70 32,70" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="5" stroke-linejoin="round"/></svg>';
+  /* ---------- block icons + the Custom skin ---------- */
+  // Each skin picks what is drawn on a block: 'tri' (the original red triangle), 'ring' (the original ring), or an outline icon. Custom lets the player choose.
+  var ICON_PATHS = { // 24x24 outlines, drawn with currentColor (the colour comes from the skin's --ricon / --ringV / --ringS)
+    crown: '<path d="m2 6 4 5 6-7 6 7 4-5-2 13H4zM5 21h14"/>',
+    star: '<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3L7 14.2 2 9.3l6.9-1z"/>',
+    heart: '<path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7z"/>',
+    diamond: '<path d="m12 2 10 10-10 10L2 12z"/>',
+    bolt: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
+    tri: '<path d="M12 3 22 20H2z"/><path d="M12 9.5 16 17H8z"/>',
+    ring: '<circle cx="12" cy="12" r="8"/>',
+    none: '<path d="M5 5l14 14M19 5 5 19"/>'
+  };
+  var ICON_ORDER = ['tri', 'crown', 'star', 'heart', 'diamond', 'bolt', 'ring', 'none'];
+  var ICON_NAME = { tri: ['Triangle', 'สามเหลี่ยม'], crown: ['Crown', 'มงกุฎ'], star: ['Star', 'ดาว'], heart: ['Heart', 'หัวใจ'], diamond: ['Diamond', 'เพชร'], bolt: ['Bolt', 'สายฟ้า'], ring: ['Ring', 'วงแหวน'], none: ['None', 'ไม่มี'] };
+  function iconSvg(id) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON_PATHS[id] + '</svg>'; }
+  var PRESETS = { // palettes of the built-in skins, used by Custom's "Start from"
+    classic: { bg: '#0d1117', board: '#07080a', R: '#e63946', T: '#2f80ed', S: '#f5b82e' },
+    blossom: { bg: '#0b0709', board: '#22141d', R: '#ff80b0', T: '#f5b9d1', S: '#5e3a55' },
+    neon: { bg: '#020503', board: '#07170d', R: '#2ee000', T: '#145a29', S: '#c3f59a' },
+    ocean: { bg: '#050d14', board: '#07151f', R: '#ff5a36', T: '#146a99', S: '#6fd0e8' },
+    sunset: { bg: '#0f0713', board: '#150a1b', R: '#ff9f1c', T: '#5a2d9c', S: '#f15bb5' },
+    forest: { bg: '#060c08', board: '#0a140c', R: '#f08c00', T: '#1f6b2b', S: '#c8b98a' },
+    mono: { bg: '#0a0a0a', board: '#0e0e0e', R: '#f4f4f4', T: '#3a3a3a', S: '#9c9c9c' },
+    gold: { bg: '#0a0804', board: '#100c05', R: '#d4a017', T: '#6e4a14', S: '#e6d3a0' },
+    paper: { bg: '#E9DCC3', board: '#8B6B4A', R: '#B5382C', T: '#D9A441', S: '#8E9F6B' },
+    tech: { bg: '#E6E9ED', board: '#D3D8DF', R: '#F26A1B', T: '#2F6FDB', S: '#B9C0CA' }
+  };
+  var CUSTOM_DEF = { bg: '#E9DCC3', board: '#8B6B4A', R: '#B5382C', T: '#D9A441', S: '#8E9F6B', icons: { R: 'crown', T: 'star', S: 'heart' } };
+  function normCustom(c) {
+    var o = JSON.parse(JSON.stringify(CUSTOM_DEF));
+    if (!c || typeof c !== 'object') return o;
+    ['bg', 'board', 'R', 'T', 'S'].forEach(function (k) { if (typeof c[k] === 'string' && /^#[0-9a-f]{6}$/i.test(c[k])) o[k] = c[k]; });
+    if (c.icons && typeof c.icons === 'object') ['R', 'T', 'S'].forEach(function (k) { if (ICON_PATHS[c.icons[k]]) o.icons[k] = c.icons[k]; });
+    return o;
+  }
+  var custom = normCustom(store.get('hr_custom', null));
+  var editIco = 'R'; // which block type the icon picker edits
+  function skinDef() { return SKINS.filter(function (x) { return x.id === skin; })[0] || SKINS[0]; }
+  function skinIcons() { var d = skinDef(); return d.id === 'custom' ? custom.icons : (d.icons || { R: 'tri', T: 'ring', S: 'ring' }); }
+  function pieceInner(t) {
+    var id = skinIcons()[t === 'R' ? 'R' : t === 'S' ? 'S' : 'T'];
+    if (id === 'ring') return '<i></i>';
+    if (id === 'none') return '';
+    if (id === 'tri') return RSVG;
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON_PATHS[id] + '</svg>';
+  }
+  function refreshIcons() {
+    Array.prototype.forEach.call(document.querySelectorAll('.piece'), function (el) {
+      var m = /\bt([RVHS])\b/.exec(el.className); if (m) el.innerHTML = pieceInner(m[1]);
+    });
+  }
+  // colour maths for the Custom skin: five colours in, every CSS variable of a skin out
+  function rgbOf(h) { return [1, 3, 5].map(function (i) { return parseInt(h.substr(i, 2), 16); }); }
+  function hexOf(a) { return '#' + a.map(function (v) { v = Math.max(0, Math.min(255, Math.round(v))); return (v < 16 ? '0' : '') + v.toString(16); }).join(''); }
+  function mixHex(a, b, k) { var x = rgbOf(a), y = rgbOf(b); return hexOf(x.map(function (v, i) { return v + (y[i] - v) * k; })); }
+  function lumOf(h) { var c = rgbOf(h).map(function (v) { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; }
+  function contrastOf(a, b) { var x = lumOf(a), y = lumOf(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
+  function onColor(h) { return contrastOf(h, '#ffffff') >= contrastOf(h, '#14171c') ? 'rgba(255,255,255,.9)' : 'rgba(20,23,28,.8)'; }
+  function gradOf(c) { return 'linear-gradient(145deg,' + mixHex(c, '#ffffff', .22) + ',' + mixHex(c, '#000000', .18) + ')'; }
+  function customVars(c) {
+    var dark = contrastOf(c.bg, '#ffffff') >= contrastOf(c.bg, '#14171c');
+    var text = dark ? '#e8edf3' : '#1b1f24', hair = dark ? 'initial' : '1px solid rgba(0,0,0,.35)';
+    var accent = contrastOf(c.R, c.bg) >= 3 ? c.R : text;
+    var ringOf = function (h, a) { return onColor(h).replace(/[\d.]+\)$/, a + ')'); };
+    return {
+      '--bg': c.bg, '--panel': mixHex(c.bg, dark ? '#ffffff' : '#ffffff', dark ? .06 : .45), '--panel2': mixHex(c.bg, dark ? '#ffffff' : '#000000', dark ? .12 : .05),
+      '--line': mixHex(c.bg, dark ? '#ffffff' : '#000000', dark ? .2 : .25), '--text': text, '--text2': mixHex(text, c.bg, .2), '--muted': mixHex(text, c.bg, .32),
+      '--yellow': accent, '--onacc': onColor(accent).replace(/rgba\((\d+),(\d+),(\d+),[\d.]+\)/, 'rgb($1,$2,$3)'),
+      '--green': dark ? '#3ddc84' : '#6BB36A', '--ok': dark ? '#3ddc84' : '#2E7D32', '--amber': dark ? '#ffb020' : '#C77700',
+      '--exit-rgb': dark ? '61,220,132' : '46,125,50', '--danger': dark ? '#ff6a6f' : '#B3261E',
+      '--bg-a': rgbOf(c.T).join(','), '--bg-b': rgbOf(c.R).join(','),
+      '--pR': gradOf(c.R), '--pV': gradOf(c.T), '--pS': gradOf(c.S),
+      '--edge': mixHex(c.board, dark ? '#ffffff' : '#000000', dark ? .2 : .45), '--board': c.board, '--device': mixHex(c.board, '#000000', dark ? .45 : .25),
+      '--bdR': hair, '--bdV': hair, '--bdS': hair, '--shR': 'initial', '--shV': 'initial',
+      '--ricon': ringOf(c.R, .9), '--ringR': ringOf(c.R, .5), '--ringV': ringOf(c.T, .75), '--ringS': ringOf(c.S, .7),
+      '--led-r': c.R, '--led-b': c.T, '--led-y': c.S, 'color-scheme': dark ? 'dark' : 'light'
+    };
+  }
+  function setVars(el, vars) { Object.keys(vars).forEach(function (k) { el.style.setProperty(k, vars[k]); }); }
+  function clearVars(el, vars) { Object.keys(vars).forEach(function (k) { el.style.removeProperty(k); }); }
+  function customWarning(c) {
+    var pairs = [['R', 'T'], ['R', 'S'], ['T', 'S']];
+    for (var i = 0; i < pairs.length; i++) if (contrastOf(c[pairs[i][0]], c[pairs[i][1]]) < 1.2) return L('Some blocks look alike. Try colours that differ more in lightness.', 'บางบล็อกสีใกล้กันเกินไป ลองเลือกสีที่สว่างต่างกันมากขึ้น');
+    var w = ['R', 'T', 'S'].filter(function (k) { return contrastOf(c[k], c.board) < 1.12; });
+    if (w.length) return L('A block colour is too close to the board colour.', 'สีบล็อกใกล้กับสีกระดานเกินไป');
+    return '';
+  }
 
   /* ---------- helpers ---------- */
   function L(en, th) { return lang === 'th' ? th : en; }
@@ -569,7 +659,7 @@ store.set('hr_bk', bk);
       if (!el) {
         el = document.createElement('div');
         el.className = 'piece t' + p.t + ' pop'; el.dataset.id = p.id;
-        el.innerHTML = p.t === 'R' ? RSVG : '<i></i>';
+        el.innerHTML = pieceInner(p.t);
         board.appendChild(el); els.set(p.id, el);
         setTimeout(function () { el.classList.remove('pop'); }, 260);
       }
@@ -1163,7 +1253,7 @@ store.set('hr_bk', bk);
       b.setAttribute('aria-pressed', lang === 'th');
       b.setAttribute('aria-label', lang === 'th' ? 'ภาษา: ไทย (แตะเพื่อเปลี่ยนเป็น English)' : 'Language: English (tap for Thai)');
     });
-    renderOffline();     renderMenu(); renderDaily(); renderBkRow(); renderBkLast(); renderNudge(); if (!$('stages').classList.contains('hidden')) renderStages();
+    renderOffline();     renderCustom(); renderMenu(); renderDaily(); renderBkRow(); renderBkLast(); renderNudge(); if (!$('stages').classList.contains('hidden')) renderStages();
     Array.prototype.forEach.call(document.querySelectorAll('.setrow[role=switch]'), renderSwitchText);
     if (!G) return;
     if (G.phase === 'design') { $('lvTitle').textContent = G.editing ? L('Edit stage ', 'แก้ไขด่าน ') + G.editing : L('Design stage', 'ออกแบบด่าน'); renderAll(); designCheck(); renderStages(); return; }
@@ -1186,10 +1276,21 @@ store.set('hr_bk', bk);
     var t = $('toast'); t.textContent = m; t.classList.remove('hidden');
     clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.add('hidden'); }, 1400);
   }
+  var appliedVars = null;
+  function applyCustomLook() {
+    var root = document.documentElement;
+    if (appliedVars) { clearVars(root, appliedVars); appliedVars = null; }
+    var tile = document.querySelector('.skprev[data-skin=custom]');
+    var vars = customVars(custom);
+    if (tile) setVars(tile, vars);
+    if (skin === 'custom') { setVars(root, vars); appliedVars = vars; }
+    var meta = document.querySelector('meta[name=theme-color]'); if (meta && skin === 'custom') meta.setAttribute('content', custom.bg);
+  }
   function applySkin() {
-    var sk = SKINS.filter(function (x) { return x.id === skin; })[0] || SKINS[0];
+    var sk = skinDef();
     skin = sk.id; document.documentElement.dataset.skin = sk.id;
     var meta = document.querySelector('meta[name=theme-color]'); if (meta) meta.setAttribute('content', sk.theme);
+    applyCustomLook(); refreshIcons(); renderCustom();
     return sk;
   }
   function renderSkinOpts() {
@@ -1200,11 +1301,68 @@ store.set('hr_bk', bk);
   SKINS.forEach(function (sk) {
     var b = document.createElement('button'); b.className = 'skopt'; b.dataset.sk = sk.id;
     b.innerHTML = '<span class="skprev" data-skin="' + sk.id + '"><i class="r"></i><i class="v"></i><i class="s"></i><i class="a"></i></span><span>' + sk.name + '</span>';
-    b.setAttribute('aria-label', 'Skin: ' + sk.name);
+    b.setAttribute('aria-label', 'Skin: ' + (sk.full || sk.name));
     b.onclick = function () { skin = sk.id; store.set('hr_skin', skin); applySkin(); renderSkinOpts(); };
     $('skopts').appendChild(b);
   });
   renderSkinOpts();
+
+  /* ---------- Custom skin editor (Settings > Skin > Custom) ---------- */
+  var CROWS = [
+    { k: 'R', en: 'Red block', th: 'บล็อกแดง', ico: true },
+    { k: 'T', en: 'Tall & wide blocks', th: 'บล็อกตั้งและบล็อกนอน', ico: true },
+    { k: 'S', en: 'Small blocks', th: 'บล็อกเล็ก', ico: true },
+    { k: 'board', en: 'Board', th: 'กระดาน' },
+    { k: 'bg', en: 'Background', th: 'พื้นหลัง' }
+  ];
+  function saveCustom() { store.set('hr_custom', custom); }
+  function renderCustom() {
+    var ed = $('custEd'); if (!ed) return;
+    ed.classList.toggle('hidden', skin !== 'custom');
+    if (skin !== 'custom') return;
+    var rows = $('custRows');
+    if (!rows.children.length) {
+      CROWS.forEach(function (r) {
+        var row = document.createElement('div'); row.className = 'crow';
+        row.innerHTML = '<label class="cn" for="cc_' + r.k + '"></label><input type="color" id="cc_' + r.k + '">' + (r.ico ? '<button type="button" class="cic" data-k="' + r.k + '"></button>' : '');
+        rows.appendChild(row);
+        row.querySelector('input').oninput = function () { custom[r.k] = this.value; saveCustom(); applyCustomLook(); renderCustomWarn(); };
+        if (r.ico) row.querySelector('.cic').onclick = function () { editIco = r.k; renderCustom(); };
+      });
+      var base = $('custBase');
+      base.onchange = function () {
+        var id = this.value; this.value = ''; if (!PRESETS[id]) return;
+        var ic = SKINS.filter(function (x) { return x.id === id; })[0].icons || { R: 'tri', T: 'ring', S: 'ring' };
+        custom = normCustom(Object.assign({}, PRESETS[id], { icons: ic })); saveCustom(); applyCustomLook(); refreshIcons(); renderCustom();
+        toast(L('Colours copied from ', 'คัดลอกสีจาก ') + (SKINS.filter(function (x) { return x.id === id; })[0].full || id));
+      };
+      $('custReset').onclick = function () { custom = normCustom(null); saveCustom(); applyCustomLook(); refreshIcons(); renderCustom(); toast(L('Custom skin reset', 'รีเซ็ตสกินที่ตั้งเองแล้ว')); };
+    }
+    CROWS.forEach(function (r, i) {
+      var row = rows.children[i], lab = L(r.en, r.th);
+      row.querySelector('.cn').textContent = lab;
+      var inp = row.querySelector('input'); if (inp.value !== custom[r.k]) inp.value = custom[r.k];
+      var cic = row.querySelector('.cic');
+      if (cic) {
+        cic.innerHTML = iconSvg(custom.icons[r.k]); cic.classList.toggle('on', editIco === r.k);
+        cic.setAttribute('aria-label', L('Icon for ', 'ไอคอนของ ') + lab); cic.setAttribute('aria-pressed', editIco === r.k);
+      }
+    });
+    var base = $('custBase');
+    base.innerHTML = '<option value="">' + L('Start from…', 'เริ่มจาก…') + '</option>' + SKINS.filter(function (x) { return x.id !== 'custom'; }).map(function (x) { return '<option value="' + x.id + '">' + (x.full || x.name) + '</option>'; }).join('');
+    var rowName = CROWS.filter(function (r) { return r.k === editIco; })[0];
+    $('icoLabel').textContent = L('Icon for ', 'ไอคอนของ ') + L(rowName.en.toLowerCase(), rowName.th);
+    var pick = $('icoPick'); pick.innerHTML = '';
+    ICON_ORDER.forEach(function (id) {
+      var b = document.createElement('button'); b.type = 'button'; b.innerHTML = iconSvg(id);
+      var on = custom.icons[editIco] === id; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+      b.setAttribute('aria-label', L(ICON_NAME[id][0], ICON_NAME[id][1]));
+      b.onclick = function () { custom.icons[editIco] = id; saveCustom(); refreshIcons(); renderCustom(); };
+      pick.appendChild(b);
+    });
+    renderCustomWarn();
+  }
+  function renderCustomWarn() { var w = customWarning(custom), el = $('custWarn'); el.textContent = w; el.classList.toggle('hidden', !w); }
 
   /* ---------- progress backup: a code or a small file, works offline; restoring merges and never loses anything ---------- */
   function backupCode() {

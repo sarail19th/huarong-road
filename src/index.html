@@ -74,12 +74,12 @@
     <div class="howbody" id="howBody" data-th="<ol>
       <li><b>ตั้งค่า</b> — วางบล็อกให้เหมือนรูปบนจอ LED เมื่อวางถูกตำแหน่ง “ชิป” ของบล็อกนั้นจะสว่างขึ้น</li>
       <li><b>เลื่อน</b> — ลากบล็อกเข้าไปในช่องว่าง</li>
-      <li><b>หนีออก</b> — พาสี่เหลี่ยม<b style='color:#ff6a6f'>สีแดง</b>ขนาดใหญ่ออกทางประตูด้านล่าง</li>
+      <li><b>หนีออก</b> — พาสี่เหลี่ยม<b style='color:var(--danger)'>สีแดง</b>ขนาดใหญ่ออกทางประตูด้านล่าง</li>
     </ol>">
     <ol>
       <li><b>Set up</b> — copy the layout shown on the LED. Place each block; its “chip” lights up when it sits in the right spot.</li>
       <li><b>Slide</b> — drag blocks into the empty space.</li>
-      <li><b>Escape</b> — guide the big <b style="color:#ff6a6f">red square</b> out through the exit at the bottom.</li>
+      <li><b>Escape</b> — guide the big <b style="color:var(--danger)">red square</b> out through the exit at the bottom.</li>
     </ol>
     </div>
   </div>
@@ -222,6 +222,15 @@
         <div class="setrow col">
       <span class="lbl"><svg class="ico" aria-hidden="true"><use href="#i-palette"/></svg><span data-th="ธีม">Skin</span></span>
       <div class="skopts" id="skopts"></div>
+    </div>
+        <div class="setrow col hidden" id="custEd">
+      <span class="lbl"><svg class="ico" aria-hidden="true"><use href="#i-palette"/></svg><span data-th="สกินที่ตั้งเอง">Custom skin</span></span>
+      <div class="custbtns"><select id="custBase" aria-label="Start from"></select><button type="button" class="btn sm" id="custReset" data-th="รีเซ็ต">Reset</button></div>
+      <div class="cust" id="custRows"></div>
+      <p class="custwarn hidden" id="custWarn" role="status"></p>
+      <span class="custhint" id="icoLabel"></span>
+      <div class="icopick" id="icoPick"></div>
+      <p class="custhint" data-th="สามเหลี่ยมและวงแหวนคือแบบดั้งเดิม สีไอคอนปรับให้อ่านง่ายโดยอัตโนมัติ">Triangle and ring are the originals. Icon colour adjusts automatically so it stays readable.</p>
     </div>
       </div>
     </section>
