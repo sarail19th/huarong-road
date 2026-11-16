@@ -466,7 +466,49 @@ html[data-motion=reduce] .piece[data-hint]{filter:brightness(1.2)}
 .cust{display:flex;flex-direction:column;gap:6px}
 .crow{display:flex;align-items:center;gap:8px;min-height:44px}
 .crow .cn{flex:1;font-size:13.5px;font-weight:600;line-height:1.2}
-.crow input[type=color]{width:56px;height:40px;padding:2px;border:1px solid var(--line);border-radius:10px;background:var(--panel);cursor:pointer}
+.cswatch{display:flex;align-items:center;gap:8px;min-height:44px;width:112px;padding:6px 8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--muted);font-size:12px;font-weight:600}
+.csw{width:26px;height:26px;border-radius:6px;border:1px solid var(--muted);flex:none}
+.btn.icono{display:flex;align-items:center;justify-content:center;gap:8px;flex:none;width:100%;min-height:46px;padding:8px;font-size:13.5px;border-width:2px;color:var(--text)}
+.btn.icono svg{width:22px;height:22px}
+.btn.icono.on{border-color:var(--yellow)}
+/* colour picker dialog */
+.card.cpick{max-width:360px;max-height:92vh;overflow-y:auto;text-align:left}
+.cphead{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.cpprev{width:48px;height:48px;border-radius:12px;border:1px solid var(--muted);flex:none}
+.cpt h2{margin:0;font-size:17px}
+.cpt small{color:var(--muted);font-size:13px}
+.cptabs{display:flex;gap:8px;margin-bottom:12px}
+.cptab{flex:1;min-height:44px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;font-weight:700;font-size:14px}
+.cptab.on{background:var(--yellow);color:var(--onacc);border-color:var(--yellow)}
+.cpwrap{background:var(--bg);border-radius:14px;padding:10px;margin-bottom:12px}
+.cpboard{position:relative;height:108px;background:var(--board);border:2px solid var(--edge);border-radius:12px;overflow:hidden}
+.cpb{position:absolute;display:block;border-radius:8px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.2)}
+.cpb.r{left:8px;top:8px;width:60px;height:60px;background:var(--pR);border:var(--bdR,0)}
+.cpb.v1,.cpb.v2,.cpb.h{background:var(--pV);border:var(--bdV,0)}
+.cpb.v1{left:76px;top:8px;width:28px;height:60px}.cpb.v2{left:112px;top:8px;width:28px;height:60px}
+.cpb.h{left:8px;top:76px;width:132px;height:24px}
+.cpb.s1,.cpb.s2{background:var(--pS);border:var(--bdS,0);width:28px;height:28px}
+.cpb.s1{left:148px;top:8px}.cpb.s2{left:148px;top:44px}
+.cpsets h4{margin:6px 2px 6px;font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.cpgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:6px}
+.cps{aspect-ratio:1;min-height:44px;padding:0;border-radius:12px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+.cps.on{border:3px solid var(--text)}
+.cps svg{width:22px;height:22px}
+.btn.cpmore{width:100%;margin-top:6px;border-style:dashed;font-size:14px}
+.cpnat{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.cpsl{margin-bottom:6px}
+.cpslh{display:flex;justify-content:space-between;align-items:baseline;font-size:14px}
+.cpslh span{font-size:13px;color:var(--muted)}
+.cpsle{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+input.cpr{-webkit-appearance:none;appearance:none;display:block;width:100%;height:44px;margin:0;cursor:pointer;background:var(--trk,var(--line)) center/100% 12px no-repeat;border-radius:6px}
+input.cpr::-webkit-slider-runnable-track{height:44px;background:transparent}
+input.cpr::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid #14171c;box-shadow:0 0 0 2px #e8edf3;margin-top:9px}
+input.cpr::-moz-range-track{height:12px;background:transparent}
+input.cpr::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid #14171c;box-shadow:0 0 0 2px #e8edf3}
+.cpmini{margin:8px 0}
+.cpmini .btn{font-size:13px;padding:10px}
+.card.cpick{padding:18px 18px 0}
+.card.cpick>.row{position:sticky;bottom:0;background:var(--panel);margin:14px -18px 0;padding:10px 18px 16px;border-top:1px solid var(--line)}
 .crow .cic{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);display:inline-flex;align-items:center;justify-content:center;padding:0}
 .crow .cic.on{border:3px solid var(--yellow)}
 .crow .cic svg{width:24px;height:24px}
@@ -708,6 +750,7 @@ html[data-motion=reduce] .piece[data-hint]{filter:brightness(1.2)}
       <p class="custwarn hidden" id="custWarn" role="status"></p>
       <span class="custhint" id="icoLabel"></span>
       <div class="icopick" id="icoPick"></div>
+      <button type="button" class="btn icono" id="icoNone" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg><span data-th="ไม่มีไอคอน">No icon</span></button>
       <p class="custhint" data-th="สามเหลี่ยมและวงแหวนคือแบบดั้งเดิม สีไอคอนปรับให้อ่านง่ายโดยอัตโนมัติ">Triangle and ring are the originals. Icon colour adjusts automatically so it stays readable.</p>
     </div>
       </div>
@@ -755,6 +798,30 @@ html[data-motion=reduce] .piece[data-hint]{filter:brightness(1.2)}
     <input type="file" id="bkFile" accept=".txt,.json,text/plain,application/json" hidden>
     <p class="bkmsg" id="bkMsg" role="status"></p>
     <div class="row"><button class="btn" id="bkClose" data-th="เสร็จสิ้น">Done</button></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="colorDlg">
+  <div class="card cpick" role="dialog" aria-modal="true" aria-labelledby="cpTitle" tabindex="-1">
+    <div class="cphead"><span class="cpprev" id="cpPrev"></span><div class="cpt"><h2 id="cpTitle"></h2><small id="cpHex"></small></div></div>
+    <div class="cptabs" role="tablist">
+      <button type="button" class="cptab on" id="cpTabS" role="tab" aria-selected="true" data-th="ชุดสี">Swatches</button>
+      <button type="button" class="cptab" id="cpTabF" role="tab" aria-selected="false" data-th="ปรับละเอียด">Fine-tune</button>
+    </div>
+    <div class="cpwrap" id="cpWrap" aria-hidden="true"><div class="cpboard"><i class="cpb r"></i><i class="cpb v1"></i><i class="cpb v2"></i><i class="cpb s1"></i><i class="cpb s2"></i><i class="cpb h"></i></div></div>
+    <div id="cpSw">
+      <div class="cpsets"></div>
+      <button type="button" class="btn cpmore" id="cpMore" data-th="สีอื่นๆ (ตัวเลือกสีของเครื่อง)">More colors (phone picker)</button>
+      <input type="color" id="cpNative" class="cpnat" tabindex="-1" aria-hidden="true">
+    </div>
+    <div id="cpFine" class="hidden">
+      <div class="cpsl"><div class="cpslh"><b data-th="เฉดสี">Hue</b><span id="cpHv"></span></div><input type="range" class="cpr" id="cpH" min="0" max="360" aria-label="Hue"></div>
+      <div class="cpsl"><div class="cpslh"><b data-th="ความอ่อน">Softness</b><span id="cpSv"></span></div><input type="range" class="cpr" id="cpS" min="0" max="100" aria-label="Softness"><div class="cpsle"><span data-th="อ่อน">Soft</span><span data-th="เข้ม">Rich</span></div></div>
+      <div class="cpsl"><div class="cpslh"><b data-th="ความสว่าง">Lightness</b><span id="cpLv"></span></div><input type="range" class="cpr" id="cpL" min="0" max="100" aria-label="Lightness"><div class="cpsle"><span data-th="มืด">Dark</span><span data-th="สว่าง">Light</span></div></div>
+      <div class="row cpmini"><button type="button" class="btn" id="cpSoft" data-th="อ่อนลง">Make softer</button><button type="button" class="btn" id="cpRich" data-th="เข้มขึ้น">Make richer</button></div>
+      <p class="custhint" data-th="แถบเลื่อนอยู่ในช่วงที่ดูสบายตา สีจึงไม่จัดเกินไป ใช้ “สีอื่นๆ” ในชุดสีถ้าต้องการค่าสีที่แน่นอน">Sliders stay inside a pleasant range, so colors never turn neon. Use More colors in Swatches for an exact value.</p>
+    </div>
+    <div class="row"><button type="button" class="btn" id="cpNo" data-th="ยกเลิก">Cancel</button><button type="button" class="btn go" id="cpYes" data-th="ใช้สีนี้">Use color</button></div>
   </div>
 </div>
 
@@ -1075,7 +1142,7 @@ store.set('hr_bk', bk);
   function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
   applyMotion(); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = 'e13d448'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = '90689c0'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var SKINS = [ // shown all at once in Settings, each tile painted with its own colours (see style.css)
     { id: 'classic', name: 'Classic', theme: '#0d1117' },
@@ -1106,7 +1173,7 @@ store.set('hr_bk', bk);
     bolt: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
     tri: '<path d="M12 3 22 20H2z"/><path d="M12 9.5 16 17H8z"/>',
     ring: '<circle cx="12" cy="12" r="8"/>',
-    none: '<path d="M5 5l14 14M19 5 5 19"/>'
+    none: '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>'
   };
   var ICON_ORDER = ['tri', 'crown', 'star', 'heart', 'diamond', 'bolt', 'ring', 'none'];
   var ICON_NAME = { tri: ['Triangle', 'สามเหลี่ยม'], crown: ['Crown', 'มงกุฎ'], star: ['Star', 'ดาว'], heart: ['Heart', 'หัวใจ'], diamond: ['Diamond', 'เพชร'], bolt: ['Bolt', 'สายฟ้า'], ring: ['Ring', 'วงแหวน'], none: ['None', 'ไม่มี'] };
@@ -2371,9 +2438,9 @@ store.set('hr_bk', bk);
     if (!rows.children.length) {
       CROWS.forEach(function (r) {
         var row = document.createElement('div'); row.className = 'crow';
-        row.innerHTML = '<label class="cn" for="cc_' + r.k + '"></label><input type="color" id="cc_' + r.k + '">' + (r.ico ? '<button type="button" class="cic" data-k="' + r.k + '"></button>' : '');
+        row.innerHTML = '<span class="cn"></span><button type="button" class="cswatch" id="cc_' + r.k + '"><span class="csw"></span><span class="chx"></span></button>' + (r.ico ? '<button type="button" class="cic" data-k="' + r.k + '"></button>' : '');
         rows.appendChild(row);
-        row.querySelector('input').oninput = function () { custom[r.k] = this.value; saveCustom(); applyCustomLook(); renderCustomWarn(); };
+        row.querySelector('.cswatch').onclick = function () { openColor(r.k); };
         if (r.ico) row.querySelector('.cic').onclick = function () { editIco = r.k; renderCustom(); };
       });
       var base = $('custBase');
@@ -2383,12 +2450,14 @@ store.set('hr_bk', bk);
         custom = normCustom(Object.assign({}, PRESETS[id], { icons: ic })); saveCustom(); applyCustomLook(); refreshIcons(); renderCustom();
         toast(L('Colours copied from ', 'คัดลอกสีจาก ') + (SKINS.filter(function (x) { return x.id === id; })[0].full || id));
       };
+      $('icoNone').onclick = function () { custom.icons[editIco] = 'none'; saveCustom(); refreshIcons(); renderCustom(); };
       $('custReset').onclick = function () { custom = normCustom(null); saveCustom(); applyCustomLook(); refreshIcons(); renderCustom(); toast(L('Custom skin reset', 'รีเซ็ตสกินที่ตั้งเองแล้ว')); };
     }
     CROWS.forEach(function (r, i) {
       var row = rows.children[i], lab = L(r.en, r.th);
       row.querySelector('.cn').textContent = lab;
-      var inp = row.querySelector('input'); if (inp.value !== custom[r.k]) inp.value = custom[r.k];
+      var sw = row.querySelector('.cswatch'); sw.querySelector('.csw').style.background = custom[r.k]; sw.querySelector('.chx').textContent = custom[r.k].toUpperCase();
+      sw.setAttribute('aria-label', L('Change color: ', 'เปลี่ยนสี: ') + lab + ' ' + custom[r.k].toUpperCase());
       var cic = row.querySelector('.cic');
       if (cic) {
         cic.innerHTML = iconSvg(custom.icons[r.k]); cic.classList.toggle('on', editIco === r.k);
@@ -2400,7 +2469,8 @@ store.set('hr_bk', bk);
     var rowName = CROWS.filter(function (r) { return r.k === editIco; })[0];
     $('icoLabel').textContent = L('Icon for ', 'ไอคอนของ ') + L(rowName.en.toLowerCase(), rowName.th);
     var pick = $('icoPick'); pick.innerHTML = '';
-    ICON_ORDER.forEach(function (id) {
+    var noIc = custom.icons[editIco] === 'none'; $('icoNone').classList.toggle('on', noIc); $('icoNone').setAttribute('aria-pressed', noIc);
+    ICON_ORDER.filter(function (id) { return id !== 'none'; }).forEach(function (id) {
       var b = document.createElement('button'); b.type = 'button'; b.innerHTML = iconSvg(id);
       var on = custom.icons[editIco] === id; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
       b.setAttribute('aria-label', L(ICON_NAME[id][0], ICON_NAME[id][1]));
@@ -2409,6 +2479,90 @@ store.set('hr_bk', bk);
     });
     renderCustomWarn();
   }
+  /* ---------- colour picker dialog: ready-made swatches, or fine-tune with soft sliders (the phone's own picker is bright pure RGB) ---------- */
+  var SWATCH_SETS = [
+    { en: 'Pastel', th: 'พาสเทล', c: ['#F4B6C2', '#F9CFA8', '#F7E3A1', '#C8E6B0', '#A8DCD1', '#B5D5F5', '#C9BFF0', '#E8C4EE', '#D7CCC8', '#CFD8DC'] },
+    { en: 'Earthy', th: 'โทนดิน', c: ['#B5382C', '#C97A3B', '#D9A441', '#8E9F6B', '#5E8C6A', '#4F7A8A', '#6B5B95', '#8B6B4A', '#5A3A22', '#A0856C'] },
+    { en: 'Vivid', th: 'สดใส', c: ['#E63946', '#FF7A00', '#F5B82E', '#3DDC84', '#1FB5A5', '#2F80ED', '#7C4DFF', '#E040A0', '#FF5A36', '#00B8D9'] },
+    { en: 'Dark', th: 'เข้ม', c: ['#0D1117', '#1A1F2B', '#22141D', '#07170D', '#0A1016', '#2A2118', '#3A3A3A', '#4A2C2C', '#1F3A2E', '#1C2B4A'] }
+  ];
+  var S_MIN = 15, S_MAX = 85, L_MIN = 12, L_MAX = 92; // the sliders stay inside this range, so colours never turn neon or muddy
+  var HUE_NAMES = [[15, 'Red', 'แดง'], [45, 'Orange', 'ส้ม'], [70, 'Yellow', 'เหลือง'], [160, 'Green', 'เขียว'], [200, 'Teal', 'เขียวอมฟ้า'], [255, 'Blue', 'น้ำเงิน'], [300, 'Purple', 'ม่วง'], [340, 'Pink', 'ชมพู'], [361, 'Red', 'แดง']];
+  function hexToHsl(h) {
+    var c = rgbOf(h).map(function (v) { return v / 255; }), mx = Math.max(c[0], c[1], c[2]), mn = Math.min(c[0], c[1], c[2]), l = (mx + mn) / 2, d = mx - mn, hh = 0, ss = 0;
+    if (d) {
+      ss = l > .5 ? d / (2 - mx - mn) : d / (mx + mn);
+      hh = mx === c[0] ? (c[1] - c[2]) / d + (c[1] < c[2] ? 6 : 0) : mx === c[1] ? (c[2] - c[0]) / d + 2 : (c[0] - c[1]) / d + 4; hh *= 60;
+    }
+    return [hh, ss * 100, l * 100];
+  }
+  function hslToHex(h, s, l) {
+    s /= 100; l /= 100; var a = s * Math.min(l, 1 - l);
+    var f = function (n) { var k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
+    return hexOf([f(0) * 255, f(8) * 255, f(4) * 255]);
+  }
+  var cp = null; // { key, cur, tab }
+  function cpSlide() { // slider positions (0-100) -> hsl
+    var h = +$('cpH').value, s = S_MIN + (+$('cpS').value) * (S_MAX - S_MIN) / 100, l = L_MIN + (+$('cpL').value) * (L_MAX - L_MIN) / 100;
+    return [h, s, l];
+  }
+  function cpSetSliders() { // current colour -> slider positions (clamped into the range)
+    var x = hexToHsl(cp.cur), cl = function (v) { return Math.max(0, Math.min(100, v)); };
+    $('cpH').value = Math.round(x[0]); $('cpS').value = Math.round(cl((x[1] - S_MIN) * 100 / (S_MAX - S_MIN))); $('cpL').value = Math.round(cl((x[2] - L_MIN) * 100 / (L_MAX - L_MIN)));
+  }
+  function cpTracks() {
+    var v = cpSlide(), hs = [];
+    for (var h = 0; h <= 360; h += 30) hs.push(hslToHex(h, v[1], v[2]));
+    $('cpH').style.setProperty('--trk', 'linear-gradient(90deg,' + hs.join(',') + ')');
+    $('cpS').style.setProperty('--trk', 'linear-gradient(90deg,' + hslToHex(v[0], S_MIN, v[2]) + ',' + hslToHex(v[0], S_MAX, v[2]) + ')');
+    $('cpL').style.setProperty('--trk', 'linear-gradient(90deg,' + hslToHex(v[0], v[1], L_MIN) + ',' + hslToHex(v[0], v[1], 50) + ',' + hslToHex(v[0], v[1], L_MAX) + ')');
+    var hn = HUE_NAMES.filter(function (x) { return v[0] < x[0]; })[0];
+    $('cpHv').textContent = L(hn[1], hn[2]);
+    $('cpSv').textContent = v[1] < 35 ? L('Soft', 'อ่อน') : v[1] < 62 ? L('Medium', 'กลาง') : L('Rich', 'เข้ม');
+    $('cpLv').textContent = v[2] < 35 ? L('Dark', 'มืด') : v[2] < 65 ? L('Medium', 'กลาง') : L('Light', 'สว่าง');
+  }
+  function cpPaint() { // hex, preview and (in the swatch tab) the ticked swatch
+    $('cpHex').textContent = cp.cur.toUpperCase(); $('cpPrev').style.background = cp.cur;
+    var tmp = JSON.parse(JSON.stringify(custom)); tmp[cp.key] = cp.cur; setVars($('cpWrap'), customVars(tmp));
+  }
+  function renderColor() {
+    var row = CROWS.filter(function (r) { return r.k === cp.key; })[0];
+    $('cpTitle').textContent = L(row.en + ' color', 'สี' + row.th);
+    var fine = cp.tab === 'F';
+    $('cpTabS').classList.toggle('on', !fine); $('cpTabS').setAttribute('aria-selected', !fine);
+    $('cpTabF').classList.toggle('on', fine); $('cpTabF').setAttribute('aria-selected', fine);
+    $('cpSw').classList.toggle('hidden', fine); $('cpFine').classList.toggle('hidden', !fine);
+    if (fine) { cpSetSliders(); cpTracks(); }
+    else {
+      var g = $('cpSw').querySelector('.cpsets'); g.innerHTML = '';
+      SWATCH_SETS.forEach(function (st) {
+        var h = document.createElement('h4'); h.textContent = L(st.en, st.th); g.appendChild(h);
+        var grid = document.createElement('div'); grid.className = 'cpgrid';
+        st.c.forEach(function (c) {
+          var on = c.toLowerCase() === cp.cur.toLowerCase(), b = document.createElement('button'); b.type = 'button'; b.className = 'cps' + (on ? ' on' : ''); b.dataset.c = c;
+          b.style.background = c; b.setAttribute('aria-label', L(st.en, st.th) + ' ' + c); b.setAttribute('aria-pressed', on);
+          if (on) b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="' + (contrastOf(c, '#ffffff') >= contrastOf(c, '#14171c') ? '#fff' : '#14171c') + '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>';
+          b.onclick = function () { cp.cur = c; renderColor(); };
+          grid.appendChild(b);
+        });
+        g.appendChild(grid);
+      });
+    }
+    cpPaint();
+  }
+  function openColor(key) { cp = { key: key, cur: custom[key], tab: 'S' }; renderColor(); openDlg('colorDlg', '#cpYes'); }
+  ['cpH', 'cpS', 'cpL'].forEach(function (id) {
+    $(id).oninput = function () { var v = cpSlide(); cp.cur = hslToHex(v[0], v[1], v[2]); cpTracks(); cpPaint(); };
+  });
+  $('cpTabS').onclick = function () { cp.tab = 'S'; renderColor(); };
+  $('cpTabF').onclick = function () { cp.tab = 'F'; renderColor(); };
+  $('cpSoft').onclick = function () { $('cpS').value = Math.max(0, +$('cpS').value - 15); $('cpS').oninput(); };
+  $('cpRich').onclick = function () { $('cpS').value = Math.min(100, +$('cpS').value + 15); $('cpS').oninput(); };
+  $('cpMore').onclick = function () { var n = $('cpNative'); n.value = cp.cur; n.click(); };
+  $('cpNative').oninput = $('cpNative').onchange = function () { if (/^#[0-9a-f]{6}$/i.test(this.value)) { cp.cur = this.value; renderColor(); } };
+  $('cpNo').onclick = function () { closeDlg('colorDlg'); };
+  $('cpYes').onclick = function () { custom[cp.key] = cp.cur; saveCustom(); applyCustomLook(); renderCustom(); closeDlg('colorDlg'); };
+  $('colorDlg').addEventListener('click', function (e) { if (e.target === this) closeDlg('colorDlg'); });
   function renderCustomWarn() { var w = customWarning(custom), el = $('custWarn'); el.textContent = w; el.classList.toggle('hidden', !w); }
 
   /* ---------- progress backup: a code or a small file, works offline; restoring merges and never loses anything ---------- */

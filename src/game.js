@@ -59,7 +59,7 @@ store.set('hr_bk', bk);
     bolt: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
     tri: '<path d="M12 3 22 20H2z"/><path d="M12 9.5 16 17H8z"/>',
     ring: '<circle cx="12" cy="12" r="8"/>',
-    none: '<path d="M5 5l14 14M19 5 5 19"/>'
+    none: '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>'
   };
   var ICON_ORDER = ['tri', 'crown', 'star', 'heart', 'diamond', 'bolt', 'ring', 'none'];
   var ICON_NAME = { tri: ['Triangle', 'สามเหลี่ยม'], crown: ['Crown', 'มงกุฎ'], star: ['Star', 'ดาว'], heart: ['Heart', 'หัวใจ'], diamond: ['Diamond', 'เพชร'], bolt: ['Bolt', 'สายฟ้า'], ring: ['Ring', 'วงแหวน'], none: ['None', 'ไม่มี'] };
@@ -1324,9 +1324,9 @@ store.set('hr_bk', bk);
     if (!rows.children.length) {
       CROWS.forEach(function (r) {
         var row = document.createElement('div'); row.className = 'crow';
-        row.innerHTML = '<label class="cn" for="cc_' + r.k + '"></label><input type="color" id="cc_' + r.k + '">' + (r.ico ? '<button type="button" class="cic" data-k="' + r.k + '"></button>' : '');
+        row.innerHTML = '<span class="cn"></span><button type="button" class="cswatch" id="cc_' + r.k + '"><span class="csw"></span><span class="chx"></span></button>' + (r.ico ? '<button type="button" class="cic" data-k="' + r.k + '"></button>' : '');
         rows.appendChild(row);
-        row.querySelector('input').oninput = function () { custom[r.k] = this.value; saveCustom(); applyCustomLook(); renderCustomWarn(); };
+        row.querySelector('.cswatch').onclick = function () { openColor(r.k); };
         if (r.ico) row.querySelector('.cic').onclick = function () { editIco = r.k; renderCustom(); };
       });
       var base = $('custBase');
@@ -1336,12 +1336,14 @@ store.set('hr_bk', bk);
         custom = normCustom(Object.assign({}, PRESETS[id], { icons: ic })); saveCustom(); applyCustomLook(); refreshIcons(); renderCustom();
         toast(L('Colours copied from ', 'คัดลอกสีจาก ') + (SKINS.filter(function (x) { return x.id === id; })[0].full || id));
       };
+      $('icoNone').onclick = function () { custom.icons[editIco] = 'none'; saveCustom(); refreshIcons(); renderCustom(); };
       $('custReset').onclick = function () { custom = normCustom(null); saveCustom(); applyCustomLook(); refreshIcons(); renderCustom(); toast(L('Custom skin reset', 'รีเซ็ตสกินที่ตั้งเองแล้ว')); };
     }
     CROWS.forEach(function (r, i) {
       var row = rows.children[i], lab = L(r.en, r.th);
       row.querySelector('.cn').textContent = lab;
-      var inp = row.querySelector('input'); if (inp.value !== custom[r.k]) inp.value = custom[r.k];
+      var sw = row.querySelector('.cswatch'); sw.querySelector('.csw').style.background = custom[r.k]; sw.querySelector('.chx').textContent = custom[r.k].toUpperCase();
+      sw.setAttribute('aria-label', L('Change color: ', 'เปลี่ยนสี: ') + lab + ' ' + custom[r.k].toUpperCase());
       var cic = row.querySelector('.cic');
       if (cic) {
         cic.innerHTML = iconSvg(custom.icons[r.k]); cic.classList.toggle('on', editIco === r.k);
@@ -1353,7 +1355,8 @@ store.set('hr_bk', bk);
     var rowName = CROWS.filter(function (r) { return r.k === editIco; })[0];
     $('icoLabel').textContent = L('Icon for ', 'ไอคอนของ ') + L(rowName.en.toLowerCase(), rowName.th);
     var pick = $('icoPick'); pick.innerHTML = '';
-    ICON_ORDER.forEach(function (id) {
+    var noIc = custom.icons[editIco] === 'none'; $('icoNone').classList.toggle('on', noIc); $('icoNone').setAttribute('aria-pressed', noIc);
+    ICON_ORDER.filter(function (id) { return id !== 'none'; }).forEach(function (id) {
       var b = document.createElement('button'); b.type = 'button'; b.innerHTML = iconSvg(id);
       var on = custom.icons[editIco] === id; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
       b.setAttribute('aria-label', L(ICON_NAME[id][0], ICON_NAME[id][1]));
@@ -1362,6 +1365,90 @@ store.set('hr_bk', bk);
     });
     renderCustomWarn();
   }
+  /* ---------- colour picker dialog: ready-made swatches, or fine-tune with soft sliders (the phone's own picker is bright pure RGB) ---------- */
+  var SWATCH_SETS = [
+    { en: 'Pastel', th: 'พาสเทล', c: ['#F4B6C2', '#F9CFA8', '#F7E3A1', '#C8E6B0', '#A8DCD1', '#B5D5F5', '#C9BFF0', '#E8C4EE', '#D7CCC8', '#CFD8DC'] },
+    { en: 'Earthy', th: 'โทนดิน', c: ['#B5382C', '#C97A3B', '#D9A441', '#8E9F6B', '#5E8C6A', '#4F7A8A', '#6B5B95', '#8B6B4A', '#5A3A22', '#A0856C'] },
+    { en: 'Vivid', th: 'สดใส', c: ['#E63946', '#FF7A00', '#F5B82E', '#3DDC84', '#1FB5A5', '#2F80ED', '#7C4DFF', '#E040A0', '#FF5A36', '#00B8D9'] },
+    { en: 'Dark', th: 'เข้ม', c: ['#0D1117', '#1A1F2B', '#22141D', '#07170D', '#0A1016', '#2A2118', '#3A3A3A', '#4A2C2C', '#1F3A2E', '#1C2B4A'] }
+  ];
+  var S_MIN = 15, S_MAX = 85, L_MIN = 12, L_MAX = 92; // the sliders stay inside this range, so colours never turn neon or muddy
+  var HUE_NAMES = [[15, 'Red', 'แดง'], [45, 'Orange', 'ส้ม'], [70, 'Yellow', 'เหลือง'], [160, 'Green', 'เขียว'], [200, 'Teal', 'เขียวอมฟ้า'], [255, 'Blue', 'น้ำเงิน'], [300, 'Purple', 'ม่วง'], [340, 'Pink', 'ชมพู'], [361, 'Red', 'แดง']];
+  function hexToHsl(h) {
+    var c = rgbOf(h).map(function (v) { return v / 255; }), mx = Math.max(c[0], c[1], c[2]), mn = Math.min(c[0], c[1], c[2]), l = (mx + mn) / 2, d = mx - mn, hh = 0, ss = 0;
+    if (d) {
+      ss = l > .5 ? d / (2 - mx - mn) : d / (mx + mn);
+      hh = mx === c[0] ? (c[1] - c[2]) / d + (c[1] < c[2] ? 6 : 0) : mx === c[1] ? (c[2] - c[0]) / d + 2 : (c[0] - c[1]) / d + 4; hh *= 60;
+    }
+    return [hh, ss * 100, l * 100];
+  }
+  function hslToHex(h, s, l) {
+    s /= 100; l /= 100; var a = s * Math.min(l, 1 - l);
+    var f = function (n) { var k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
+    return hexOf([f(0) * 255, f(8) * 255, f(4) * 255]);
+  }
+  var cp = null; // { key, cur, tab }
+  function cpSlide() { // slider positions (0-100) -> hsl
+    var h = +$('cpH').value, s = S_MIN + (+$('cpS').value) * (S_MAX - S_MIN) / 100, l = L_MIN + (+$('cpL').value) * (L_MAX - L_MIN) / 100;
+    return [h, s, l];
+  }
+  function cpSetSliders() { // current colour -> slider positions (clamped into the range)
+    var x = hexToHsl(cp.cur), cl = function (v) { return Math.max(0, Math.min(100, v)); };
+    $('cpH').value = Math.round(x[0]); $('cpS').value = Math.round(cl((x[1] - S_MIN) * 100 / (S_MAX - S_MIN))); $('cpL').value = Math.round(cl((x[2] - L_MIN) * 100 / (L_MAX - L_MIN)));
+  }
+  function cpTracks() {
+    var v = cpSlide(), hs = [];
+    for (var h = 0; h <= 360; h += 30) hs.push(hslToHex(h, v[1], v[2]));
+    $('cpH').style.setProperty('--trk', 'linear-gradient(90deg,' + hs.join(',') + ')');
+    $('cpS').style.setProperty('--trk', 'linear-gradient(90deg,' + hslToHex(v[0], S_MIN, v[2]) + ',' + hslToHex(v[0], S_MAX, v[2]) + ')');
+    $('cpL').style.setProperty('--trk', 'linear-gradient(90deg,' + hslToHex(v[0], v[1], L_MIN) + ',' + hslToHex(v[0], v[1], 50) + ',' + hslToHex(v[0], v[1], L_MAX) + ')');
+    var hn = HUE_NAMES.filter(function (x) { return v[0] < x[0]; })[0];
+    $('cpHv').textContent = L(hn[1], hn[2]);
+    $('cpSv').textContent = v[1] < 35 ? L('Soft', 'อ่อน') : v[1] < 62 ? L('Medium', 'กลาง') : L('Rich', 'เข้ม');
+    $('cpLv').textContent = v[2] < 35 ? L('Dark', 'มืด') : v[2] < 65 ? L('Medium', 'กลาง') : L('Light', 'สว่าง');
+  }
+  function cpPaint() { // hex, preview and (in the swatch tab) the ticked swatch
+    $('cpHex').textContent = cp.cur.toUpperCase(); $('cpPrev').style.background = cp.cur;
+    var tmp = JSON.parse(JSON.stringify(custom)); tmp[cp.key] = cp.cur; setVars($('cpWrap'), customVars(tmp));
+  }
+  function renderColor() {
+    var row = CROWS.filter(function (r) { return r.k === cp.key; })[0];
+    $('cpTitle').textContent = L(row.en + ' color', 'สี' + row.th);
+    var fine = cp.tab === 'F';
+    $('cpTabS').classList.toggle('on', !fine); $('cpTabS').setAttribute('aria-selected', !fine);
+    $('cpTabF').classList.toggle('on', fine); $('cpTabF').setAttribute('aria-selected', fine);
+    $('cpSw').classList.toggle('hidden', fine); $('cpFine').classList.toggle('hidden', !fine);
+    if (fine) { cpSetSliders(); cpTracks(); }
+    else {
+      var g = $('cpSw').querySelector('.cpsets'); g.innerHTML = '';
+      SWATCH_SETS.forEach(function (st) {
+        var h = document.createElement('h4'); h.textContent = L(st.en, st.th); g.appendChild(h);
+        var grid = document.createElement('div'); grid.className = 'cpgrid';
+        st.c.forEach(function (c) {
+          var on = c.toLowerCase() === cp.cur.toLowerCase(), b = document.createElement('button'); b.type = 'button'; b.className = 'cps' + (on ? ' on' : ''); b.dataset.c = c;
+          b.style.background = c; b.setAttribute('aria-label', L(st.en, st.th) + ' ' + c); b.setAttribute('aria-pressed', on);
+          if (on) b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="' + (contrastOf(c, '#ffffff') >= contrastOf(c, '#14171c') ? '#fff' : '#14171c') + '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>';
+          b.onclick = function () { cp.cur = c; renderColor(); };
+          grid.appendChild(b);
+        });
+        g.appendChild(grid);
+      });
+    }
+    cpPaint();
+  }
+  function openColor(key) { cp = { key: key, cur: custom[key], tab: 'S' }; renderColor(); openDlg('colorDlg', '#cpYes'); }
+  ['cpH', 'cpS', 'cpL'].forEach(function (id) {
+    $(id).oninput = function () { var v = cpSlide(); cp.cur = hslToHex(v[0], v[1], v[2]); cpTracks(); cpPaint(); };
+  });
+  $('cpTabS').onclick = function () { cp.tab = 'S'; renderColor(); };
+  $('cpTabF').onclick = function () { cp.tab = 'F'; renderColor(); };
+  $('cpSoft').onclick = function () { $('cpS').value = Math.max(0, +$('cpS').value - 15); $('cpS').oninput(); };
+  $('cpRich').onclick = function () { $('cpS').value = Math.min(100, +$('cpS').value + 15); $('cpS').oninput(); };
+  $('cpMore').onclick = function () { var n = $('cpNative'); n.value = cp.cur; n.click(); };
+  $('cpNative').oninput = $('cpNative').onchange = function () { if (/^#[0-9a-f]{6}$/i.test(this.value)) { cp.cur = this.value; renderColor(); } };
+  $('cpNo').onclick = function () { closeDlg('colorDlg'); };
+  $('cpYes').onclick = function () { custom[cp.key] = cp.cur; saveCustom(); applyCustomLook(); renderCustom(); closeDlg('colorDlg'); };
+  $('colorDlg').addEventListener('click', function (e) { if (e.target === this) closeDlg('colorDlg'); });
   function renderCustomWarn() { var w = customWarning(custom), el = $('custWarn'); el.textContent = w; el.classList.toggle('hidden', !w); }
 
   /* ---------- progress backup: a code or a small file, works offline; restoring merges and never loses anything ---------- */

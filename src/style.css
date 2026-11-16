@@ -465,7 +465,49 @@ html[data-motion=reduce] .piece[data-hint]{filter:brightness(1.2)}
 .cust{display:flex;flex-direction:column;gap:6px}
 .crow{display:flex;align-items:center;gap:8px;min-height:44px}
 .crow .cn{flex:1;font-size:13.5px;font-weight:600;line-height:1.2}
-.crow input[type=color]{width:56px;height:40px;padding:2px;border:1px solid var(--line);border-radius:10px;background:var(--panel);cursor:pointer}
+.cswatch{display:flex;align-items:center;gap:8px;min-height:44px;width:112px;padding:6px 8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--muted);font-size:12px;font-weight:600}
+.csw{width:26px;height:26px;border-radius:6px;border:1px solid var(--muted);flex:none}
+.btn.icono{display:flex;align-items:center;justify-content:center;gap:8px;flex:none;width:100%;min-height:46px;padding:8px;font-size:13.5px;border-width:2px;color:var(--text)}
+.btn.icono svg{width:22px;height:22px}
+.btn.icono.on{border-color:var(--yellow)}
+/* colour picker dialog */
+.card.cpick{max-width:360px;max-height:92vh;overflow-y:auto;text-align:left}
+.cphead{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.cpprev{width:48px;height:48px;border-radius:12px;border:1px solid var(--muted);flex:none}
+.cpt h2{margin:0;font-size:17px}
+.cpt small{color:var(--muted);font-size:13px}
+.cptabs{display:flex;gap:8px;margin-bottom:12px}
+.cptab{flex:1;min-height:44px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;font-weight:700;font-size:14px}
+.cptab.on{background:var(--yellow);color:var(--onacc);border-color:var(--yellow)}
+.cpwrap{background:var(--bg);border-radius:14px;padding:10px;margin-bottom:12px}
+.cpboard{position:relative;height:108px;background:var(--board);border:2px solid var(--edge);border-radius:12px;overflow:hidden}
+.cpb{position:absolute;display:block;border-radius:8px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.2)}
+.cpb.r{left:8px;top:8px;width:60px;height:60px;background:var(--pR);border:var(--bdR,0)}
+.cpb.v1,.cpb.v2,.cpb.h{background:var(--pV);border:var(--bdV,0)}
+.cpb.v1{left:76px;top:8px;width:28px;height:60px}.cpb.v2{left:112px;top:8px;width:28px;height:60px}
+.cpb.h{left:8px;top:76px;width:132px;height:24px}
+.cpb.s1,.cpb.s2{background:var(--pS);border:var(--bdS,0);width:28px;height:28px}
+.cpb.s1{left:148px;top:8px}.cpb.s2{left:148px;top:44px}
+.cpsets h4{margin:6px 2px 6px;font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.cpgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:6px}
+.cps{aspect-ratio:1;min-height:44px;padding:0;border-radius:12px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+.cps.on{border:3px solid var(--text)}
+.cps svg{width:22px;height:22px}
+.btn.cpmore{width:100%;margin-top:6px;border-style:dashed;font-size:14px}
+.cpnat{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.cpsl{margin-bottom:6px}
+.cpslh{display:flex;justify-content:space-between;align-items:baseline;font-size:14px}
+.cpslh span{font-size:13px;color:var(--muted)}
+.cpsle{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+input.cpr{-webkit-appearance:none;appearance:none;display:block;width:100%;height:44px;margin:0;cursor:pointer;background:var(--trk,var(--line)) center/100% 12px no-repeat;border-radius:6px}
+input.cpr::-webkit-slider-runnable-track{height:44px;background:transparent}
+input.cpr::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid #14171c;box-shadow:0 0 0 2px #e8edf3;margin-top:9px}
+input.cpr::-moz-range-track{height:12px;background:transparent}
+input.cpr::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid #14171c;box-shadow:0 0 0 2px #e8edf3}
+.cpmini{margin:8px 0}
+.cpmini .btn{font-size:13px;padding:10px}
+.card.cpick{padding:18px 18px 0}
+.card.cpick>.row{position:sticky;bottom:0;background:var(--panel);margin:14px -18px 0;padding:10px 18px 16px;border-top:1px solid var(--line)}
 .crow .cic{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);display:inline-flex;align-items:center;justify-content:center;padding:0}
 .crow .cic.on{border:3px solid var(--yellow)}
 .crow .cic svg{width:24px;height:24px}

@@ -670,7 +670,7 @@ def new_skins(p):
     page = ctx.new_page(); errs = []
     page.on('pageerror', lambda e: errs.append(str(e)))
     page.goto(URL)
-    css = lambda v: page.evaluate("(v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim()", v)
+    css = lambda v: page.evaluate("(v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim()", v).lower()
     # light skins flip the colour scheme and text colour; the original icons stay the default for Classic
     set_skin(page, 'paper')
     assert page.evaluate("() => document.documentElement.dataset.skin") == 'paper' and css('color-scheme') == 'light'
@@ -685,20 +685,43 @@ def new_skins(p):
     # Custom: editor hidden for other skins, shown for Custom; colour, icon, persistence, reset, start-from
     settings(page); assert page.locator('#custEd').is_hidden()
     page.locator('#settings .skopt[data-sk=custom]').click(); assert page.locator('#custEd').is_visible()
-    page.evaluate("""() => { const set = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input')); };
-      set('cc_bg', '#101820'); set('cc_R', '#ff4d6d'); set('cc_T', '#4cc9f0'); set('cc_S', '#ffd60a'); set('cc_board', '#0a1016'); }""")
-    assert css('--bg') == '#101820' and css('color-scheme') == 'dark' and css('--text') == '#e8edf3', 'dark custom background picks light text'
+    def pick(key, hexv):  # colour dialog: tap a swatch, then Use color
+        page.click(f'#cc_{key}'); page.wait_for_selector('#colorDlg:not(.hidden)')
+        page.click(f'#cpSw .cps[data-c="{hexv}"]'); page.click('#cpYes'); page.wait_for_selector('#colorDlg.hidden', state='attached')
+    pick('bg', '#1A1F2B'); pick('board', '#0A1016'); pick('R', '#F4B6C2'); pick('T', '#2F80ED'); pick('S', '#F7E3A1')
+    assert css('--bg') == '#1a1f2b' and css('color-scheme') == 'dark' and css('--text') == '#e8edf3', 'dark custom background picks light text'
+    assert page.locator('#cc_R .chx').inner_text() == '#F4B6C2', 'row shows the chosen colour'
+    # the phone's picker is not used: the rows are buttons, and Cancel keeps the old colour
+    assert page.evaluate("() => document.querySelectorAll('#custRows input[type=color]').length") == 0
+    page.click('#cc_R'); page.click('#cpSw .cps[data-c="#E63946"]'); page.click('#cpNo')
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_custom')).R") == '#F4B6C2', 'cancel keeps the colour'
+    # fine-tune: sliders stay in the soft range, preview follows, Use saves
+    page.click('#cc_R'); page.click('#cpTabF')
+    page.evaluate("() => { const s = document.getElementById('cpS'); s.value = 100; s.dispatchEvent(new Event('input')); const l = document.getElementById('cpL'); l.value = 0; l.dispatchEvent(new Event('input')); }")
+    hexv = page.inner_text('#cpHex')
+    import re as _re
+    assert _re.fullmatch(r'#[0-9A-F]{6}', hexv) and hexv != '#F4B6C2', 'fine-tune changes the colour'
+    page.click('#cpSoft'); assert page.inner_text('#cpHex') != hexv, 'make softer'
+    page.click('#cpYes'); assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_custom')).R").upper() != '#F4B6C2'
+    # More colors still reaches the phone picker's value
+    page.click('#cc_R'); page.evaluate("() => { const n = document.getElementById('cpNative'); n.value = '#336699'; n.dispatchEvent(new Event('input')); }")
+    assert page.inner_text('#cpHex') == '#336699'; page.click('#cpYes')
+    pick('R', '#F4B6C2')
     page.locator('#icoPick button').nth(4).click()  # diamond on the red block
     saved = page.evaluate("() => JSON.parse(localStorage.getItem('hr_custom'))")
-    assert saved['R'] == '#ff4d6d' and saved['icons']['R'] == 'diamond', 'custom saved'
+    assert saved['R'] == '#F4B6C2' and saved['icons']['R'] == 'diamond', 'custom saved'
     page.locator('.cic[data-k=T]').click(); page.locator('#icoPick button').nth(6).click()  # ring on tall blocks
+    # No icon: a labelled button (the old X tile is gone), per block type
+    assert page.locator('#icoPick button').count() == 7 and page.locator('#icoNone').inner_text().strip() == 'No icon'
+    page.locator('.cic[data-k=S]').click(); page.click('#icoNone')
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_custom')).icons.S") == 'none' and page.locator('#icoNone').get_attribute('aria-pressed') == 'true'
     page.click('#setClose'); lv(page, 5).click()
     assert page.locator('.piece.tR svg').count() == 1 and page.locator('.piece.tV i').count() >= 1, 'custom icons drawn on the board'
-    page.reload(); assert css('--bg') == '#101820', 'custom survives reload'
-    # a near-identical pair of block colours shows the contrast warning
+    assert page.locator('.piece.tS').first.inner_html() == '', 'no icon leaves the small blocks blank'
+    page.reload(); assert css('--bg') == '#1a1f2b', 'custom survives reload'
+    # two block colours that are nearly the same show the contrast warning
     settings(page)
-    page.evaluate("""() => { const set = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input')); }; set('cc_T', '#4cc9f1'); set('cc_S', '#4cc9f0'); }""")
-    assert page.locator('#custWarn').is_visible(), 'contrast warning'
+    pick('T', '#F7E3A1'); assert page.locator('#custWarn').is_visible(), 'contrast warning'
     page.locator('#custBase').select_option('gold'); assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_custom')).R") == '#d4a017', 'start from gold'
     page.click('#custReset'); assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_custom')).bg") == '#E9DCC3', 'reset'
     # leaving Custom removes its inline variables
@@ -706,7 +729,8 @@ def new_skins(p):
     assert page.evaluate("() => document.documentElement.getAttribute('style')") in (None, ''), 'no leftover custom variables'
     # Thai labels in the editor
     page.locator('#settings .skopt[data-sk=custom]').click(); page.locator('#settings .lang-btn').click()
-    assert 'บล็อกแดง' in page.locator('#custRows').inner_text(), 'editor in Thai'
+    assert 'บล็อกแดง' in page.locator('#custRows').inner_text() and page.locator('#icoNone').inner_text().strip() == 'ไม่มีไอคอน', 'editor in Thai'
+    page.click('#cc_R'); assert 'ชุดสี' in page.locator('#cpTabS').inner_text() and 'สีบล็อกแดง' in page.inner_text('#cpTitle'), 'colour dialog in Thai'; page.click('#cpNo')
     assert not errs, errs
     ctx.close()
 
