@@ -132,8 +132,9 @@
   </div>
   <div class="stats">
     <div class="stat" id="timeStat"><small>Time</small><b id="time">0:00</b></div>
-    <div class="stat"><small>Moves</small><b id="moves">0</b></div>
-    <div class="stat"><small>Par</small><b id="par">0</b></div>
+    <div class="stat" id="movesStat"><small>Moves</small><b id="moves">0</b></div>
+    <div class="stat" id="parStat"><small>Par</small><b id="par">0</b></div>
+    <div class="stat freechip" id="freeChip" data-th="ไม่กดดัน · ไม่นับครั้ง">Stress-free · no count</div>
     <div class="stat hidden" id="bestStat"><small>Best</small><b id="best">–</b></div>
   </div>
   <div class="lsbar hidden" id="lsBar"><div class="lssegs" id="lsSegs"></div><div class="lsgoal" id="lsGoal"></div></div>
@@ -260,6 +261,7 @@
         <button class="setrow" id="autoPlaceBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg><span class="lbl" data-th="วางอัตโนมัติ">Auto-place</span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
         <button class="setrow" id="autoStartBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span class="lbl two"><span data-th="เริ่มเกมอัตโนมัติ">Auto-start</span><small class="sub" data-th="ข้ามการตั้งค่า เริ่มเล่นทันที">Skip setup, start at once</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
         <button class="setrow" id="timerBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-timer"/></svg><span class="lbl two"><span data-th="จับเวลา">Timer</span><small class="sub" data-th="ปิดเพื่อเล่นแบบไม่กดดัน">Turn off for no-stress play</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+        <button class="setrow" id="freeBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-star"/></svg><span class="lbl two"><span data-th="โหมดไม่กดดัน">Stress-free mode</span><small class="sub" data-th="ซ่อนจำนวนครั้งและพาร์ ผ่านด่านได้ดาวเงิน">Hides Moves and Par · silver stars</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
       </div>
     </section>
     <section class="setgrp data">

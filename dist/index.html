@@ -400,6 +400,12 @@ html[lang=th] .about p,html[lang=th] .about ul.facts li,html[lang=th] .about ul.
 
 /* no-stress mode: the clock is hidden */
 body.notimer #timeStat{display:none}
+.freechip{display:none;flex:2;align-items:center;justify-content:center;font-size:12.5px;color:var(--muted);border-style:dashed}
+body.free .freechip{display:flex}
+body.free #movesStat,body.free #parStat,body.free #bestStat{display:none!important}
+.lv.silver .stars{color:#aab2bd;opacity:1}
+.card .big.silver{color:#aab2bd}
+.silvercount{color:#aab2bd}
 .setrow .lbl.two{flex-direction:column;align-items:flex-start;gap:1px}
 .setrow .sub{color:var(--muted);font-size:11px;font-weight:500}
 
@@ -782,8 +788,9 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
   </div>
   <div class="stats">
     <div class="stat" id="timeStat"><small>Time</small><b id="time">0:00</b></div>
-    <div class="stat"><small>Moves</small><b id="moves">0</b></div>
-    <div class="stat"><small>Par</small><b id="par">0</b></div>
+    <div class="stat" id="movesStat"><small>Moves</small><b id="moves">0</b></div>
+    <div class="stat" id="parStat"><small>Par</small><b id="par">0</b></div>
+    <div class="stat freechip" id="freeChip" data-th="ไม่กดดัน · ไม่นับครั้ง">Stress-free · no count</div>
     <div class="stat hidden" id="bestStat"><small>Best</small><b id="best">–</b></div>
   </div>
   <div class="lsbar hidden" id="lsBar"><div class="lssegs" id="lsSegs"></div><div class="lsgoal" id="lsGoal"></div></div>
@@ -910,6 +917,7 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
         <button class="setrow" id="autoPlaceBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg><span class="lbl" data-th="วางอัตโนมัติ">Auto-place</span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
         <button class="setrow" id="autoStartBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span class="lbl two"><span data-th="เริ่มเกมอัตโนมัติ">Auto-start</span><small class="sub" data-th="ข้ามการตั้งค่า เริ่มเล่นทันที">Skip setup, start at once</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
         <button class="setrow" id="timerBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-timer"/></svg><span class="lbl two"><span data-th="จับเวลา">Timer</span><small class="sub" data-th="ปิดเพื่อเล่นแบบไม่กดดัน">Turn off for no-stress play</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+        <button class="setrow" id="freeBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-star"/></svg><span class="lbl two"><span data-th="โหมดไม่กดดัน">Stress-free mode</span><small class="sub" data-th="ซ่อนจำนวนครั้งและพาร์ ผ่านด่านได้ดาวเงิน">Hides Moves and Par · silver stars</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
       </div>
     </section>
     <section class="setgrp data">
@@ -1308,6 +1316,8 @@ if(typeof module!=="undefined")module.exports=LESSONS;
     set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   };
   var progress = store.get('hr_progress', {});
+  var silver = store.get('hr_silver', {}); // level ids cleared in stress-free mode (a silver star): never counted as gold stars
+  var freeMode = store.get('hr_free', false); // stress-free mode: Moves / Par hidden, a clear earns a silver star
   var seen = store.get('hr_seen', {}); // level ids whose solution was viewed: wins there earn no stars
   var muted = store.get('hr_muted', false);
   var haptics = store.get('hr_haptics', true);
@@ -1325,7 +1335,7 @@ store.set('hr_bk', bk);
   function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
   applyMotion(); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = '7904b8f'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = 'd9b805f'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null, autoTimer = null;
   var els = new Map();
@@ -1607,10 +1617,11 @@ store.set('hr_bk', bk);
 
   function renderMenu() {
     var wrap = $('levels'); wrap.innerHTML = '';
-    var last = null, row = null, total = 0;
+    var last = null, row = null, total = 0, nSilver = 0;
     LV.forEach(function (lv, i) {
       var pr = progress[lv.id];
       if (pr) total += pr.stars;
+      else if (silver[lv.id] && Math.floor(i / PAGE) !== menuPage) nSilver++;
       if (Math.floor(i / PAGE) !== menuPage) return;
       var gr = gradeOf(lv.par);
       if (gr.name !== last) {
@@ -1621,12 +1632,13 @@ store.set('hr_bk', bk);
         row = document.createElement('div'); row.className = 'lvgrid'; wrap.appendChild(row);
       }
       var b = document.createElement('button');
-      b.className = 'lv' + (pr ? ' done' : '');
-      b.innerHTML = '<b>' + (i + 1) + '</b><span class="stars">' + (seen[lv.id] ? '👁 ' : '') + stars(pr ? pr.stars : 0) + '</span>';
+      var sv = !pr && silver[lv.id]; if (sv) nSilver++;
+      b.className = 'lv' + (pr ? ' done' : '') + (sv ? ' silver' : '');
+      b.innerHTML = '<b>' + (i + 1) + '</b><span class="stars">' + (seen[lv.id] ? '👁 ' : '') + (sv ? '★' : stars(pr ? pr.stars : 0)) + '</span>';
       b.onclick = function () { openLevel(i); };
       row.appendChild(b);
     });
-    $('totalStars').textContent = total + ' / ' + LV.length * 3;
+    $('totalStars').innerHTML = total + ' / ' + LV.length * 3 + (nSilver ? ' <span class="silvercount">· ★ ' + nSilver + ' ' + L('silver', 'เงิน') + '</span>' : '');
     renderDsCard();
     var chips = $('pgchips'); chips.innerHTML = '';
     for (var pg = 0; pg < PAGES; pg++) (function (pg) {
@@ -1855,7 +1867,7 @@ store.set('hr_bk', bk);
     var c = G.check; if (!c || !c.save) return;
     if (G.editing) {
       designs.forEach(function (d) { if (d.n === G.editing) { d.g = c.key; d.par = c.par; d.at = Date.now(); } });
-      delete progress['s' + G.editing]; delete seen['s' + G.editing]; store.set('hr_progress', progress); store.set('hr_seen', seen);
+      delete progress['s' + G.editing]; delete seen['s' + G.editing]; delete silver['s' + G.editing]; store.set('hr_progress', progress); store.set('hr_seen', seen); store.set('hr_silver', silver);
       say(L('Stage ' + G.editing + ' updated', 'อัปเดตด่าน ' + G.editing + ' แล้ว'));
     } else {
       if (designs.length >= MAX_STAGES) return;
@@ -1884,7 +1896,7 @@ store.set('hr_bk', bk);
     box.innerHTML = designs.slice().sort(function (a, b) { return b.n - a.n; }).map(function (d) {
       var pr = progress['s' + d.n];
       return '<div class="dsrow"><button class="dsplay" data-play="' + d.n + '">' + L('Stage ', 'ด่าน ') + d.n +
-        '<small>' + gradeOf(d.par).name + ' · par ' + d.par + ' · ' + stars(pr ? pr.stars : 0) + '</small></button>' +
+        '<small>' + gradeOf(d.par).name + ' · par ' + d.par + ' · ' + (pr ? stars(pr.stars) : silver['s' + d.n] ? '★ ' + L('silver', 'เงิน') : stars(0)) + '</small></button>' +
         '<button class="icon-btn" data-edit="' + d.n + '" aria-label="' + L('Edit stage ', 'แก้ไขด่าน ') + d.n + '"><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg></button>' +
         '<button class="icon-btn" data-del="' + d.n + '" aria-label="' + L('Delete stage ', 'ลบด่าน ') + d.n + '"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg></button></div>';
     }).join('');
@@ -1900,7 +1912,7 @@ store.set('hr_bk', bk);
         setTimeout(function () { if (document.body.contains(b)) renderStages(); }, 3000); return;
       }
       designs = designs.filter(function (x) { return x.n !== n; }); saveDesigns();
-      delete progress['s' + n]; delete seen['s' + n]; store.set('hr_progress', progress); store.set('hr_seen', seen);
+      delete progress['s' + n]; delete seen['s' + n]; delete silver['s' + n]; store.set('hr_progress', progress); store.set('hr_seen', seen); store.set('hr_silver', silver);
       renderStages(); renderDsCard();
     }
   });
@@ -1954,13 +1966,14 @@ store.set('hr_bk', bk);
   }
   function recordText(id) {
     var pr = progress[id], parts = [];
-    if (pr) parts.push(stars(pr.stars), 'Best ' + pr.moves);
+    if (pr) parts.push(stars(pr.stars)); if (pr && !freeMode) parts.push('Best ' + pr.moves);
+    if (silver[id] && !pr) parts.push(L('silver ★', 'ดาวเงิน ★'));
     if (seen[id]) parts.push(L('solution viewed', 'ดูเฉลยแล้ว'));
     return parts.join(' · ');
   }
   // The reset link shows only when there is something to reset: stars/best, or the solution-viewed lock
   function renderRecord() {
-    var id = G && G.lv && G.lv.id, can = !!id && id !== 'draft' && !G.lv.daily && G.phase !== 'design' && (progress[id] || seen[id]);
+    var id = G && G.lv && G.lv.id, can = !!id && id !== 'draft' && !G.lv.daily && G.phase !== 'design' && (progress[id] || seen[id] || silver[id]);
     $('recLine').classList.toggle('hidden', !can);
     if (can) $('recText').textContent = L('Your record: ', 'สถิติของคุณ: ') + recordText(id);
   }
@@ -1973,7 +1986,7 @@ store.set('hr_bk', bk);
   $('rcNo').onclick = function () { closeDlg('rcAsk'); };
   $('rcYes').onclick = function () {
     closeDlg('rcAsk'); if (!G) return;
-    delete progress[G.lv.id]; delete seen[G.lv.id]; store.set('hr_progress', progress); store.set('hr_seen', seen);
+    delete progress[G.lv.id]; delete seen[G.lv.id]; delete silver[G.lv.id]; store.set('hr_progress', progress); store.set('hr_seen', seen); store.set('hr_silver', silver);
     renderBest(); toast(L('Record cleared — go for 3 stars', 'ลบสถิติแล้ว — ลุ้น 3 ดาวได้เลย'));
   };
 
@@ -2259,7 +2272,7 @@ store.set('hr_bk', bk);
   $('restartBtn').onclick = function () {
     if (!G || G.phase !== 'play') return;
     if (!G.moves) return doRestart();
-    $('rsBody').textContent = L('Your ' + G.moves + ' move' + (G.moves > 1 ? 's' : '') + ' and the clock will be reset.', 'ทั้ง ' + G.moves + ' ครั้งที่เดินและเวลาจะถูกรีเซ็ต');
+    $('rsBody').textContent = freeMode ? L('Your progress on this level and the clock will be reset.', 'ความคืบหน้าในด่านนี้และเวลาจะถูกรีเซ็ต') : L('Your ' + G.moves + ' move' + (G.moves > 1 ? 's' : '') + ' and the clock will be reset.', 'ทั้ง ' + G.moves + ' ครั้งที่เดินและเวลาจะถูกรีเซ็ต');
     openDlg('rsAsk', '#rsNo');
   };
   $('rsNo').onclick = function () { closeDlg('rsAsk'); };
@@ -2398,7 +2411,7 @@ store.set('hr_bk', bk);
       var m = i.first, arrow = m.dr < 0 ? '↑' : m.dr > 0 ? '↓' : m.dc < 0 ? '←' : '→';
       els.get(i.mover.id).setAttribute('data-hint', arrow + (m.k > 1 ? m.k : ''));
     }
-    $('tipHead').innerHTML = '<span class="step">' + L(i.left + ' move' + (i.left > 1 ? 's' : '') + ' to go · hint ' + h.tier + '/2', 'เหลืออีก ' + i.left + ' ครั้ง · คำใบ้ ' + h.tier + '/2') + '</span>' + t.head;
+    $('tipHead').innerHTML = '<span class="step">' + (freeMode ? L('hint ' + h.tier + '/2', 'คำใบ้ ' + h.tier + '/2') : L(i.left + ' move' + (i.left > 1 ? 's' : '') + ' to go · hint ' + h.tier + '/2', 'เหลืออีก ' + i.left + ' ครั้ง · คำใบ้ ' + h.tier + '/2')) + '</span>' + t.head;
     $('tipBody').textContent = t.body; $('tipWhy').textContent = t.why;
     $('tip').classList.remove('hidden');
     try { $('tip').scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' }); } catch (e) {}
@@ -2671,12 +2684,15 @@ store.set('hr_bk', bk);
     G.elapsed = Date.now() - G.t0;
     var par = G.lv.par, st = seen[G.lv.id] ? 0 : G.moves <= par ? 3 : G.moves <= Math.ceil(par * 1.4) ? 2 : 1;
     var prev = progress[G.lv.id], rec = G.lv.id !== 'draft';
-    var cur = {
+    // stress-free mode: a clear earns a silver star and never touches gold stars, moves or best (the daily still records, its streak needs it)
+    var free = freeMode, silverNow = free && !seen[G.lv.id] && !G.lv.daily;
+    var cur = free && !G.lv.daily ? prev : {
       stars: Math.max(st, prev ? prev.stars : 0),
       moves: Math.min(G.moves, prev ? prev.moves : 1e9),
       time: Math.min(G.elapsed, prev ? prev.time : 1e12)
     };
-    if (rec) { progress[G.lv.id] = cur; store.set('hr_progress', progress); keepStorage(); }
+    if (rec && free && !G.lv.daily) { if (silverNow && !prev) { silver[G.lv.id] = 1; store.set('hr_silver', silver); keepStorage(); } }
+    else if (rec) { progress[G.lv.id] = cur; store.set('hr_progress', progress); keepStorage(); }
     var red = G.pieces.filter(function (p) { return p.t === 'R'; })[0], el = els.get(red.id);
     setTimeout(function () {
       el.style.transform = 'translate(' + (PAD + red.c * cell + GAP) + 'px,' + (PAD + (red.r + 2) * cell + GAP) + 'px)';
@@ -2684,10 +2700,17 @@ store.set('hr_bk', bk);
       beep(784, 0.12); setTimeout(function () { beep(988, 0.18); }, 130);
     }, 250);
     setTimeout(function () {
-      $('winStars').textContent = stars(st);
+      $('winStars').classList.toggle('silver', free);
+      $('winStars').textContent = free ? (silverNow || G.lv.daily ? '★' : '☆') : stars(st);
       var best = cur, bestLine = '';
       if (prev && G.moves < prev.moves) bestLine = L('New best! ', 'สถิติใหม่! ') + L('(was ' + prev.moves + ')', '(เดิม ' + prev.moves + ')');
       else if (prev) bestLine = 'Best <b>' + best.moves + '</b>' + (timerOn ? ' · ' + fmt(best.time) : '');
+      if (free) {
+        $('winInfo').innerHTML = (timerOn ? 'Time <b>' + fmt(G.elapsed) + '</b>' : '') + (G.hints ? (timerOn ? ' · ' : '') + L('Hints ', 'คำใบ้ ') + G.hints : '') +
+          (G.lv.daily ? '' : '<span class="best">' + (seen[G.lv.id] ? L('Solution viewed — no star for this level', 'ดูเฉลยแล้ว — ด่านนี้ไม่ได้ดาว')
+            : prev ? L('Your gold record is unchanged. Silver is for stress-free clears.', 'สถิติดาวทองของคุณไม่เปลี่ยน ดาวเงินใช้กับโหมดไม่กดดัน')
+            : L('Silver star · cleared without counting. Turn stress-free off to chase 3 gold stars.', 'ดาวเงิน · ผ่านโดยไม่นับครั้ง ปิดโหมดไม่กดดันเพื่อลุ้น 3 ดาวทอง')) + '</span>');
+      } else
       $('winInfo').innerHTML = 'Moves <b>' + G.moves + '</b> (par ' + par + ')' + (timerOn ? ' · Time <b>' + fmt(G.elapsed) + '</b>' : '') +
         (G.hints ? ' · ' + L('Hints ', 'คำใบ้ ') + G.hints : '') + (bestLine ? '<span class="best">' + bestLine + '</span>' : '') +
         (seen[G.lv.id] ? '<br>' + L('Solution viewed — no stars for this level', 'ดูเฉลยแล้ว — ด่านนี้ไม่ได้ดาว') : '');
@@ -2751,6 +2774,9 @@ store.set('hr_bk', bk);
   function renderTimer() { setSwitch($('timerBtn'), timerOn); document.body.classList.toggle('notimer', !timerOn); }
   $('timerBtn').onclick = function () { timerOn = !timerOn; store.set('hr_timer', timerOn); renderTimer(); };
   renderTimer();
+  function renderFree() { setSwitch($('freeBtn'), freeMode); document.body.classList.toggle('free', freeMode); if (G && G.phase === 'play') renderBest(); }
+  $('freeBtn').onclick = function () { freeMode = !freeMode; store.set('hr_free', freeMode); renderFree(); if (G && G.phase === 'play') renderStatus(); renderMenu(); };
+  renderFree();
   renderAuto();
   renderMotion();
 
@@ -3119,7 +3145,7 @@ store.set('hr_bk', bk);
 
   /* ---------- progress backup: a code or a small file, works offline; restoring merges and never loses anything ---------- */
   function backupCode() {
-    var data = { v: 1, at: new Date().toISOString().slice(0, 10), progress: progress, seen: seen, designs: designs, themes: themes, lessons: lessonsDone };
+    var data = { v: 1, at: new Date().toISOString().slice(0, 10), progress: progress, seen: seen, designs: designs, themes: themes, lessons: lessonsDone, silver: silver };
     return 'HR1.' + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   }
   function readBackup(text) {
@@ -3160,6 +3186,7 @@ store.set('hr_bk', bk);
       progress[id] = b ? { stars: Math.max(a.stars, b.stars), moves: Math.min(a.moves, b.moves), time: Math.min(a.time, b.time) } : a;
     });
     Object.keys(d.seen || {}).forEach(function (id) { seen[id] = 1; });
+    Object.keys(d.silver || {}).forEach(function (id) { if (/^(\d+|s\d+)$/.test(id)) silver[id] = 1; }); store.set('hr_silver', silver);
     Object.keys(d.lessons || {}).forEach(function (n) { if (+n >= 1 && +n <= LESSONS.length) lessonsDone[n] = 1; });
     store.set('hr_lessons', lessonsDone);
     store.set('hr_progress', progress); store.set('hr_seen', seen);
@@ -3286,7 +3313,7 @@ store.set('hr_bk', bk);
   $('raBackup').onclick = function () { closeDlg('raAsk'); $('backupBtn').onclick(); };
   $('raYes').onclick = function () {
     if (!$('raCheck').checked) return;
-    progress = {}; seen = {}; store.set('hr_progress', progress); store.set('hr_seen', seen);
+    progress = {}; seen = {}; silver = {}; store.set('hr_progress', progress); store.set('hr_seen', seen); store.set('hr_silver', silver);
     closeDlg('raAsk'); renderMenu(); renderDaily(); renderNudge(); if (G) renderBest();
     toast(L('All progress reset', 'รีเซ็ตความคืบหน้าทั้งหมดแล้ว'));
   };

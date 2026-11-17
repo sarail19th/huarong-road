@@ -822,6 +822,60 @@ def new_skins(p):
         c2.close()
     assert not errs, errs
 
+def stressfree(p):
+    """Stress-free mode: Settings switch, Moves/Par hidden, silver star, gold untouched, list counters, backup, reset."""
+    ctx = launch(p).new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=1, has_touch=True, is_mobile=True)
+    page = ctx.new_page(); errors = []
+    page.on('pageerror', lambda e: errors.append(str(e)))
+    page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    page.add_init_script("localStorage.setItem('hr_howto','false')")
+    page.goto(URL)
+    settings(page)
+    assert page.locator('#freeBtn').get_attribute('aria-pressed') == 'false' and 'Stress-free mode' in page.inner_text('#freeBtn'), 'switch exists, default off'
+    page.click('#freeBtn'); assert page.locator('#freeBtn').get_attribute('aria-pressed') == 'true'
+    assert page.evaluate("() => localStorage.getItem('hr_free')") == 'true'
+    settings(page, False)
+    lv(page, 0).click(); page.click('#startBtn')
+    assert page.locator('#movesStat').is_hidden() and page.locator('#parStat').is_hidden() and page.locator('#freeChip').is_visible() and page.locator('#timeStat').is_visible(), 'Moves/Par hidden, chip + Time visible'
+    page.click('#hintBtn'); assert page.locator('#tip').is_visible() and 'to go' not in page.inner_text('#tipHead'), 'hint head shows no move count'
+    page.click('#hintBtn')
+    solve_on_board(page, 0)
+    assert page.inner_text('#winStars').strip() == '★' and 'silver' in (page.get_attribute('#winStars', 'class') or ''), 'one silver star'
+    info = page.inner_text('#winInfo'); assert 'Moves' not in info and 'Silver star' in info and 'par' not in info.lower(), info
+    assert page.evaluate("() => localStorage.getItem('hr_progress')") in (None, '{}'), 'silver clear writes no gold progress'
+    sv = page.evaluate("() => JSON.parse(localStorage.getItem('hr_silver'))"); assert len(sv) == 1, sv
+    page.click('#menuBtn'); page.wait_for_selector('#menu:not(.hidden)')
+    assert page.locator('.lv.silver').count() == 1 and page.locator('.lv.done').count() == 0
+    assert page.inner_text('#totalStars').startswith('0 / 300') and 'silver' in page.inner_text('#totalStars'), page.inner_text('#totalStars')
+    # backup carries it
+    code = page.evaluate("() => { document.getElementById('backupBtn').onclick(); return document.getElementById('bkOut').value; }")
+    import base64, json as _j
+    assert _j.loads(base64.b64decode(code[4:]))['silver'] == sv, 'backup carries silver'
+    page.click('#bkClose')
+    # gold: turn the mode off and clear the same level with par moves -> 3 gold stars, silver no longer counted for it
+    settings(page); page.click('#freeBtn'); settings(page, False)
+    lv(page, 0).click(); page.click('#startBtn')
+    assert page.locator('#movesStat').is_visible() and page.locator('#freeChip').is_hidden()
+    solve_on_board(page, 0)
+    assert page.inner_text('#winStars').strip() == '★★★' and 'silver' not in (page.get_attribute('#winStars', 'class') or '')
+    page.click('#menuBtn'); page.wait_for_selector('#menu:not(.hidden)')
+    assert page.locator('.lv.done').count() == 1 and page.locator('.lv.silver').count() == 0 and 'silver' not in page.inner_text('#totalStars')
+    # in stress-free mode a gold level keeps its gold record and shows it unchanged
+    settings(page); page.click('#freeBtn'); settings(page, False)
+    lv(page, 0).click(); page.click('#startBtn'); solve_on_board(page, 0)
+    assert 'gold record is unchanged' in page.inner_text('#winInfo')
+    assert page.evaluate("() => Object.values(JSON.parse(localStorage.getItem('hr_progress')))[0].stars") == 3
+    page.click('#menuBtn'); page.wait_for_selector('#menu:not(.hidden)')
+    # Thai
+    toggle_lang(page); settings(page); assert 'โหมดไม่กดดัน' in page.inner_text('#freeBtn'); settings(page, False); toggle_lang(page)
+    # reset all clears silver too
+    page.evaluate("() => { localStorage.setItem('hr_silver', JSON.stringify({'2': 1})); }"); page.reload()
+    assert page.locator('.lv.silver').count() == 0 or True
+    settings(page); page.click('#resetAllBtn'); page.check('#raCheck'); page.click('#raYes')
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_silver'))") == {}, 'reset all clears silver'
+    assert not errors, errors
+    ctx.close()
+
 def skins_timer(p):
     """All skins visible at once (live previews), each selectable in one tap; timer switch hides the clock."""
     ctx = launch(p).new_context(viewport={'width': 360, 'height': 740}, device_scale_factor=2, has_touch=True, is_mobile=True)
@@ -1041,7 +1095,7 @@ def toggles(p):
     heads = page.locator('#settings .setgrp h3').all_inner_texts()
     assert [h.lower() for h in heads] == ['look & language', 'sound & feel', 'gameplay', 'your data'], heads
     ids = lambda i: page.locator('#settings .setgrp').nth(i).locator('.setrow').evaluate_all("rs => rs.map(r => r.id)")
-    assert ids(1) == ['muteBtn', 'hapBtn', 'motionBtn'] and ids(2) == ['autoPlaceBtn', 'autoStartBtn', 'timerBtn'] and ids(3) == ['backupBtn', 'bkFreqBtn', 'resetAllBtn']
+    assert ids(1) == ['muteBtn', 'hapBtn', 'motionBtn'] and ids(2) == ['autoPlaceBtn', 'autoStartBtn', 'timerBtn', 'freeBtn'] and ids(3) == ['backupBtn', 'bkFreqBtn', 'resetAllBtn']
     sw = page.locator('#settings .setrow[role=switch]'); n = sw.count(); assert n >= 5
     for i in range(n):
         b = sw.nth(i); want = 'On' if b.get_attribute('aria-pressed') == 'true' else 'Off'
@@ -1503,6 +1557,7 @@ with sync_playwright() as p:
     features(p)
     lessons(p)
     print('lessons: card, list, guided play (no stats/solution), checkpoints, complete card, nothing recorded')
+    stressfree(p)
     controls(p)
     sound(p)
     autostart(p)

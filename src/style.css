@@ -388,6 +388,12 @@ html[lang=th] .about p,html[lang=th] .about ul.facts li,html[lang=th] .about ul.
 
 /* no-stress mode: the clock is hidden */
 body.notimer #timeStat{display:none}
+.freechip{display:none;flex:2;align-items:center;justify-content:center;font-size:12.5px;color:var(--muted);border-style:dashed}
+body.free .freechip{display:flex}
+body.free #movesStat,body.free #parStat,body.free #bestStat{display:none!important}
+.lv.silver .stars{color:#aab2bd;opacity:1}
+.card .big.silver{color:#aab2bd}
+.silvercount{color:#aab2bd}
 .setrow .lbl.two{flex-direction:column;align-items:flex-start;gap:1px}
 .setrow .sub{color:var(--muted);font-size:11px;font-weight:500}
 
