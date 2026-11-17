@@ -1273,7 +1273,7 @@ store.set('hr_bk', bk);
     var N = d.cps.length, c = d.cps[cp - 1], kinds = moveKinds(c.mv), T = LS_TXT[d.tier], body;
     if (!kinds.length) body = L('Red could slide straight there — nothing had to move first.', 'ตัวแดงเลื่อนไปถึงได้เลย ไม่ต้องเลื่อนบล็อกอื่นก่อน');
     else if (kinds.length === 1 && c.mv.S > 0) body = L('You made room using only small blocks — they carry the gaps.', 'คุณเปิดที่ว่างด้วยบล็อกเล็กล้วนๆ — บล็อกเล็กพาช่องว่างไปได้');
-    else body = L('You made room with ' + kinds.join(', ') + (kinds.length > 1 ? ' blocks' : ' blocks') + '.', 'คุณเปิดที่ว่างด้วย' + kinds.join(' ') + '');
+    else body = L('You made room with ' + kinds.join(', ') + (kinds.length > 1 ? ' blocks' : ' blocks') + '.', 'คุณเปิดที่ว่างด้วย' + kinds.join('และ'));
     var tip = T.tips[(cp - 1) % T.tips.length];
     return { head: '✓ ' + L('Checkpoint ' + cp + ' of ' + N, 'จุดตรวจที่ ' + cp + ' จาก ' + N), body: body, why: L(tip[0], tip[1]) };
   }
