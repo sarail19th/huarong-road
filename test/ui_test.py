@@ -1408,6 +1408,8 @@ def lessons(p):
     # the dashed outline always follows the optimal line from the CURRENT position (what Hint explains), also after a detour
     page.click('#lsOpen'); page.locator('.lsrow').nth(3).click(); page.wait_for_selector('#game:not(.hidden)')
     state = page.evaluate("() => LESSONS[3].g.split('').map(Number)")
+    top0 = page.evaluate("() => Math.round(document.getElementById('board').getBoundingClientRect().top)")
+    board_top = lambda: page.evaluate("() => Math.round(document.getElementById('board').getBoundingClientRect().top)")
     def expected_ghost(g):
         return page.evaluate("""(g) => { var line = Solver.solve(g); for (var i = 0; i < line.length; i++) if (line[i].t === 'R') return [line[i].r + line[i].dr * line[i].k, line[i].c + line[i].dc * line[i].k]; return null; }""", g)
     def ghost_cell():
@@ -1424,17 +1426,19 @@ def lessons(p):
         m = next(x for x in reversed(nb) if not (x['t'] == sol0['t'] and x['r'] == sol0['r'] and x['c'] == sol0['c'] and x['dr'] == sol0['dr'] and x['dc'] == sol0['dc'] and x['k'] == sol0['k']))
         lesson_drag(m); state = apply_move(state, m); page.wait_for_timeout(450)
         assert ghost_cell() == expected_ghost(state), ('detour step', step, ghost_cell(), expected_ghost(state))
+        assert board_top() == top0, ('board jumped (goal bar changed height)', step, board_top(), top0)
     for step in range(6):
         m = page.evaluate("(g) => Solver.solve(g)[0]", state)
         lesson_drag(m); state = apply_move(state, m); page.wait_for_timeout(450)
         if page.locator('#win:not(.hidden)').count(): break
         assert ghost_cell() == expected_ghost(state), ('on-line step', step, ghost_cell(), expected_ghost(state))
+        assert board_top() == top0, ('board jumped (goal bar changed height)', step, board_top(), top0)
         first = page.evaluate("(g) => Solver.solve(g)[0].t", state)
-        assert ('make room first' in page.locator('#lsGoal').inner_text()) == (first != 'R'), ('room text', step, first, page.locator('#lsGoal').inner_text())
+        assert ('Make room first' in page.locator('#lsGoal').inner_text()) == (first != 'R'), ('room text', step, first, page.locator('#lsGoal').inner_text())
     page.click('#backBtn'); page.wait_for_selector('#lessons:not(.hidden)'); page.click('#lsBack')
     # chasing the box with red alone (lesson 3: red up, down, up...) is told to make room first instead of ping-ponging silently
     page.click('#lsOpen'); page.locator('.lsrow').nth(2).click(); page.wait_for_selector('#game:not(.hidden)'); page.wait_for_timeout(400)
-    assert 'make room first' in page.locator('#lsGoal').inner_text(), page.locator('#lsGoal').inner_text()
+    assert 'Make room first' in page.locator('#lsGoal').inner_text(), page.locator('#lsGoal').inner_text()
     page.click('#backBtn'); page.wait_for_selector('#lessons:not(.hidden)'); page.click('#lsBack')
     # backup carries lesson progress
     ctx.close(); assert not errors, errors

@@ -1311,7 +1311,7 @@ store.set('hr_bk', bk);
     if (!on) { lessonGhost(null); return; }
     var d = LESSONS[G.lv.lesson - 1], N = d.cps.length, cp = Math.min(G.cp || 0, N), segs = '', i, over = G.phase === 'won';
     for (i = 0; i < N; i++) segs += '<span' + (i < cp ? ' class="on"' : '') + '></span>';
-    $('lsSegs').innerHTML = segs;
+    if (G.lgSegs !== segs) { $('lsSegs').innerHTML = segs; G.lgSegs = segs; }
     if (over) { $('lsGoal').innerHTML = '<b>' + L('Lesson complete', 'จบบทเรียนแล้ว') + '</b>'; lessonGhost(null); }
     else {
       // The dashed outline is where the optimal line from the CURRENT position moves red next (the same line Hint explains),
@@ -1321,13 +1321,17 @@ store.set('hr_bk', bk);
       var toExit = gh ? (gh.r === 3 && gh.c === 1) : cp >= N - 1, onTrack = gh && gh.r === nx.r && gh.c === nx.c;
       // The outline is where red goes, not a square to chase: red often cannot take that step efficiently until room is made.
       // Say so, with how many moves come first (the same count Hint gives), or the player ping-pongs red up and down.
-      var prep = gh ? gh.prep : 0, ps = prep === 1 ? '' : 's';
+      // Kept short (two lines at most) so the bar never changes height and the board never jumps.
+      var prep = gh ? gh.prep : 0;
       var how = prep > 0
-        ? L(' Not yet: make room first (' + prep + ' move' + ps + ' before red moves). Tap Hint if unsure.', ' ยังไปไม่ได้ ต้องเปิดที่ว่างก่อน (อีก ' + prep + ' ครั้งก่อนตัวแดงจะขยับ) ไม่แน่ใจแตะ “คำใบ้” ได้')
-        : (gh ? L(' Red can slide there now.', ' ตัวแดงเลื่อนไปได้เลยตอนนี้') : '');
-      $('lsGoal').innerHTML = toExit ? '<b>' + L('Last goal', 'เป้าหมายสุดท้าย') + '</b> · ' + L('slide the red square out through the exit.', 'เลื่อนสี่เหลี่ยมแดงออกไปที่ EXIT') + how
-        : '<b>' + (onTrack ? L('Goal ' + (cp + 1) + ' of ' + N, 'เป้าหมายที่ ' + (cp + 1) + ' จาก ' + N) : L('Next goal', 'เป้าหมายถัดไป')) + '</b> · ' + L('get the red square onto the dashed outline.', 'เลื่อนสี่เหลี่ยมแดงไปให้ตรงกรอบเส้นประ') + how;
-      if (gh) lessonGhost(gh.r, gh.c); else lessonGhost(nx.r, nx.c);
+        ? L(' Make room first (' + prep + ' move' + (prep === 1 ? '' : 's') + ').', ' ต้องเปิดที่ว่างก่อน (อีก ' + prep + ' ครั้ง)')
+        : (gh ? L(' Slide it now.', ' เลื่อนได้เลย') : '');
+      var html = toExit ? '<b>' + L('Last goal', 'เป้าหมายสุดท้าย') + '</b> · ' + L('red slides out to EXIT.', 'ตัวแดงออกไปที่ EXIT') + how
+        : '<b>' + (onTrack ? L('Goal ' + (cp + 1) + ' of ' + N, 'เป้าหมายที่ ' + (cp + 1) + ' จาก ' + N) : L('Next goal', 'เป้าหมายถัดไป')) + '</b> · ' + L('red goes to the dashed outline.', 'ตัวแดงไปที่กรอบเส้นประ') + how;
+      // While the next position is still being solved (~20 ms) keep what is shown: no flash back to an old target
+      if (gh || !G.lgLast) { G.lgLast = { html: html, r: gh ? gh.r : nx.r, c: gh ? gh.c : nx.c }; }
+      if (G.lgHtml !== G.lgLast.html) { $('lsGoal').innerHTML = G.lgLast.html; G.lgHtml = G.lgLast.html; }
+      lessonGhost(G.lgLast.r, G.lgLast.c);
     }
     var head, body, why;
     if (cp === 0) { head = L('The idea · ', 'แนวคิด · ') + lsT(d, 'name'); body = lsT(d, 'idea'); why = L('Stuck? Tap Hint: it explains the next step, same as in every level.', 'ติดอยู่ตรงไหน? แตะ “คำใบ้” ได้เลย จะอธิบายขั้นต่อไปให้ เหมือนในด่านทั่วไป'); }

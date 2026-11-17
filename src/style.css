@@ -610,7 +610,7 @@ input.cpr::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:
 .lssegs{display:flex;gap:5px;margin-bottom:6px}
 .lssegs span{flex:1;height:7px;border-radius:4px;background:var(--panel2);border:1px solid var(--line)}
 .lssegs span.on{background:var(--yellow);border-color:var(--yellow)}
-.lsgoal{font-size:13.5px;line-height:1.4}
+.lsgoal{font-size:13.5px;line-height:1.4;min-height:2.8em}
 .lsgoal b{font-weight:700}
 .lsnote{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--yellow);border-radius:12px;padding:9px 12px;margin-top:8px;font-size:13.5px;line-height:1.5}
 .lsnote b{display:block;margin-bottom:2px}
