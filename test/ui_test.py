@@ -932,7 +932,7 @@ def polish(p):
     assert page.locator('#lvTitle').inner_text().startswith('ด่าน 1 · เริ่มต้น')
     page.click('#startBtn'); english_left('play')
     solve_on_board(page, 0); english_left('win card')
-    assert page.locator('#winTitle').inner_text() == 'ผ่านด่าน!' and page.locator('#nextBtn').inner_text() == 'ด่านถัดไป'
+    assert page.locator('#winTitle').inner_text() == 'ผ่านด่าน!' and page.locator('#nextBtn').inner_text() == 'ถัดไป'
     # --- 2. dialogs: focus moves in, Esc closes (not the win card), Tab stays inside, focus comes back
     assert page.evaluate("() => !!document.activeElement.closest('#win')"), 'focus moves into the win card'
     page.keyboard.press('Escape'); assert page.locator('#win').is_visible(), 'Esc does not dismiss the win card'
@@ -1341,7 +1341,9 @@ def lessons(p):
     page.wait_for_selector('#win:not(.hidden)', timeout=5000)
     assert 'Lesson complete' in page.locator('#winTitle').inner_text()
     assert page.locator('.lswhy li').count() == 3, 'three why bullets'
-    assert page.locator('#lsTry').is_visible() and 'Starter' in page.locator('#lsTry').inner_text()
+    assert page.locator('#lsTry').is_visible() and page.locator('#lsTry').inner_text() == 'Play a real level', page.locator('#lsTry').inner_text()
+    assert [page.locator(s).inner_text().strip() for s in ('#menuBtn', '#replayBtn', '#nextBtn')] == ['Back', 'Replay', 'Next'], 'same three short verbs'
+    assert page.locator('#menuBtn svg').count() == 1 and page.locator('#nextBtn svg').count() == 1, 'arrow icons on Back and Next'
     assert page.locator('#nextBtn').is_visible()
     assert page.evaluate("() => localStorage.getItem('hr_lessons')") == '{"1":1}'
     assert page.evaluate("() => localStorage.getItem('hr_progress')") in (None, '{}'), 'lessons record no progress'
@@ -1351,7 +1353,12 @@ def lessons(p):
     assert page.evaluate("() => document.body.dataset.mode") == '', 'real level is not a lesson'
     page.click('#startBtn'); assert page.locator('#solBtn').is_visible() and page.locator('#lsBar').is_hidden()
     assert 'Level 1' in page.locator('#lvTitle').inner_text(), page.locator('#lvTitle').inner_text()
-    page.click('#backBtn'); page.wait_for_selector('#menu:not(.hidden)')
+    # a normal win afterwards must not inherit the lesson card: no lesson button, plain Next / Levels labels
+    solve_on_board(page, 0)
+    assert page.locator('#lsTry').is_hidden(), 'lesson button leaks into a level win card'
+    assert page.locator('#nextBtn').inner_text().strip() == 'Next' and page.locator('#nextBtn svg').count() == 0
+    assert page.locator('#menuBtn').inner_text().strip() == 'Levels'
+    page.click('#menuBtn'); page.wait_for_selector('#menu:not(.hidden)')
     assert '1/6' in page.locator('#lsCount').inner_text()
     # checkpoint engine on a longer lesson: follow the optimal line and watch the bar fill
     page.click('#lsOpen'); assert page.locator('.lsrow.done').count() == 1 and page.locator('.lsrow.next .num').inner_text() == '2'
@@ -1392,10 +1399,11 @@ def lessons(p):
     for m in sol[len(sol) // 2:]: lesson_drag(m)
     page.wait_for_selector('#win:not(.hidden)', timeout=8000)
     assert 'จบบทเรียน' in page.locator('#winTitle').inner_text()
+    assert [page.locator(s).inner_text().strip() for s in ('#menuBtn', '#replayBtn', '#nextBtn')] == ['กลับ', 'ลองอีกรอบ', 'ถัดไป'] and page.locator('#lsTry').inner_text() == 'เล่นด่านจริง'
     # language switch while the complete card is open: use the About/Settings switch through the page
     page.evaluate("() => document.querySelector('.lang-btn').click()")
     page.wait_for_timeout(150)
-    assert 'Lesson complete' in page.locator('#winTitle').inner_text() and 'Now try a real' in page.locator('#lsTry').inner_text()
+    assert 'Lesson complete' in page.locator('#winTitle').inner_text() and page.locator('#lsTry').inner_text() == 'Play a real level'
     page.click('#menuBtn'); page.wait_for_selector('#lessons:not(.hidden)'); page.click('#lsBack')
     # the dashed outline always follows the optimal line from the CURRENT position (what Hint explains), also after a detour
     page.click('#lsOpen'); page.locator('.lsrow').nth(3).click(); page.wait_for_selector('#game:not(.hidden)')
@@ -1421,6 +1429,12 @@ def lessons(p):
         lesson_drag(m); state = apply_move(state, m); page.wait_for_timeout(450)
         if page.locator('#win:not(.hidden)').count(): break
         assert ghost_cell() == expected_ghost(state), ('on-line step', step, ghost_cell(), expected_ghost(state))
+        first = page.evaluate("(g) => Solver.solve(g)[0].t", state)
+        assert ('make room first' in page.locator('#lsGoal').inner_text()) == (first != 'R'), ('room text', step, first, page.locator('#lsGoal').inner_text())
+    page.click('#backBtn'); page.wait_for_selector('#lessons:not(.hidden)'); page.click('#lsBack')
+    # chasing the box with red alone (lesson 3: red up, down, up...) is told to make room first instead of ping-ponging silently
+    page.click('#lsOpen'); page.locator('.lsrow').nth(2).click(); page.wait_for_selector('#game:not(.hidden)'); page.wait_for_timeout(400)
+    assert 'make room first' in page.locator('#lsGoal').inner_text(), page.locator('#lsGoal').inner_text()
     page.click('#backBtn'); page.wait_for_selector('#lessons:not(.hidden)'); page.click('#lsBack')
     # backup carries lesson progress
     ctx.close(); assert not errors, errors

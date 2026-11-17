@@ -624,3 +624,6 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
 .lswhy{margin:8px 0 2px;padding:0;list-style:none;text-align:left;font-size:13.5px;line-height:1.5}
 .lswhy li{display:flex;gap:8px;margin-bottom:6px}
 .lswhy li i{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--yellow);display:flex;align-items:center;justify-content:center;font:700 11px/1 system-ui;font-style:normal}
+.btn.arrow{display:flex;align-items:center;justify-content:center;gap:2px;padding-left:8px;padding-right:8px;white-space:nowrap}
+.btn.arrow .ico{width:20px;height:20px}
+#win .row .btn{white-space:nowrap;padding-left:6px;padding-right:6px}

@@ -1296,7 +1296,7 @@ store.set('hr_bk', bk);
         if (G !== g0 || G.phase !== 'play') return;
         var line = Sol.solve(g), cur = g, dest = null, i;
         for (i = 0; line && i < line.length && !dest; i++) {
-          if (line[i].t === 'R') dest = { r: line[i].r + line[i].dr * line[i].k, c: line[i].c + line[i].dc * line[i].k };
+          if (line[i].t === 'R') dest = { r: line[i].r + line[i].dr * line[i].k, c: line[i].c + line[i].dc * line[i].k, prep: i }; // prep = moves before red moves
           cur = Sol.slide(cur, { t: line[i].t, r: line[i].r, c: line[i].c }, line[i].dr, line[i].dc, line[i].k);
         }
         G.lg[k] = dest; G.lgBusy = null;
@@ -1319,8 +1319,14 @@ store.set('hr_bk', bk);
       // the next fixed checkpoint (the bar and cards are about those); otherwise it is just the next goal.
       var gh = lessonNext(d), nx = d.cps[Math.min(cp, N - 1)];
       var toExit = gh ? (gh.r === 3 && gh.c === 1) : cp >= N - 1, onTrack = gh && gh.r === nx.r && gh.c === nx.c;
-      $('lsGoal').innerHTML = toExit ? '<b>' + L('Last goal', 'เป้าหมายสุดท้าย') + '</b> · ' + L('slide the red square out through the exit.', 'เลื่อนสี่เหลี่ยมแดงออกไปที่ EXIT')
-        : '<b>' + (onTrack ? L('Goal ' + (cp + 1) + ' of ' + N, 'เป้าหมายที่ ' + (cp + 1) + ' จาก ' + N) : L('Next goal', 'เป้าหมายถัดไป')) + '</b> · ' + L('get the red square onto the dashed outline.', 'เลื่อนสี่เหลี่ยมแดงไปให้ตรงกรอบเส้นประ');
+      // The outline is where red goes, not a square to chase: red often cannot take that step efficiently until room is made.
+      // Say so, with how many moves come first (the same count Hint gives), or the player ping-pongs red up and down.
+      var prep = gh ? gh.prep : 0, ps = prep === 1 ? '' : 's';
+      var how = prep > 0
+        ? L(' Not yet: make room first (' + prep + ' move' + ps + ' before red moves). Tap Hint if unsure.', ' ยังไปไม่ได้ ต้องเปิดที่ว่างก่อน (อีก ' + prep + ' ครั้งก่อนตัวแดงจะขยับ) ไม่แน่ใจแตะ “คำใบ้” ได้')
+        : (gh ? L(' Red can slide there now.', ' ตัวแดงเลื่อนไปได้เลยตอนนี้') : '');
+      $('lsGoal').innerHTML = toExit ? '<b>' + L('Last goal', 'เป้าหมายสุดท้าย') + '</b> · ' + L('slide the red square out through the exit.', 'เลื่อนสี่เหลี่ยมแดงออกไปที่ EXIT') + how
+        : '<b>' + (onTrack ? L('Goal ' + (cp + 1) + ' of ' + N, 'เป้าหมายที่ ' + (cp + 1) + ' จาก ' + N) : L('Next goal', 'เป้าหมายถัดไป')) + '</b> · ' + L('get the red square onto the dashed outline.', 'เลื่อนสี่เหลี่ยมแดงไปให้ตรงกรอบเส้นประ') + how;
       if (gh) lessonGhost(gh.r, gh.c); else lessonGhost(nx.r, nx.c);
     }
     var head, body, why;
@@ -1363,9 +1369,19 @@ store.set('hr_bk', bk);
       $('winStars').textContent = '✓';
       $('winInfo').innerHTML = '<b>' + lsT(d, 'name') + '</b><ul class="lswhy">' + T.why.map(function (w, i) { return '<li><i>' + (i + 1) + '</i><span>' + L(w[0], w[1]) + '</span></li>'; }).join('') + '</ul>';
       $('dWin').classList.add('hidden');
-      var tr = $('lsTry'); tr.classList.remove('hidden'); tr.textContent = L('Now try a real ' + gradeOf(d.par).name + ' level', 'ลองเล่นด่าน' + gradeOf(d.par).name + 'จริงๆ');
-      $('menuBtn').textContent = L('Lessons', 'บทเรียน');
-      $('nextBtn').textContent = L('Next tier', 'ไปบทถัดไป'); $('nextBtn').classList.toggle('hidden', !hasNext);
+      // Short, same three verbs on every lesson card: ‹ Back · Replay · Next ›  (+ one wide "play a real level" above them)
+      var tr = $('lsTry'); tr.classList.remove('hidden'); tr.textContent = L('Play a real level', 'เล่นด่านจริง');
+      var back = $('menuBtn'), nx = $('nextBtn');
+      back.innerHTML = '<svg class="ico" aria-hidden="true"><use href="#i-back"/></svg><span>' + L('Back', 'กลับ') + '</span>'; back.classList.add('arrow');
+      nx.innerHTML = '<span>' + L('Next', 'ถัดไป') + '</span><svg class="ico flip" aria-hidden="true"><use href="#i-back"/></svg>'; nx.classList.add('arrow');
+      nx.classList.toggle('hidden', !hasNext);
+  }
+  // A normal level's win card: plain labels, no lesson button (the lesson card changes them, so put them back every time)
+  function plainWinButtons() {
+    $('lsTry').classList.add('hidden');
+    var back = $('menuBtn'), nx = $('nextBtn');
+    back.classList.remove('arrow'); nx.classList.remove('arrow');
+    nx.textContent = L('Next', 'ถัดไป');
   }
   $('lsTry').onclick = function () { // first level of this tier you have not cleared yet (or its first level)
     if (!G || !G.lv.lesson) return;
@@ -1402,6 +1418,7 @@ store.set('hr_bk', bk);
         (seen[G.lv.id] ? '<br>' + L('Solution viewed — no stars for this level', 'ดูเฉลยแล้ว — ด่านนี้ไม่ได้ดาว') : '');
       renderBest();
       var daily = !!G.lv.daily, hasNext = G.idx >= 0 && G.idx + 1 < LV.length;
+      plainWinButtons();
       $('menuBtn').textContent = G.lv.fromList ? L('My stages', 'ด่านของฉัน') : G.lv.design ? L('Edit', 'แก้ไข') : L('Levels', 'ด่าน');
       $('winTitle').textContent = daily ? L('Daily solved!', 'ผ่านปริศนารายวัน!') : L('Cleared!', 'ผ่านด่าน!');
       $('dWin').classList.toggle('hidden', !daily);
