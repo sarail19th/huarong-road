@@ -1380,6 +1380,48 @@ def lessons(p):
             assert 'Goal 1 of' in page.locator('#lsGoal').inner_text(), page.locator('#lsGoal').inner_text()
     page.wait_for_selector('#win:not(.hidden)', timeout=8000); page.click('#menuBtn'); page.wait_for_selector('#lessons:not(.hidden)')
     page.click('#lsBack')
+    # switching language mid-lesson re-renders the guide (idea card, goal line, title) and the complete card
+    page.click('#lsOpen'); page.locator('.lsrow').nth(2).click(); page.wait_for_selector('#game:not(.hidden)')
+    assert not re.search('[\u0e00-\u0e7f]', page.locator('#lsNoteBody').inner_text())
+    toggle_lang(page)
+    for sel in ('#lsNoteHead', '#lsNoteBody', '#lsNoteWhy', '#lsGoal', '#lvTitle'):
+        assert re.search('[\u0e00-\u0e7f]', page.locator(sel).inner_text()), sel + ' stays English after switching to Thai'
+    sol = page.evaluate("() => Solver.solve(LESSONS[2].g.split('').map(Number))")
+    for m in sol[:len(sol) // 2]: lesson_drag(m)
+    assert re.search('[\u0e00-\u0e7f]', page.locator('#lsNoteBody').inner_text()), 'checkpoint card in Thai'
+    for m in sol[len(sol) // 2:]: lesson_drag(m)
+    page.wait_for_selector('#win:not(.hidden)', timeout=8000)
+    assert 'จบบทเรียน' in page.locator('#winTitle').inner_text()
+    # language switch while the complete card is open: use the About/Settings switch through the page
+    page.evaluate("() => document.querySelector('.lang-btn').click()")
+    page.wait_for_timeout(150)
+    assert 'Lesson complete' in page.locator('#winTitle').inner_text() and 'Now try a real' in page.locator('#lsTry').inner_text()
+    page.click('#menuBtn'); page.wait_for_selector('#lessons:not(.hidden)'); page.click('#lsBack')
+    # the dashed outline always follows the optimal line from the CURRENT position (what Hint explains), also after a detour
+    page.click('#lsOpen'); page.locator('.lsrow').nth(3).click(); page.wait_for_selector('#game:not(.hidden)')
+    state = page.evaluate("() => LESSONS[3].g.split('').map(Number)")
+    def expected_ghost(g):
+        return page.evaluate("""(g) => { var line = Solver.solve(g); for (var i = 0; i < line.length; i++) if (line[i].t === 'R') return [line[i].r + line[i].dr * line[i].k, line[i].c + line[i].dc * line[i].k]; return null; }""", g)
+    def ghost_cell():
+        bx = page.locator('#board').bounding_box(); cs = (bx['width'] - 20) / 4
+        tr = page.evaluate("() => document.getElementById('ghost').style.transform")
+        x, y = [float(v.replace('px', '')) for v in tr[tr.index('(') + 1:tr.index(')')].split(',')]
+        return [round((y - 8 - 3) / cs), round((x - 8 - 3) / cs)]
+    def apply_move(g, m):
+        return page.evaluate("([g, m]) => Solver.slide(g, { t: m.t, r: m.r, c: m.c }, m.dr, m.dc, m.k)", [g, m])
+    # detour: five legal moves that are NOT on the optimal line (take the last neighbour each time), then follow the line a bit
+    for step in range(5):
+        nb = page.evaluate("(g) => Solver.neighbors(g).map(function (n) { return n.m; })", state)
+        sol0 = page.evaluate("(g) => Solver.solve(g)[0]", state)
+        m = next(x for x in reversed(nb) if not (x['t'] == sol0['t'] and x['r'] == sol0['r'] and x['c'] == sol0['c'] and x['dr'] == sol0['dr'] and x['dc'] == sol0['dc'] and x['k'] == sol0['k']))
+        lesson_drag(m); state = apply_move(state, m); page.wait_for_timeout(450)
+        assert ghost_cell() == expected_ghost(state), ('detour step', step, ghost_cell(), expected_ghost(state))
+    for step in range(6):
+        m = page.evaluate("(g) => Solver.solve(g)[0]", state)
+        lesson_drag(m); state = apply_move(state, m); page.wait_for_timeout(450)
+        if page.locator('#win:not(.hidden)').count(): break
+        assert ghost_cell() == expected_ghost(state), ('on-line step', step, ghost_cell(), expected_ghost(state))
+    page.click('#backBtn'); page.wait_for_selector('#lessons:not(.hidden)'); page.click('#lsBack')
     # backup carries lesson progress
     ctx.close(); assert not errors, errors
 

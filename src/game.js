@@ -1207,30 +1207,30 @@ store.set('hr_bk', bk);
   // board is the next one.
   var lessonsDone = store.get('hr_lessons', {}); // { '1': 1, ... } lesson number -> finished
   var LS_TXT = {
-    starter: { name: ['Gaps are the moves', 'ช่องว่างคือการเดิน'],
-      idea: ['A block can only slide into an empty cell, and there are just two empty cells. So every move you make is really moving a gap. Before you drag, ask: where do I need an empty cell?', 'บล็อกเลื่อนได้เฉพาะเข้าไปในช่องว่าง และมีช่องว่างเพียง 2 ช่อง ดังนั้นทุกการเดินคือการย้ายช่องว่าง ก่อนลาก ลองถามว่า ตอนนี้ฉันต้องการช่องว่างตรงไหน'],
-      tips: [['Every block you moved made an empty cell appear exactly where red needed it.', 'ทุกบล็อกที่คุณเลื่อน ทำให้ช่องว่างไปอยู่ตรงที่ตัวแดงต้องการพอดี']],
-      why: [['Red can only move into empty cells.', 'ตัวแดงเลื่อนได้เฉพาะเข้าไปในช่องว่าง'], ['So the other blocks moved to bring a gap next to red.', 'บล็อกอื่นจึงต้องเลื่อนเพื่อพาช่องว่างมาอยู่ข้างตัวแดง'], ['Next time, look at where the gaps are before you move anything.', 'ครั้งหน้าลองดูตำแหน่งช่องว่างก่อนเลื่อนบล็อกใดๆ']] },
-    easy: { name: ['Work backwards from the exit', 'ย้อนคิดจากทางออก'],
-      idea: ['Start from the end. Red has to reach the bottom centre, so what must be empty there? What is sitting on those cells? Free that block first, then work back to where you are now.', 'เริ่มคิดจากปลายทาง ตัวแดงต้องไปถึงตรงกลางด้านล่าง แล้วตรงนั้นต้องว่างอะไรบ้าง ตอนนี้มีบล็อกอะไรอยู่ ปลดบล็อกนั้นก่อน แล้วค่อยย้อนมาถึงจุดที่คุณอยู่'],
-      tips: [['Find what stands in red’s way, then ask what that block needs to get out.', 'หาว่าอะไรขวางทางตัวแดง แล้วถามว่าบล็อกนั้นต้องการอะไรจึงจะออกไปได้'], ['The dashed outline is the end of a short chain: blocker, space, then red.', 'เส้นประคือปลายทางของลำดับสั้นๆ: บล็อกที่ขวาง ที่ว่าง แล้วจึงตัวแดง']],
-      why: [['The goal first: red needs those cells empty.', 'เริ่มจากเป้าหมาย: ตัวแดงต้องการให้ช่องเหล่านั้นว่าง'], ['Then the blocker: what sits there, and where can it go?', 'จากนั้นดูตัวขวาง: อะไรอยู่ตรงนั้น และไปไหนได้'], ['Last, the gaps: how do I bring empty cells to that blocker?', 'สุดท้ายคือช่องว่าง: จะพาช่องว่างไปหาตัวขวางได้อย่างไร']] },
-    medium: { name: ['Join the two gaps', 'รวมช่องว่างสองช่องเข้าด้วยกัน'],
-      idea: ['Red and the long blocks need two empty cells side by side. One gap alone can only shuffle small blocks. Walk the two gaps together and a long block can slide in a single move.', 'ตัวแดงและบล็อกยาวต้องการช่องว่างสองช่องติดกัน ช่องว่างเดียวทำได้แค่สลับบล็อกเล็ก ลองพาช่องว่างสองช่องมาชิดกัน แล้วบล็อกยาวจะเลื่อนผ่านได้ในครั้งเดียว'],
-      tips: [['Two gaps side by side make a hole a long block can use. Joining them is usually the point of the small moves in between.', 'ช่องว่างสองช่องติดกันเป็นช่องที่บล็อกยาวใช้ได้ การรวมช่องว่างมักเป็นเหตุผลของการเดินเล็กๆ ระหว่างทาง'], ['A long block stepping sideways needs that two-cell hole first.', 'บล็อกยาวที่จะเลื่อนหลบข้างต้องมีช่องสองช่องแบบนี้ก่อน']],
-      why: [['Some blocks needed two empty cells side by side.', 'บางบล็อกต้องการช่องว่างสองช่องติดกัน'], ['You moved small blocks until the two gaps met.', 'คุณเลื่อนบล็อกเล็กจนช่องว่างทั้งสองมาชิดกัน'], ['Then the long block slid in one move. Watch for this in every level.', 'แล้วบล็อกยาวก็เลื่อนได้ในครั้งเดียว ลองสังเกตเรื่องนี้ในทุกด่าน']] },
-    hard: { name: ['Small blocks carry gaps', 'บล็อกเล็กพาช่องว่างไป'],
-      idea: ['Small blocks are your delivery trucks. Sliding a small block into a gap moves the gap the other way, so a short chain of small moves can carry a gap right across the board.', 'บล็อกเล็กเปรียบเหมือนรถขนส่ง เมื่อเลื่อนบล็อกเล็กเข้าไปในช่องว่าง ช่องว่างจะย้ายไปอีกด้าน ดังนั้นการเดินบล็อกเล็กต่อกันไม่กี่ครั้งก็พาช่องว่างข้ามกระดานได้'],
-      tips: [['Each small-block move shifts a gap one step. A short chain walks the gap to where a bigger block needs it.', 'การเดินบล็อกเล็กแต่ละครั้งย้ายช่องว่างไปหนึ่งก้าว ต่อกันสั้นๆ ก็พาช่องว่างไปหาบล็อกใหญ่ได้'], ['If the gap is on the wrong side, ask which small block can carry it over.', 'ถ้าช่องว่างอยู่ผิดฝั่ง ลองถามว่าบล็อกเล็กตัวไหนพาข้ามมาได้']],
-      why: [['Moving a small block into a gap moves the gap the opposite way.', 'เลื่อนบล็อกเล็กเข้าช่องว่าง ช่องว่างจะไปอยู่ฝั่งตรงข้าม'], ['Chains of small moves carried the gaps to where they were needed.', 'การเดินบล็อกเล็กต่อกันพาช่องว่างไปยังจุดที่ต้องการ'], ['When stuck, trace the gap: which small block can bring it closer?', 'เมื่อติด ลองไล่ตามช่องว่าง: บล็อกเล็กตัวไหนพามาใกล้ขึ้นได้']] },
+    starter: { name: ['Gaps are the moves', 'ทุกก้าวเริ่มจากช่องว่าง'],
+      idea: ['A block can only slide into an empty cell, and there are just two empty cells. So every move you make is really moving a gap. Before you drag, ask: where do I need an empty cell?', 'บล็อกจะขยับได้ก็ต่อเมื่อมีช่องว่างให้เลื่อนเข้าไป และบนกระดานมีช่องว่างแค่ 2 ช่อง ดังนั้นทุกครั้งที่เดิน จริงๆ แล้วเรากำลังย้ายช่องว่าง ก่อนลากบล็อก ลองถามตัวเองก่อนว่า ตอนนี้ตัวแดงต้องการช่องว่างตรงไหน'],
+      tips: [['Every block you moved made an empty cell appear exactly where red needed it.', 'บล็อกที่คุณเพิ่งขยับ ทำให้เกิดช่องว่างตรงที่ตัวแดงต้องใช้พอดี']],
+      why: [['Red can only move into empty cells.', 'ตัวแดงเลื่อนได้เฉพาะตรงที่มีช่องว่าง'], ['So the other blocks moved to bring a gap next to red.', 'บล็อกอื่นจึงต้องหลบ เพื่อพาช่องว่างมาไว้ข้างตัวแดง'], ['Next time, look at where the gaps are before you move anything.', 'คราวหน้า ลองดูก่อนว่าช่องว่างอยู่ตรงไหน แล้วค่อยลากบล็อก']] },
+    easy: { name: ['Work backwards from the exit', 'คิดย้อนจากทางออก'],
+      idea: ['Start from the end. Red has to reach the bottom centre, so what must be empty there? What is sitting on those cells? Free that block first, then work back to where you are now.', 'ลองเริ่มคิดจากปลายทางดู ตัวแดงต้องไปให้ถึงกลางแถวล่าง แล้วตรงนั้นต้องว่างอะไรบ้าง ตอนนี้มีบล็อกอะไรวางอยู่ ปลดบล็อกนั้นให้ได้ก่อน แล้วค่อยไล่ย้อนมาถึงจุดที่เรายืนอยู่'],
+      tips: [['Find what stands in red’s way, then ask what that block needs to get out.', 'ดูว่าอะไรขวางทางตัวแดงอยู่ แล้วถามต่อว่า บล็อกนั้นต้องการอะไรถึงจะหลบไปได้'], ['The dashed outline is the end of a short chain: blocker, space, then red.', 'เส้นประคือปลายทางของลำดับสั้นๆ: บล็อกที่ขวาง → ที่ว่าง → ตัวแดง']],
+      why: [['The goal first: red needs those cells empty.', 'เริ่มจากเป้าหมายก่อน: ตัวแดงต้องการให้ช่องพวกนั้นว่าง'], ['Then the blocker: what sits there, and where can it go?', 'ต่อมาดูตัวที่ขวาง: มันวางอยู่ตรงนั้น แล้วหลบไปทางไหนได้บ้าง'], ['Last, the gaps: how do I bring empty cells to that blocker?', 'สุดท้ายคือช่องว่าง: จะพาช่องว่างไปหาตัวที่ขวางได้ยังไง']] },
+    medium: { name: ['Join the two gaps', 'รวมช่องว่างให้เป็นคู่'],
+      idea: ['Red and the long blocks need two empty cells side by side. One gap alone can only shuffle small blocks. Walk the two gaps together and a long block can slide in a single move.', 'ตัวแดงกับบล็อกยาวต้องการช่องว่าง 2 ช่องที่อยู่ติดกัน ถ้ามีช่องว่างเดียวก็ทำได้แค่ขยับบล็อกเล็กไปมา ลองพาช่องว่างทั้งสองมาอยู่ชิดกัน แล้วบล็อกยาวจะเลื่อนผ่านได้ในทีเดียว'],
+      tips: [['Two gaps side by side make a hole a long block can use. Joining them is usually the point of the small moves in between.', 'ช่องว่างสองช่องที่ติดกันเป็นช่องที่บล็อกยาวใช้ได้ การเดินเล็กๆ ระหว่างทางส่วนใหญ่ก็เพื่อรวมช่องว่างนี่แหละ'], ['A long block stepping sideways needs that two-cell hole first.', 'ก่อนบล็อกยาวจะเลื่อนหลบไปด้านข้างได้ ต้องมีช่องว่างสองช่องรออยู่ก่อน']],
+      why: [['Some blocks needed two empty cells side by side.', 'บางบล็อกต้องมีช่องว่างสองช่องติดกันถึงจะขยับได้'], ['You moved small blocks until the two gaps met.', 'คุณเลยขยับบล็อกเล็กจนช่องว่างทั้งสองมาเจอกัน'], ['Then the long block slid in one move. Watch for this in every level.', 'แล้วบล็อกยาวก็เลื่อนได้ในทีเดียว ลองสังเกตจังหวะนี้ในทุกด่านดู']] },
+    hard: { name: ['Small blocks carry gaps', 'บล็อกเล็กช่วยพาช่องว่างไป'],
+      idea: ['Small blocks are your delivery trucks. Sliding a small block into a gap moves the gap the other way, so a short chain of small moves can carry a gap right across the board.', 'ลองมองบล็อกเล็กเป็นรถขนส่ง พอเลื่อนบล็อกเล็กเข้าไปในช่องว่าง ช่องว่างก็ย้ายไปอยู่อีกฝั่งแทน เดินบล็อกเล็กต่อกันไม่กี่ที ก็พาช่องว่างข้ามกระดานไปได้'],
+      tips: [['Each small-block move shifts a gap one step. A short chain walks the gap to where a bigger block needs it.', 'บล็อกเล็กทุกครั้งที่ขยับ จะย้ายช่องว่างไปหนึ่งก้าว เดินต่อกันสั้นๆ ก็พาช่องว่างไปถึงบล็อกใหญ่ที่ต้องการได้'], ['If the gap is on the wrong side, ask which small block can carry it over.', 'ถ้าช่องว่างอยู่ผิดฝั่ง ลองดูว่าบล็อกเล็กตัวไหนพามันข้ามมาได้']],
+      why: [['Moving a small block into a gap moves the gap the opposite way.', 'เลื่อนบล็อกเล็กเข้าช่องว่าง ช่องว่างก็ไปอยู่ฝั่งตรงข้าม'], ['Chains of small moves carried the gaps to where they were needed.', 'การเดินบล็อกเล็กต่อกัน ช่วยพาช่องว่างไปถึงจุดที่ต้องใช้'], ['When stuck, trace the gap: which small block can bring it closer?', 'ถ้าติด ลองตามดูช่องว่าง แล้วถามว่าบล็อกเล็กตัวไหนพามันเข้ามาใกล้ขึ้นได้']] },
     expert: { name: ['Pass a long block', 'หลีกทางให้บล็อกยาว'],
-      idea: ['Sometimes a long block is in the way and cannot leave in a straight line. Step it aside into a joined pair of gaps, let the other block go by, then step it back if you need to.', 'บางครั้งบล็อกยาวขวางทางและออกตรงๆ ไม่ได้ ให้เลื่อนมันหลบเข้าช่องว่างที่รวมกันสองช่อง ปล่อยให้บล็อกอื่นผ่านไป แล้วค่อยเลื่อนกลับถ้าจำเป็น'],
-      tips: [['Stepping a long block aside makes a lane. Plan where it will come back.', 'การเลื่อนบล็อกยาวหลบเป็นการเปิดช่องทาง ลองวางแผนว่าจะเลื่อนกลับตรงไหน'], ['A sideways step needs two gaps first, so join them before you move it.', 'การหลบข้างต้องมีช่องว่างสองช่องก่อน รวมช่องว่างก่อนเลื่อน']],
-      why: [['A long block was in the way and could not leave in a straight line.', 'บล็อกยาวขวางทางและออกตรงๆ ไม่ได้'], ['It stepped aside into a joined pair of gaps.', 'มันหลบเข้าช่องว่างที่รวมกันสองช่อง'], ['That opened a lane for the next block to pass.', 'ซึ่งเปิดช่องให้บล็อกถัดไปผ่านไปได้']] },
-    master: { name: ['Chain the sub-goals', 'ต่อเป้าหมายย่อยเป็นลูกโซ่'],
-      idea: ['A long puzzle is a chain of short ones. Each checkpoint is one link: make room, free a block, move red a step. Do not try to see the whole solution, only the next link.', 'ปริศนายาวคือเป้าหมายสั้นๆ ที่ต่อกันเป็นลูกโซ่ แต่ละจุดตรวจคือหนึ่งห่วง: เปิดที่ว่าง ปลดบล็อก แล้วขยับตัวแดงหนึ่งก้าว ไม่ต้องมองเห็นเฉลยทั้งหมด แค่ห่วงถัดไปก็พอ'],
-      tips: [['That was one link of the chain. Name the next blocker, then bring a gap to it.', 'นั่นคือหนึ่งห่วงของลูกโซ่ ตั้งชื่อตัวขวางถัดไป แล้วพาช่องว่างไปหามัน'], ['Each checkpoint is smaller than the whole puzzle. Keep your eyes on the dashed outline.', 'แต่ละจุดตรวจเล็กกว่าปริศนาทั้งหมด จับตาที่เส้นประไว้']],
-      why: [['A long solution is just short goals in a row.', 'เฉลยที่ยาวก็คือเป้าหมายสั้นๆ เรียงต่อกัน'], ['At each link: find the blocker, make room, move red.', 'ทุกห่วง: หาตัวขวาง เปิดที่ว่าง ขยับตัวแดง'], ['You do not need the whole plan, only the next link.', 'ไม่ต้องมีแผนทั้งหมด แค่ห่วงถัดไป']] }
+      idea: ['Sometimes a long block is in the way and cannot leave in a straight line. Step it aside into a joined pair of gaps, let the other block go by, then step it back if you need to.', 'บางทีบล็อกยาวก็ขวางทางอยู่และออกไปตรงๆ ไม่ได้ ให้เลื่อนมันหลบเข้าไปในช่องว่างคู่ รอให้บล็อกอื่นผ่านไปก่อน แล้วค่อยเลื่อนกลับถ้าจำเป็น'],
+      tips: [['Stepping a long block aside makes a lane. Plan where it will come back.', 'การเลื่อนบล็อกยาวหลบข้างคือการเปิดทางให้ตัวอื่น ลองวางแผนไว้ด้วยว่าจะเลื่อนกลับตรงไหน'], ['A sideways step needs two gaps first, so join them before you move it.', 'จะหลบข้างได้ต้องมีช่องว่างสองช่องก่อน จัดช่องว่างให้ติดกันก่อนแล้วค่อยเลื่อน']],
+      why: [['A long block was in the way and could not leave in a straight line.', 'บล็อกยาวขวางทางอยู่ และออกไปตรงๆ ไม่ได้'], ['It stepped aside into a joined pair of gaps.', 'มันเลยหลบเข้าไปในช่องว่างคู่'], ['That opened a lane for the next block to pass.', 'ทางที่เปิดออกมา ทำให้บล็อกถัดไปผ่านไปได้']] },
+    master: { name: ['Chain the sub-goals', 'แบ่งเป็นเป้าหมายย่อยทีละข้อ'],
+      idea: ['A long puzzle is a chain of short ones. Each checkpoint is one link: make room, free a block, move red a step. Do not try to see the whole solution, only the next link.', 'ปริศนายาวๆ ก็คือปริศนาสั้นๆ หลายข้อต่อกัน แต่ละจุดตรวจคือหนึ่งข้อ: เปิดที่ว่าง ปลดบล็อก แล้วขยับตัวแดงไปอีกก้าว ไม่ต้องพยายามมองเฉลยทั้งหมด โฟกัสแค่ข้อถัดไปก็พอ'],
+      tips: [['That was one link of the chain. Name the next blocker, then bring a gap to it.', 'ไปอีกหนึ่งข้อแล้ว ลองดูว่าตัวไหนขวางอยู่ถัดไป แล้วพาช่องว่างไปหามัน'], ['Each checkpoint is smaller than the whole puzzle. Keep your eyes on the dashed outline.', 'แต่ละจุดตรวจเล็กกว่าปริศนาทั้งด่านมาก จ้องที่เส้นประไว้ก็พอ']],
+      why: [['A long solution is just short goals in a row.', 'เฉลยยาวๆ ก็แค่เป้าหมายสั้นๆ เรียงต่อกัน'], ['At each link: find the blocker, make room, move red.', 'ทุกข้อทำเหมือนกัน: หาตัวที่ขวาง เปิดที่ว่าง ขยับตัวแดง'], ['You do not need the whole plan, only the next link.', 'ไม่ต้องมีแผนทั้งหมด แค่รู้ว่าข้อถัดไปคืออะไร']] }
   };
   function lsT(d, key) { var a = LS_TXT[d.tier][key]; return L(a[0], a[1]); }
   function tierRange(k) { // 1-based level numbers of a tier
@@ -1242,7 +1242,7 @@ store.set('hr_bk', bk);
   function lessonCount() { return LESSONS.filter(function (d, i) { return lessonsDone[i + 1]; }).length; }
   function renderLessonCard() {
     var n = lessonCount();
-    $('lsCount').textContent = L(n + '/' + LESSONS.length + ' done · Starter to Master', 'ผ่านแล้ว ' + n + '/' + LESSONS.length + ' · เริ่มต้นถึงปรมาจารย์');
+    $('lsCount').textContent = L(n + '/' + LESSONS.length + ' done · Starter to Master', 'ผ่านแล้ว ' + n + '/' + LESSONS.length + ' บท · จากเริ่มต้นถึงปรมาจารย์');
     $('lsProg').style.width = (n / LESSONS.length * 100) + '%';
   }
   function showLessons() {
@@ -1256,7 +1256,7 @@ store.set('hr_bk', bk);
       var done = !!lessonsDone[i + 1], gr = gradeOf(d.par).name, rg = tierRange(d.tier);
       return '<button class="lsrow' + (done ? ' done' : '') + (i === nextIdx ? ' next' : '') + '" data-i="' + i + '">' +
         '<span class="num">' + (done ? '✓' : i + 1) + '</span><span class="txt"><b>' + gr + ' · ' + lsT(d, 'name') + '</b>' +
-        '<small>' + L('Levels ' + rg[0] + '–' + rg[1] + ' · about ' + d.par + ' moves', 'ด่าน ' + rg[0] + '–' + rg[1] + ' · ราว ' + d.par + ' ครั้ง') + '</small></span><span class="go" aria-hidden="true">›</span></button>';
+        '<small>' + L('Levels ' + rg[0] + '–' + rg[1] + ' · about ' + d.par + ' moves', 'ด่าน ' + rg[0] + '–' + rg[1] + ' · ประมาณ ' + d.par + ' ครั้ง') + '</small></span><span class="go" aria-hidden="true">›</span></button>';
     }).join('');
     renderLessonCard();
   }
@@ -1271,9 +1271,9 @@ store.set('hr_bk', bk);
   }
   function lessonCard(d, cp) { // the card for the checkpoint just reached (cp = number reached, 1-based)
     var N = d.cps.length, c = d.cps[cp - 1], kinds = moveKinds(c.mv), T = LS_TXT[d.tier], body;
-    if (!kinds.length) body = L('Red could slide straight there — nothing had to move first.', 'ตัวแดงเลื่อนไปถึงได้เลย ไม่ต้องเลื่อนบล็อกอื่นก่อน');
-    else if (kinds.length === 1 && c.mv.S > 0) body = L('You made room using only small blocks — they carry the gaps.', 'คุณเปิดที่ว่างด้วยบล็อกเล็กล้วนๆ — บล็อกเล็กพาช่องว่างไปได้');
-    else body = L('You made room with ' + kinds.join(', ') + (kinds.length > 1 ? ' blocks' : ' blocks') + '.', 'คุณเปิดที่ว่างด้วย' + kinds.join('และ'));
+    if (!kinds.length) body = L('Red could slide straight there — nothing had to move first.', 'ตัวแดงเลื่อนไปถึงได้เลย ไม่ต้องขยับบล็อกอื่นก่อน');
+    else if (kinds.length === 1 && c.mv.S > 0) body = L('You made room using only small blocks — they carry the gaps.', 'คุณเปิดทางด้วยบล็อกเล็กล้วนๆ บล็อกเล็กนี่แหละที่ช่วยพาช่องว่างไปได้');
+    else body = L('You made room with ' + kinds.join(', ') + (kinds.length > 1 ? ' blocks' : ' blocks') + '.', 'คุณเปิดทางด้วย' + kinds.join('และ'));
     var tip = T.tips[(cp - 1) % T.tips.length];
     return { head: '✓ ' + L('Checkpoint ' + cp + ' of ' + N, 'จุดตรวจที่ ' + cp + ' จาก ' + N), body: body, why: L(tip[0], tip[1]) };
   }
@@ -1284,6 +1284,27 @@ store.set('hr_bk', bk);
     g.style.width = (2 * cell - 2 * GAP) + 'px'; g.style.height = (2 * cell - 2 * GAP) + 'px';
     g.style.transform = 'translate(' + (PAD + c * cell + GAP) + 'px,' + (PAD + r * cell + GAP) + 'px)';
   }
+  // Where does the optimal line from the current position move the red block next? Solved a moment after each move (like the
+  // on-track feedback) so dragging stays smooth; cached per position. null until known.
+  function lessonNext(d) {
+    var g = gridOf(), k = Sol.key(g);
+    if (!G.lg) G.lg = {};
+    if (G.lg[k] !== undefined) return G.lg[k];
+    if (G.phase === 'play' && G.lgBusy !== k) {
+      G.lgBusy = k; var g0 = G;
+      setTimeout(function () {
+        if (G !== g0 || G.phase !== 'play') return;
+        var line = Sol.solve(g), cur = g, dest = null, i;
+        for (i = 0; line && i < line.length && !dest; i++) {
+          if (line[i].t === 'R') dest = { r: line[i].r + line[i].dr * line[i].k, c: line[i].c + line[i].dc * line[i].k };
+          cur = Sol.slide(cur, { t: line[i].t, r: line[i].r, c: line[i].c }, line[i].dr, line[i].dc, line[i].k);
+        }
+        G.lg[k] = dest; G.lgBusy = null;
+        if (Sol.key(gridOf()) === k) lessonRender();
+      }, 20);
+    }
+    return null;
+  }
   function lessonRender() {
     var on = !!(G && G.lv && G.lv.lesson && G.phase !== 'design');
     $('lsBar').classList.toggle('hidden', !on); $('lsNote').classList.toggle('hidden', !on);
@@ -1291,15 +1312,19 @@ store.set('hr_bk', bk);
     var d = LESSONS[G.lv.lesson - 1], N = d.cps.length, cp = Math.min(G.cp || 0, N), segs = '', i, over = G.phase === 'won';
     for (i = 0; i < N; i++) segs += '<span' + (i < cp ? ' class="on"' : '') + '></span>';
     $('lsSegs').innerHTML = segs;
-    if (over) { $('lsGoal').innerHTML = '<b>' + L('Lesson complete', 'จบบทเรียน') + '</b>'; lessonGhost(null); }
+    if (over) { $('lsGoal').innerHTML = '<b>' + L('Lesson complete', 'จบบทเรียนแล้ว') + '</b>'; lessonGhost(null); }
     else {
-      var last = cp >= N - 1;
-      $('lsGoal').innerHTML = last ? '<b>' + L('Last goal', 'เป้าหมายสุดท้าย') + '</b> · ' + L('slide the red square out through the exit.', 'เลื่อนสี่เหลี่ยมแดงออกทางทางออก')
-        : '<b>' + L('Goal ' + (cp + 1) + ' of ' + N, 'เป้าหมายที่ ' + (cp + 1) + ' จาก ' + N) + '</b> · ' + L('get the red square onto the dashed outline.', 'พาสี่เหลี่ยมแดงไปที่กรอบเส้นประ');
-      lessonGhost(d.cps[cp].r, d.cps[cp].c);
+      // The dashed outline is where the optimal line from the CURRENT position moves red next (the same line Hint explains),
+      // so after a detour it never points somewhere the hint is not heading. It is "Goal k of N" only while that square is also
+      // the next fixed checkpoint (the bar and cards are about those); otherwise it is just the next goal.
+      var gh = lessonNext(d), nx = d.cps[Math.min(cp, N - 1)];
+      var toExit = gh ? (gh.r === 3 && gh.c === 1) : cp >= N - 1, onTrack = gh && gh.r === nx.r && gh.c === nx.c;
+      $('lsGoal').innerHTML = toExit ? '<b>' + L('Last goal', 'เป้าหมายสุดท้าย') + '</b> · ' + L('slide the red square out through the exit.', 'เลื่อนสี่เหลี่ยมแดงออกไปที่ EXIT')
+        : '<b>' + (onTrack ? L('Goal ' + (cp + 1) + ' of ' + N, 'เป้าหมายที่ ' + (cp + 1) + ' จาก ' + N) : L('Next goal', 'เป้าหมายถัดไป')) + '</b> · ' + L('get the red square onto the dashed outline.', 'เลื่อนสี่เหลี่ยมแดงไปให้ตรงกรอบเส้นประ');
+      if (gh) lessonGhost(gh.r, gh.c); else lessonGhost(nx.r, nx.c);
     }
     var head, body, why;
-    if (cp === 0) { head = L('The idea · ', 'แนวคิด · ') + lsT(d, 'name'); body = lsT(d, 'idea'); why = L('Stuck? Tap Hint: it explains the next step, same as in every level.', 'ติดอยู่? แตะคำใบ้: อธิบายขั้นถัดไปเหมือนในทุกด่าน'); }
+    if (cp === 0) { head = L('The idea · ', 'แนวคิด · ') + lsT(d, 'name'); body = lsT(d, 'idea'); why = L('Stuck? Tap Hint: it explains the next step, same as in every level.', 'ติดอยู่ตรงไหน? แตะ “คำใบ้” ได้เลย จะอธิบายขั้นต่อไปให้ เหมือนในด่านทั่วไป'); }
     else { var cd = lessonCard(d, Math.min(cp, N - 1) || 1); head = cd.head; body = cd.body; why = cd.why; }
     $('lsNoteHead').textContent = head; $('lsNoteBody').textContent = body; $('lsNoteWhy').textContent = why;
   }
@@ -1326,16 +1351,21 @@ store.set('hr_bk', bk);
       beep(784, 0.12); setTimeout(function () { beep(988, 0.18); }, 130);
     }, 250);
     setTimeout(function () {
+      lessonWinText();
+      openDlg('win', n < LESSONS.length ? '#nextBtn' : '#lsTry');
+    }, 950);
+  }
+  // The complete card's text: also redrawn when the language is switched while it is open
+  function lessonWinText() {
+    var n = G.lv.lesson, d = LESSONS[n - 1];
       var T = LS_TXT[d.tier], hasNext = n < LESSONS.length;
-      $('winTitle').textContent = L('Lesson complete', 'จบบทเรียน');
+      $('winTitle').textContent = L('Lesson complete', 'จบบทเรียนแล้ว!');
       $('winStars').textContent = '✓';
       $('winInfo').innerHTML = '<b>' + lsT(d, 'name') + '</b><ul class="lswhy">' + T.why.map(function (w, i) { return '<li><i>' + (i + 1) + '</i><span>' + L(w[0], w[1]) + '</span></li>'; }).join('') + '</ul>';
       $('dWin').classList.add('hidden');
-      var tr = $('lsTry'); tr.classList.remove('hidden'); tr.textContent = L('Now try a real ' + gradeOf(d.par).name + ' level', 'ลองด่าน' + gradeOf(d.par).name + 'ของจริง');
+      var tr = $('lsTry'); tr.classList.remove('hidden'); tr.textContent = L('Now try a real ' + gradeOf(d.par).name + ' level', 'ลองเล่นด่าน' + gradeOf(d.par).name + 'จริงๆ');
       $('menuBtn').textContent = L('Lessons', 'บทเรียน');
-      $('nextBtn').textContent = L('Next tier', 'ระดับถัดไป'); $('nextBtn').classList.toggle('hidden', !hasNext);
-      openDlg('win', hasNext ? '#nextBtn' : '#lsTry');
-    }, 950);
+      $('nextBtn').textContent = L('Next tier', 'ไปบทถัดไป'); $('nextBtn').classList.toggle('hidden', !hasNext);
   }
   $('lsTry').onclick = function () { // first level of this tier you have not cleared yet (or its first level)
     if (!G || !G.lv.lesson) return;
@@ -1479,7 +1509,8 @@ store.set('hr_bk', bk);
     if (G.phase === 'design') { $('lvTitle').textContent = G.editing ? L('Edit stage ', 'แก้ไขด่าน ') + G.editing : L('Design stage', 'ออกแบบด่าน'); renderAll(); designCheck(); renderStages(); return; }
     $('lvTitle').textContent = levelTitle(G.lv, G.idx);
     if (G.msg) G.msg = '';
-    renderStatus();
+    renderStatus(); lessonRender();
+    if (G.lv.lesson && G.phase === 'won' && !$('win').classList.contains('hidden')) lessonWinText();
     if (G.phase === 'play' && G.hint && !$('tip').classList.contains('hidden')) showHint(G.hint);
     if (G.phase === 'solution' && G.sol) renderSol();
   }
