@@ -680,3 +680,7 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
 .frres .goldtxt{color:#c9971a;font-weight:700}
 .frres .btn{min-height:44px}
 .frres .btn:disabled{opacity:.7}
+
+.howhead .hidetxt{font-size:13px;color:var(--muted);text-decoration:underline}
+.about .apage ol{font-size:13.5px;line-height:1.55;padding-left:20px;margin:6px 0 10px;color:var(--text2)}
+.about .apage ol b{color:var(--text)}

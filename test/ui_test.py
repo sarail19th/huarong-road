@@ -514,24 +514,26 @@ def about(p):
     assert page.locator('#about').is_hidden()
     page.click('#aboutBtn')
     assert page.locator('#about').is_visible()
-    pages = page.locator('#about .apage'); n = pages.count(); assert n == 4
+    pages = page.locator('#about .apage'); n = pages.count(); assert n == 5
     assert page.locator('#aPrev').is_disabled() and page.locator('#aNext').is_enabled()
     seen_txt = ''
     for k in range(n):
         assert page.locator('#about .apage:visible').count() == 1, 'exactly one page visible'
         seen_txt += page.locator('#about .apage:visible').inner_text()
-        if k == 1: page.wait_for_timeout(400); page.screenshot(path=f'{SHOTS}/about_en.png')
+        if k == 2: page.wait_for_timeout(400); page.screenshot(path=f'{SHOTS}/about_en.png')
+        if k == 0: assert 'How to play' in seen_txt and 'Set up' in seen_txt and 'Stars' in seen_txt, 'page 1 = How to play'
         if k < n - 1: page.click('#aNext')
     assert page.locator('#aNext').is_disabled() and page.locator('#aboutClose').is_visible()
-    for w in ('Cao Cao', 'Guan Yu', 'Huarong Road', 'Klotski', '25,955', '81'): assert w in seen_txt, w
-    page.click('#aPrev'); page.click('#aPrev'); page.click('#aPrev'); assert page.locator('#aPrev').is_disabled()
-    page.locator('#aDots i').nth(2).click()     # dots jump straight to a page
+    for w in ('Set up', 'Cao Cao', 'Guan Yu', 'Huarong Road', 'Klotski', '25,955', '81'): assert w in seen_txt, w
+    for _ in range(4): page.click('#aPrev')
+    assert page.locator('#aPrev').is_disabled()
+    page.locator('#aDots i').nth(3).click()     # dots jump straight to a page
     assert 'Why' in page.locator('#about .apage:visible h4').inner_text() and page.locator('#about .apage:visible').count() == 1
     page.locator('#aDots i').nth(0).click()
     sw = lambda c: page.locator(f'#about .sw.{c}').bounding_box()
-    page.locator('#aDots i').nth(1).click()
+    page.locator('#aDots i').nth(2).click()
     h, v = sw('H'), sw('V'); assert h['width'] > h['height'] and v['height'] > v['width'], 'wide block swatch is wide, tall block swatch is tall'
-    page.locator('#aDots i').nth(0).click()
+    page.locator('#aDots i').nth(1).click()
     page.locator('#about .lang-btn').click()      # switch language from inside the panel; stays on the same page
     assert 'ศึกผาแดง' in page.locator('#about').inner_text() and 'เซ็กเพ็ก' not in page.locator('#about').inner_text(), 'Red Cliffs is ศึกผาแดง in Thai'
     assert page.evaluate("() => getComputedStyle(document.querySelector('#about .apage p')).textAlign") == 'justify'
@@ -539,9 +541,9 @@ def about(p):
         for nm in page.locator('#about .apage:visible .nw').all():
             r = nm.evaluate("e => e.getClientRects().length"); assert r == 1, ('name split over lines', nm.inner_text())
         page.click('#aNext')
-    for _ in range(3): page.click('#aPrev')
-    th = page.locator('#about').inner_text()
-    assert 'โจโฉ' in th and 'กวนอู' in th and 'เกี่ยวกับเกมนี้' in th and 'The story' not in th
+    for _ in range(4): page.click('#aPrev')
+    page.click('#aNext'); th = page.locator('#about').inner_text()
+    assert 'โจโฉ' in th and 'กวนอู' in th and 'ช่วยเหลือและเกี่ยวกับเกม' in th and 'The story' not in th
     assert page.locator('#about').is_visible(), 'panel stays open when the language changes'
     page.screenshot(path=f'{SHOTS}/about_th.png')
     page.click('#aNext'); page.click('#aNext'); page.click('#aNext')
@@ -552,7 +554,7 @@ def about(p):
     page.click('#aboutBtn'); page.keyboard.press('Escape'); assert page.locator('#about').is_hidden()
     page.click('#aboutBtn'); page.mouse.click(5, 5); assert page.locator('#about').is_hidden(), 'backdrop tap closes'
     toggle_lang(page)      # back to English; panel is English again
-    page.click('#aboutBtn'); assert 'The story' in page.locator('#about').inner_text() and page.locator('#aPrev').is_disabled()
+    page.click('#aboutBtn'); assert 'Set up' in page.locator('#about .apage:visible').inner_text() and page.locator('#aPrev').is_disabled(), 'opens on How to play'
     ctx.close()
     assert not errors, errors
 
@@ -564,19 +566,20 @@ def controls(p):
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
     page.add_init_script("window.__vib = []; navigator.vibrate = function (ms) { window.__vib.push(ms); return true; };")
     page.goto(URL)
-    # How to play: open at first, folds away, remembered, saves space, Thai heading
+    # How to play: shown inline to a brand-new player, hidden for good once dismissed; always reachable from ? (page 1)
     assert 'How to play' in page.locator('#howToggle').inner_text() and page.locator('#howBody').is_visible()
-    assert page.locator('#howToggle').get_attribute('aria-expanded') == 'true'
     y_open = page.locator('.lv').first.bounding_box()['y']
     page.click('#howToggle')
-    assert page.locator('#howBody').is_hidden() and page.locator('#howToggle').get_attribute('aria-expanded') == 'false'
-    assert page.locator('.lv').first.bounding_box()['y'] < y_open - 80, 'levels move up when the panel is folded'
+    assert page.locator('#howto').is_hidden() and 'under the ? button' in page.inner_text('#toast')
+    assert page.locator('.lv').first.bounding_box()['y'] < y_open - 80, 'levels move up when the panel is hidden'
     assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_howto'))") is False
-    page.reload(); assert page.locator('#howBody').is_hidden(), 'folded state survives a reload'
-    toggle_lang(page); assert page.locator('#howToggle').inner_text().strip() == 'วิธีเล่น'; page.click('#howToggle'); assert 'ตั้งค่า' in page.locator('#howBody').inner_text()
-    toggle_lang(page); assert page.locator('#howBody').is_visible() and page.locator('#howToggle').inner_text().strip() == 'How to play'
-    page.click('#howToggle'); assert page.locator('#howBody').is_hidden()
-    page.click('#howToggle'); assert page.locator('#howBody').is_visible() and 'Set up' in page.locator('#howBody').inner_text()
+    page.reload(); assert page.locator('#howto').is_hidden(), 'hidden state survives a reload'
+    page.click('#aboutBtn'); assert 'Set up' in page.locator('#about .apage:visible').inner_text(); page.click('#aboutClose')
+    toggle_lang(page); page.click('#aboutBtn'); assert 'ตั้งค่า' in page.locator('#about .apage:visible').inner_text() and 'ดาว' in page.locator('#about .apage:visible').inner_text(); page.click('#aboutClose'); toggle_lang(page)
+    # an experienced player (has a record) never sees it inline even if never dismissed
+    page.evaluate("() => { localStorage.setItem('hr_howto', 'true'); localStorage.setItem('hr_progress', JSON.stringify({'1': {stars: 3, moves: 2, time: 1}})); }"); page.reload()
+    assert page.locator('#howto').is_hidden(), 'hidden once something is cleared'
+    page.evaluate("() => { localStorage.removeItem('hr_progress'); }"); page.reload(); assert page.locator('#howto').is_visible(), 'fresh player sees it'
     # header: title shares the row with ? and the gear; one-line centred subtitle; star icon on the stars line
     tb = page.locator('#menu h1').bounding_box(); ab = page.locator('#aboutBtn').bounding_box(); gb0 = page.locator('#menu .settings-btn').bounding_box()
     assert abs((tb['y'] + tb['height'] / 2) - (ab['y'] + ab['height'] / 2)) < 10 and abs((tb['y'] + tb['height'] / 2) - (gb0['y'] + gb0['height'] / 2)) < 10, 'title on the same row as the buttons'

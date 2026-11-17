@@ -311,6 +311,7 @@ store.set('hr_bk', bk);
   }
 
   function renderMenu() {
+    if (typeof howOpen !== 'undefined' && typeof renderHow === 'function') renderHow();
     var wrap = $('levels'); wrap.innerHTML = '';
     var last = null, row = null, total = 0, nSilver = 0;
     LV.forEach(function (lv, i) {
@@ -1498,8 +1499,12 @@ store.set('hr_bk', bk);
 
   // "How to play" folds away for players who know the game; the choice is remembered (open on first launch)
   var howOpen = store.get('hr_howto', true);
-  function renderHow() { $('howto').classList.toggle('closed', !howOpen); $('howToggle').setAttribute('aria-expanded', howOpen); }
-  $('howToggle').onclick = function () { howOpen = !howOpen; store.set('hr_howto', howOpen); renderHow(); };
+  // The rules live in Help & About (? button). The menu shows them only to a brand-new player (nothing cleared yet) who hasn't hidden them.
+  function renderHow() {
+    var fresh = !Object.keys(progress).length && !Object.keys(silver).length;
+    $('howto').classList.toggle('hidden', !(howOpen && fresh));
+  }
+  $('howToggle').onclick = function () { howOpen = false; store.set('hr_howto', false); renderHow(); toast(L('How to play is now under the ? button', 'วิธีเล่นอยู่ใต้ปุ่ม ? แล้ว')); };
   renderHow();
 
   /* ---------- about: the story behind the name ---------- */
