@@ -1416,6 +1416,21 @@ store.set('hr_bk', bk);
         (G.hints ? ' · ' + L('Hints ', 'คำใบ้ ') + G.hints : '') + (bestLine ? '<span class="best">' + bestLine + '</span>' : '') +
         (seen[G.lv.id] ? '<br>' + L('Solution viewed — no stars for this level', 'ดูเฉลยแล้ว — ด่านนี้ไม่ได้ดาว') : '');
       renderBest();
+      // stress-free clear: the count stays hidden; the player may peek and choose to also record gold stars
+      var frOk = free && rec && !G.lv.daily && !seen[G.lv.id], gold = { stars: Math.max(st, prev ? prev.stars : 0), moves: Math.min(G.moves, prev ? prev.moves : 1e9), time: Math.min(G.elapsed, prev ? prev.time : 1e12) };
+      var frCan = !prev || st > prev.stars || G.moves < prev.moves;
+      $('frev').classList.toggle('hidden', !frOk); $('frSee').classList.remove('hidden'); $('frRes').classList.add('hidden');
+      $('frSee').onclick = function () {
+        $('frSee').classList.add('hidden'); $('frRes').classList.remove('hidden');
+        $('frTxt').innerHTML = L('Moves ', 'Moves ') + '<b>' + G.moves + '</b> (par ' + par + ') · <span class="goldtxt">' + stars(st) + '</span>' +
+          (prev && !frCan ? '<br>' + L('Your gold record is already as good or better.', 'สถิติดาวทองของคุณดีเท่าหรือดีกว่านี้แล้ว') : '');
+        $('frGold').classList.toggle('hidden', !frCan);
+        $('frGold').disabled = false; $('frGold').textContent = L('Also record as gold ' + stars(st), 'บันทึกเป็นดาวทองด้วย ' + stars(st));
+        $('frGold').onclick = function () {
+          progress[G.lv.id] = gold; store.set('hr_progress', progress); keepStorage();
+          $('frGold').disabled = true; $('frGold').textContent = L('Gold recorded ✓', 'บันทึกดาวทองแล้ว ✓'); renderBest(); var bs = $('winInfo').querySelector('.best'); if (bs) bs.textContent = L('Silver star + gold ' + stars(st) + ' recorded.', 'ดาวเงิน + ดาวทอง ' + stars(st) + ' บันทึกแล้ว');
+        };
+      };
       var daily = !!G.lv.daily, hasNext = G.idx >= 0 && G.idx + 1 < LV.length;
       plainWinButtons();
       $('menuBtn').textContent = G.lv.fromList ? L('My stages', 'ด่านของฉัน') : G.lv.design ? L('Edit', 'แก้ไข') : L('Levels', 'ด่าน');

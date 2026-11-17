@@ -673,3 +673,10 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
 .sidetiles .dscard::after{content:"›";position:absolute;right:12px;top:8px;font-size:20px;line-height:1;color:var(--muted)}
 .sidetiles .dsinfo{width:100%}
 .sidetiles .dsinfo span#lsCount,.sidetiles .dsinfo span#dsCount{font-size:12px;line-height:1.3}
+
+.frev{margin:6px 0 10px;text-align:center}
+.linkbtn{background:none;border:0;color:var(--accent);font:inherit;font-size:14px;text-decoration:underline;min-height:44px;padding:0 12px;cursor:pointer}
+.frres p{margin:4px 0 8px;font-size:14px;color:var(--text2,inherit)}
+.frres .goldtxt{color:#c9971a;font-weight:700}
+.frres .btn{min-height:44px}
+.frres .btn:disabled{opacity:.7}

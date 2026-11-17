@@ -844,6 +844,9 @@ def stressfree(p):
     info = page.inner_text('#winInfo'); assert 'Moves' not in info and 'Silver star' in info and 'par' not in info.lower(), info
     assert page.evaluate("() => localStorage.getItem('hr_progress')") in (None, '{}'), 'silver clear writes no gold progress'
     sv = page.evaluate("() => JSON.parse(localStorage.getItem('hr_silver'))"); assert len(sv) == 1, sv
+    assert page.locator('#frev').is_visible() and page.locator('#frRes').is_hidden() and 'Moves' not in page.inner_text('#winInfo'), 'count stays hidden until asked'
+    page.click('#frSee'); assert page.locator('#frRes').is_visible() and 'Moves 2' in page.inner_text('#frTxt') and 'par 2' in page.inner_text('#frTxt') and page.locator('#frGold').is_visible()
+    assert page.evaluate("() => localStorage.getItem('hr_progress')") in (None, '{}'), 'peeking records nothing'
     page.click('#menuBtn'); page.wait_for_selector('#menu:not(.hidden)')
     assert page.locator('.lv.silver').count() == 1 and page.locator('.lv.done').count() == 0
     assert page.inner_text('#totalStars').startswith('0 / 300') and 'silver' in page.inner_text('#totalStars'), page.inner_text('#totalStars')
@@ -864,11 +867,24 @@ def stressfree(p):
     settings(page); page.click('#freeBtn'); settings(page, False)
     lv(page, 0).click(); page.click('#startBtn'); solve_on_board(page, 0)
     assert 'gold record is unchanged' in page.inner_text('#winInfo')
+    page.click('#frSee'); assert 'already as good' in page.inner_text('#frTxt') and page.locator('#frGold').is_hidden(), 'no gold button when nothing to improve'
     assert page.evaluate("() => Object.values(JSON.parse(localStorage.getItem('hr_progress')))[0].stars") == 3
     page.click('#menuBtn'); page.wait_for_selector('#menu:not(.hidden)')
     # menu: Continue button goes to the first level that is neither gold nor silver; a solved daily collapses
     assert page.locator('#contBtn').is_visible() and 'Level 2' in page.inner_text('#contBtn'), page.inner_text('#contBtn')
     page.click('#contBtn'); page.wait_for_selector('#game:not(.hidden)'); assert 'Level 2' in page.inner_text('#lvTitle'); page.click('#backBtn'); page.wait_for_selector('#menu:not(.hidden)')
+    # stress-free clear of level 2: peek, then choose to also record gold; silver stays, win card stays silver
+    lv(page, 1).click(); page.click('#startBtn'); solve_on_board(page, 1)
+    assert page.locator('#frev').is_visible(); page.click('#frSee'); assert 'Also record as gold ★★★' in page.inner_text('#frGold')
+    page.click('#frGold'); assert page.locator('#frGold').is_disabled() and 'recorded' in page.inner_text('#frGold')
+    assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_progress'))['2'].stars") == 3
+    assert 'silver' in (page.get_attribute('#winStars', 'class') or '') and '2' in page.evaluate("() => Object.keys(JSON.parse(localStorage.getItem('hr_silver')))")
+    page.screenshot(path=f'{SHOTS}/free_reveal.png')
+    page.click('#menuBtn'); page.wait_for_selector('#menu:not(.hidden)'); assert page.locator('.lv.done').count() == 2
+    # a normal (counted) clear never shows the reveal
+    settings(page); page.click('#freeBtn'); settings(page, False)
+    lv(page, 2).click(); page.click('#startBtn'); solve_on_board(page, 2); assert page.locator('#frev').is_hidden(); page.click('#menuBtn'); page.wait_for_selector('#menu:not(.hidden)')
+    settings(page); page.click('#freeBtn'); settings(page, False)
     # Thai
     toggle_lang(page); settings(page); assert 'นับจำนวนครั้ง' in page.inner_text('#freeBtn'); settings(page, False); toggle_lang(page)
     # reset all clears silver too

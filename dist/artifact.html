@@ -674,6 +674,13 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
 .sidetiles .dscard::after{content:"›";position:absolute;right:12px;top:8px;font-size:20px;line-height:1;color:var(--muted)}
 .sidetiles .dsinfo{width:100%}
 .sidetiles .dsinfo span#lsCount,.sidetiles .dsinfo span#dsCount{font-size:12px;line-height:1.3}
+
+.frev{margin:6px 0 10px;text-align:center}
+.linkbtn{background:none;border:0;color:var(--accent);font:inherit;font-size:14px;text-decoration:underline;min-height:44px;padding:0 12px;cursor:pointer}
+.frres p{margin:4px 0 8px;font-size:14px;color:var(--text2,inherit)}
+.frres .goldtxt{color:#c9971a;font-weight:700}
+.frres .btn{min-height:44px}
+.frres .btn:disabled{opacity:.7}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -1074,6 +1081,10 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
     <h2 id="winTitle">Cleared!</h2>
     <div class="big" id="winStars">★★★</div>
     <p id="winInfo"></p>
+    <div class="frev hidden" id="frev">
+      <button class="linkbtn" id="frSee" data-th="ดูจำนวนครั้งที่เดิน">See my moves</button>
+      <div class="frres hidden" id="frRes" aria-live="polite"><p id="frTxt"></p><button class="btn" id="frGold"></button></div>
+    </div>
     <div class="dwin hidden" id="dWin"><div class="streakbig" id="dWinStreak"></div><div class="week" id="dWinWeek"></div><p class="next" id="dNext"></p></div>
     <button class="btn go lstry hidden" id="lsTry"></button>
     <div class="row">
@@ -1345,7 +1356,7 @@ store.set('hr_bk', bk);
   function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
   applyMotion(); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = '7fc7903'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = '5657baf'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null, autoTimer = null;
   var els = new Map();
@@ -2731,6 +2742,21 @@ store.set('hr_bk', bk);
         (G.hints ? ' · ' + L('Hints ', 'คำใบ้ ') + G.hints : '') + (bestLine ? '<span class="best">' + bestLine + '</span>' : '') +
         (seen[G.lv.id] ? '<br>' + L('Solution viewed — no stars for this level', 'ดูเฉลยแล้ว — ด่านนี้ไม่ได้ดาว') : '');
       renderBest();
+      // stress-free clear: the count stays hidden; the player may peek and choose to also record gold stars
+      var frOk = free && rec && !G.lv.daily && !seen[G.lv.id], gold = { stars: Math.max(st, prev ? prev.stars : 0), moves: Math.min(G.moves, prev ? prev.moves : 1e9), time: Math.min(G.elapsed, prev ? prev.time : 1e12) };
+      var frCan = !prev || st > prev.stars || G.moves < prev.moves;
+      $('frev').classList.toggle('hidden', !frOk); $('frSee').classList.remove('hidden'); $('frRes').classList.add('hidden');
+      $('frSee').onclick = function () {
+        $('frSee').classList.add('hidden'); $('frRes').classList.remove('hidden');
+        $('frTxt').innerHTML = L('Moves ', 'Moves ') + '<b>' + G.moves + '</b> (par ' + par + ') · <span class="goldtxt">' + stars(st) + '</span>' +
+          (prev && !frCan ? '<br>' + L('Your gold record is already as good or better.', 'สถิติดาวทองของคุณดีเท่าหรือดีกว่านี้แล้ว') : '');
+        $('frGold').classList.toggle('hidden', !frCan);
+        $('frGold').disabled = false; $('frGold').textContent = L('Also record as gold ' + stars(st), 'บันทึกเป็นดาวทองด้วย ' + stars(st));
+        $('frGold').onclick = function () {
+          progress[G.lv.id] = gold; store.set('hr_progress', progress); keepStorage();
+          $('frGold').disabled = true; $('frGold').textContent = L('Gold recorded ✓', 'บันทึกดาวทองแล้ว ✓'); renderBest(); var bs = $('winInfo').querySelector('.best'); if (bs) bs.textContent = L('Silver star + gold ' + stars(st) + ' recorded.', 'ดาวเงิน + ดาวทอง ' + stars(st) + ' บันทึกแล้ว');
+        };
+      };
       var daily = !!G.lv.daily, hasNext = G.idx >= 0 && G.idx + 1 < LV.length;
       plainWinButtons();
       $('menuBtn').textContent = G.lv.fromList ? L('My stages', 'ด่านของฉัน') : G.lv.design ? L('Edit', 'แก้ไข') : L('Levels', 'ด่าน');
