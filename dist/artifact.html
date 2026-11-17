@@ -613,7 +613,7 @@ input.cpr::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:
 .lssegs span.on{background:var(--yellow);border-color:var(--yellow)}
 .lsgoal{font-size:13.5px;line-height:1.4;min-height:2.8em}
 .lsgoal b{font-weight:700}
-.lsnote{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--yellow);border-radius:12px;padding:9px 12px;margin-top:8px;font-size:13.5px;line-height:1.5}
+.lsnote{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--yellow);border-radius:12px;padding:9px 12px;margin-top:8px;font-size:13.5px;line-height:1.5;min-height:172px}
 .lsnote b{display:block;margin-bottom:2px}
 .lsnote span{display:block}
 .lsnote em{display:block;margin-top:4px;color:var(--text2);font-style:normal;font-size:13px}
@@ -1284,7 +1284,7 @@ store.set('hr_bk', bk);
   function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
   applyMotion(); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = '90d9368'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = '83cb854'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null, autoTimer = null;
   var els = new Map();
@@ -2575,19 +2575,19 @@ store.set('hr_bk', bk);
       // the next fixed checkpoint (the bar and cards are about those); otherwise it is just the next goal.
       var gh = lessonNext(d), nx = d.cps[Math.min(cp, N - 1)];
       var toExit = gh ? (gh.r === 3 && gh.c === 1) : cp >= N - 1, onTrack = gh && gh.r === nx.r && gh.c === nx.c;
-      // The outline is where red goes, not a square to chase: red often cannot take that step efficiently until room is made.
-      // Say so, with how many moves come first (the same count Hint gives), or the player ping-pongs red up and down.
-      // Kept short (two lines at most) so the bar never changes height and the board never jumps.
-      var prep = gh ? gh.prep : 0;
-      var how = prep > 0
-        ? L(' Make room first (' + prep + ' move' + (prep === 1 ? '' : 's') + ').', ' ต้องเปิดที่ว่างก่อน (อีก ' + prep + ' ครั้ง)')
-        : (gh ? L(' Slide it now.', ' เลื่อนได้เลย') : '');
-      var html = toExit ? '<b>' + L('Last goal', 'เป้าหมายสุดท้าย') + '</b> · ' + L('red slides out to EXIT.', 'ตัวแดงออกไปที่ EXIT') + how
-        : '<b>' + (onTrack ? L('Goal ' + (cp + 1) + ' of ' + N, 'เป้าหมายที่ ' + (cp + 1) + ' จาก ' + N) : L('Next goal', 'เป้าหมายถัดไป')) + '</b> · ' + L('red goes to the dashed outline.', 'ตัวแดงไปที่กรอบเส้นประ') + how;
+      // The dashed outline is shown ONLY when sliding red there is the right move right now (the best line starts with it).
+      // While room still has to be made it is hidden: a visible target invites chasing it with red alone, and red then
+      // bounces up and down or left and right forever. Short text, fixed two-line height, so the board never jumps.
+      var prep = gh ? gh.prep : 0, ready = !!gh && prep === 0;
+      var head = toExit ? L('Last goal', 'เป้าหมายสุดท้าย') : onTrack ? L('Goal ' + (cp + 1) + ' of ' + N, 'เป้าหมายที่ ' + (cp + 1) + ' จาก ' + N) : L('Next goal', 'เป้าหมายถัดไป');
+      var body = !gh ? ''
+        : ready ? (toExit ? L('slide red out to EXIT now.', 'เลื่อนตัวแดงออกที่ EXIT ได้เลย') : L('slide red onto the dashed outline now.', 'เลื่อนตัวแดงไปที่กรอบเส้นประได้เลย'))
+        : L('make room first: ' + prep + ' move' + (prep === 1 ? '' : 's') + ' before red can step. Hint shows how.', 'เปิดที่ว่างก่อน: อีก ' + prep + ' ครั้งตัวแดงถึงจะขยับได้ ขอคำใบ้ได้');
+      var html = '<b>' + head + '</b>' + (body ? ' · ' + body : '');
       // While the next position is still being solved (~20 ms) keep what is shown: no flash back to an old target
-      if (gh || !G.lgLast) { G.lgLast = { html: html, r: gh ? gh.r : nx.r, c: gh ? gh.c : nx.c }; }
+      if (gh || !G.lgLast) { G.lgLast = { html: html, r: gh ? gh.r : nx.r, c: gh ? gh.c : nx.c, show: ready }; }
       if (G.lgHtml !== G.lgLast.html) { $('lsGoal').innerHTML = G.lgLast.html; G.lgHtml = G.lgLast.html; }
-      lessonGhost(G.lgLast.r, G.lgLast.c);
+      if (G.lgLast.show) lessonGhost(G.lgLast.r, G.lgLast.c); else lessonGhost(null);
     }
     var head, body, why;
     if (cp === 0) { head = L('The idea · ', 'แนวคิด · ') + lsT(d, 'name'); body = lsT(d, 'idea'); why = L('Stuck? Tap Hint: it explains the next step, same as in every level.', 'ติดอยู่ตรงไหน? แตะ “คำใบ้” ได้เลย จะอธิบายขั้นต่อไปให้ เหมือนในด่านทั่วไป'); }

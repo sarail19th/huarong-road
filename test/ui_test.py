@@ -1325,7 +1325,7 @@ def lessons(p):
     assert page.locator('#lsBar').is_visible() and page.locator('#lsNote').is_visible()
     assert page.locator('#solBtn').is_hidden(), 'no Show solution in a lesson'
     assert page.locator('.stats').first.is_hidden(), 'no Moves/Par/Best/clock'
-    assert page.locator('#ghost').count() == 1, 'ghost outline'
+    page.wait_for_timeout(300); assert page.locator('#ghost').count() in (0, 1)
     assert 'Lesson 1 of 6' in page.locator('#lvTitle').inner_text(), page.locator('#lvTitle').inner_text()
     # hint works as in levels
     page.click('#hintBtn'); assert page.locator('#tip').is_visible(); page.click('#hintBtn')
@@ -1411,7 +1411,16 @@ def lessons(p):
     top0 = page.evaluate("() => Math.round(document.getElementById('board').getBoundingClientRect().top)")
     board_top = lambda: page.evaluate("() => Math.round(document.getElementById('board').getBoundingClientRect().top)")
     def expected_ghost(g):
-        return page.evaluate("""(g) => { var line = Solver.solve(g); for (var i = 0; i < line.length; i++) if (line[i].t === 'R') return [line[i].r + line[i].dr * line[i].k, line[i].c + line[i].dc * line[i].k]; return null; }""", g)
+        return page.evaluate("""(g) => { var line = Solver.solve(g); for (var i = 0; i < line.length; i++) if (line[i].t === 'R') return [[line[i].r + line[i].dr * line[i].k, line[i].c + line[i].dc * line[i].k], i]; return [null, 0]; }""", g)
+    def check_guide(g, tag):
+        dest, prep = expected_ghost(g)
+        txt = page.locator('#lsGoal').inner_text().lower()
+        if prep > 0:  # room must be made first: no target to chase, the line says how many moves come first
+            assert page.locator('#ghost').count() == 0, (tag, 'outline must be hidden while room has to be made', txt)
+            assert 'make room first' in txt and (str(prep) + ' move') in txt, (tag, prep, txt)
+        else:         # red's step is the right move now: outline on exactly that square
+            assert page.locator('#ghost').count() == 1 and ghost_cell() == dest, (tag, dest)
+            assert ' now' in txt, (tag, txt)
     def ghost_cell():
         bx = page.locator('#board').bounding_box(); cs = (bx['width'] - 20) / 4
         tr = page.evaluate("() => document.getElementById('ghost').style.transform")
@@ -1425,20 +1434,18 @@ def lessons(p):
         sol0 = page.evaluate("(g) => Solver.solve(g)[0]", state)
         m = next(x for x in reversed(nb) if not (x['t'] == sol0['t'] and x['r'] == sol0['r'] and x['c'] == sol0['c'] and x['dr'] == sol0['dr'] and x['dc'] == sol0['dc'] and x['k'] == sol0['k']))
         lesson_drag(m); state = apply_move(state, m); page.wait_for_timeout(450)
-        assert ghost_cell() == expected_ghost(state), ('detour step', step, ghost_cell(), expected_ghost(state))
+        check_guide(state, ('detour', step))
         assert board_top() == top0, ('board jumped (goal bar changed height)', step, board_top(), top0)
     for step in range(6):
         m = page.evaluate("(g) => Solver.solve(g)[0]", state)
         lesson_drag(m); state = apply_move(state, m); page.wait_for_timeout(450)
         if page.locator('#win:not(.hidden)').count(): break
-        assert ghost_cell() == expected_ghost(state), ('on-line step', step, ghost_cell(), expected_ghost(state))
+        check_guide(state, ('on-line', step))
         assert board_top() == top0, ('board jumped (goal bar changed height)', step, board_top(), top0)
-        first = page.evaluate("(g) => Solver.solve(g)[0].t", state)
-        assert ('Make room first' in page.locator('#lsGoal').inner_text()) == (first != 'R'), ('room text', step, first, page.locator('#lsGoal').inner_text())
     page.click('#backBtn'); page.wait_for_selector('#lessons:not(.hidden)'); page.click('#lsBack')
     # chasing the box with red alone (lesson 3: red up, down, up...) is told to make room first instead of ping-ponging silently
     page.click('#lsOpen'); page.locator('.lsrow').nth(2).click(); page.wait_for_selector('#game:not(.hidden)'); page.wait_for_timeout(400)
-    assert 'Make room first' in page.locator('#lsGoal').inner_text(), page.locator('#lsGoal').inner_text()
+    assert 'make room first' in page.locator('#lsGoal').inner_text().lower() and page.locator('#ghost').count() == 0, page.locator('#lsGoal').inner_text()
     page.click('#backBtn'); page.wait_for_selector('#lessons:not(.hidden)'); page.click('#lsBack')
     # backup carries lesson progress
     ctx.close(); assert not errors, errors
