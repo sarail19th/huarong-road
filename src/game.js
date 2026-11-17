@@ -1622,7 +1622,6 @@ store.set('hr_bk', bk);
       var b = document.createElement('button'); b.type = 'button'; b.dataset.s = s[0];
       b.onclick = function () { ed.d.solid[ed.tab] = s[0] === '1'; edChanged(); }; $('teSolid').appendChild(b);
     });
-    $('teBgToggle').onclick = function () { var open = $('teBgBox').classList.toggle('hidden') === false; $('teBgToggle').setAttribute('aria-expanded', open); renderEdBtns(); if (open) try { $('teBgBox').scrollIntoView({ block: 'nearest' }); } catch (e) {} };
     $('teMoreBtn').onclick = function () { var open = $('teMore').classList.toggle('hidden') === false; $('teMoreBtn').setAttribute('aria-expanded', open); if (!open && ed) ed.del = false; renderEdBtns(); };
     $('teName').oninput = function () { ed.d.name = this.value.slice(0, 24); ed.discard = false; ed.del = false; renderEdBtns(); };
     $('teBack').onclick = teBack;
@@ -1650,7 +1649,7 @@ store.set('hr_bk', bk);
     var t = activeTheme(), d = t ? normTheme(t) : themeFromSkin(skin);
     if (!t) d.name = defaultName(d.base);
     ed = { d: d, id: t ? t.id : null, orig: '', tab: 'R', discard: false, del: false };
-    $('teBgBox').classList.add('hidden'); $('teBgToggle').setAttribute('aria-expanded', 'false'); $('teMore').classList.add('hidden'); $('teMoreBtn').setAttribute('aria-expanded', 'false');
+    $('teMore').classList.add('hidden'); $('teMoreBtn').setAttribute('aria-expanded', 'false');
     ed.orig = JSON.stringify(ed.d);
     renderEd(); openDlg('themeEd', '#teName');
   }
@@ -1681,8 +1680,7 @@ store.set('hr_bk', bk);
     $('teDel').classList.toggle('hidden', !ed.id); $('teDel').textContent = ed.del ? L('Tap again to delete', 'แตะอีกครั้งเพื่อลบ') : L('Delete', 'ลบ');
     $('teDel').classList.toggle('warn', !!ed.del);
     $('teReset').textContent = L('Reset to original', 'กลับเป็นแบบเดิม');
-    var bgOpen = !$('teBgBox').classList.contains('hidden');
-    $('teBgToggle').textContent = L('Board and background colours', 'สีกระดานและพื้นหลัง') + (bgOpen ? '  ⌃' : '  ⌄');
+    $('teBgH').textContent = L('Board and background', 'กระดานและพื้นหลัง');
     $('teMoreBtn').setAttribute('aria-label', L('More: reset or delete', 'เพิ่มเติม: รีเซ็ตหรือลบ'));
   }
   function renderEd() {

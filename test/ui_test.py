@@ -700,7 +700,6 @@ def new_skins(p):
     def pick(key, hexv):  # colour dialog: tap a swatch, then Use color (block colours use the selected tab's row)
         if key in ('R', 'T', 'S'): tab(key); sel = '#cc_chip'
         else:
-            if page.locator('#teBgBox').is_hidden(): page.click('#teBgToggle')
             sel = f'#cc_{key}'
         page.click(sel); page.wait_for_selector('#colorDlg:not(.hidden)')
         page.click(f'#cpSw .cps[data-c="{hexv}"]'); page.click('#cpYes'); page.wait_for_selector('#colorDlg.hidden', state='attached')
@@ -801,16 +800,25 @@ def new_skins(p):
         assert page.inner_text('#cc_fr .chx') == '#112233' and page.locator('#teSolid button[data-s="1"]').get_attribute('aria-pressed') == 'true', ('legacy theme', k)
     page.click('#teBack'); page.click('#teBack') if page.locator('#themeEd:not(.hidden)').count() else None
     ctx.close()
-    # the whole editor fits one phone screen (390 x 844) without scrolling, in English and Thai
+    # nothing is clipped or scrolled sideways: every icon and border option is visible (they wrap), the page scrolls down to the
+    # board/background colours, and the preview + save bar stay pinned (390 x 844, English and Thai)
     for lg in ('en', 'th'):
         c2 = launch(p).new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=1, has_touch=True, is_mobile=True)
         pg = c2.new_page(); pg.add_init_script("localStorage.setItem('hr_howto','false');localStorage.setItem('hr_lang',JSON.stringify('%s'))" % lg)
         pg.goto(URL); settings(pg); pg.click('#custBtn'); pg.wait_for_selector('#themeEd:not(.hidden)')
         for k in ('R', 'T', 'S'):
             pg.click(f'#teTabs button[data-k={k}]')
-            h = pg.evaluate("() => [document.querySelector('.tedcard').scrollHeight, document.getElementById('themeEd').clientHeight]")
-            assert h[0] <= h[1], ('editor needs scrolling', lg, k, h)
+            r = pg.evaluate("""() => {
+              var inner = function (id) { var e = document.getElementById(id); return [e.scrollWidth, e.clientWidth]; };
+              var pan = document.querySelector('.tepanel'), last = document.getElementById('frPick').lastElementChild.getBoundingClientRect(), pb = pan.getBoundingClientRect();
+              return { icoW: inner('icoPick'), frW: inner('frPick'), panelBottomOk: last.bottom <= pb.bottom + 1, panelClipped: pan.scrollHeight > pan.clientHeight + 1,
+                       icons: document.querySelectorAll('#icoPick button').length, doc: document.documentElement.scrollWidth <= window.innerWidth + 1 };
+            }""")
+            assert r['icoW'][0] <= r['icoW'][1] + 1 and r['frW'][0] <= r['frW'][1] + 1, ('sideways scroll', lg, k, r)
+            assert r['panelBottomOk'] and not r['panelClipped'] and r['icons'] == 10 and r['doc'], ('panel clipped', lg, k, r)
             assert pg.locator('#teSave').is_visible() and pg.locator('#teBoard').is_visible()
+        pg.locator('#cc_bg').scroll_into_view_if_needed(); assert pg.locator('#cc_bg').is_visible() and pg.locator('#cc_board').is_visible(), 'board and background colours reachable by scrolling'
+        assert pg.locator('#teSave').is_visible() and pg.locator('#teBoard').is_visible(), 'preview and save bar stay pinned'
         c2.close()
     assert not errs, errs
 
