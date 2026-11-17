@@ -1367,9 +1367,20 @@ def lessons(p):
     # restart resets the bar
     page.click('#restartBtn'); page.click('#rsYes'); page.wait_for_timeout(100)
     assert page.locator('#lsSegs span.on').count() == 0 and 'The idea' in page.locator('#lsNoteHead').inner_text()
+    # Expert lesson: its 2nd checkpoint is the red block's own start square; moving other blocks first must not advance the bar
+    page.click('#backBtn'); page.wait_for_selector('#lessons:not(.hidden)')
+    page.locator('.lsrow').nth(4).click(); page.wait_for_selector('#game:not(.hidden)')
+    sol = page.evaluate("() => Solver.solve(LESSONS[4].g.split('').map(Number))")
+    red_moved = False
+    for m in sol:
+        red_moved = red_moved or m['t'] == 'R'
+        lesson_drag(m)
+        if not red_moved:
+            assert page.locator('#lsSegs span.on').count() == 0, 'moving other blocks must not fill the bar'
+            assert 'Goal 1 of' in page.locator('#lsGoal').inner_text(), page.locator('#lsGoal').inner_text()
+    page.wait_for_selector('#win:not(.hidden)', timeout=8000); page.click('#menuBtn'); page.wait_for_selector('#lessons:not(.hidden)')
+    page.click('#lsBack')
     # backup carries lesson progress
-    page.click('#backBtn'); page.wait_for_selector('#lessons:not(.hidden)'); page.click('#lsBack')
-    code = page.evaluate("() => { var t = document.getElementById('bkOut'); return null; }")
     ctx.close(); assert not errors, errors
 
 with sync_playwright() as p:

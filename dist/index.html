@@ -1293,7 +1293,7 @@ store.set('hr_bk', bk);
   function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
   applyMotion(); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = 'cebf975'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = 'b24a6ce'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null, autoTimer = null;
   var els = new Map();
@@ -2572,8 +2572,11 @@ store.set('hr_bk', bk);
   function lessonCheck() {
     if (!G || !G.lv.lesson || G.phase !== 'play') return;
     var d = LESSONS[G.lv.lesson - 1], red = G.pieces.filter(function (p) { return p.t === 'R'; })[0], i;
-    for (i = d.cps.length - 2; i >= (G.cp || 0); i--)
+    for (i = d.cps.length - 2; i >= (G.cp || 0); i--) {
+      // a later checkpoint on the red block's own start square must not fire before red has moved (only the next goal may)
+      if (i > (G.cp || 0) && d.cps[i].r === d.red0[0] && d.cps[i].c === d.red0[1]) continue;
       if (red && red.r === d.cps[i].r && red.c === d.cps[i].c) { G.cp = i + 1; beep(880, 0.1); buzz(25); break; }
+    }
     lessonRender();
   }
   function winLesson() {

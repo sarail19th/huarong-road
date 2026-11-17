@@ -1307,8 +1307,11 @@ store.set('hr_bk', bk);
   function lessonCheck() {
     if (!G || !G.lv.lesson || G.phase !== 'play') return;
     var d = LESSONS[G.lv.lesson - 1], red = G.pieces.filter(function (p) { return p.t === 'R'; })[0], i;
-    for (i = d.cps.length - 2; i >= (G.cp || 0); i--)
+    for (i = d.cps.length - 2; i >= (G.cp || 0); i--) {
+      // a later checkpoint on the red block's own start square must not fire before red has moved (only the next goal may)
+      if (i > (G.cp || 0) && d.cps[i].r === d.red0[0] && d.cps[i].c === d.red0[1]) continue;
       if (red && red.r === d.cps[i].r && red.c === d.cps[i].c) { G.cp = i + 1; beep(880, 0.1); buzz(25); break; }
+    }
     lessonRender();
   }
   function winLesson() {
