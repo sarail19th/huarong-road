@@ -294,30 +294,38 @@
 
 <div class="overlay hidden full" id="themeEd">
   <div class="card tedcard" role="dialog" aria-modal="true" aria-labelledby="teTitle" tabindex="-1">
-    <div class="tehead"><button type="button" class="btn sm" id="teBack">‹ Back</button><h2 id="teTitle">Customize</h2></div>
-    <p class="custhint" id="teBase"></p>
-    <label class="telab"><span data-th="ชื่อธีม">Theme name</span><input id="teName" type="text" maxlength="24" autocomplete="off"></label>
-    <div class="cpwrap tepv" id="tePrev" aria-hidden="true"><div id="teBoard" class="teboard"></div></div>
+    <div class="tetop">
+      <div class="tehead"><button type="button" class="btn sm" id="teBack">‹ Back</button><h2 id="teTitle" class="sr">Customize</h2><input id="teName" type="text" maxlength="24" autocomplete="off" aria-label="Theme name"></div>
+      <div class="cpwrap tepv" id="tePrev"><div id="teBoard" class="teboard"></div></div>
+      <p class="custhint tecap" id="teBase"></p>
+    </div>
     <p class="custwarn hidden" id="teWarn" role="status"></p>
-    <h3 class="teh" data-th="สี">Colours</h3>
-    <div class="cust" id="teRows"></div>
-    <h3 class="teh" id="teBlockH"></h3>
-    <div class="tetabs" id="teTabs" role="group"></div>
-    <span class="custhint" data-th="ไอคอน">Icon</span>
-    <div class="icopick" id="icoPick"></div>
-    <button type="button" class="btn icono" id="icoNone" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg><span data-th="ไม่มีไอคอน">No icon</span></button>
-    <div class="cust" id="teIcRow"></div>
-    <span class="custhint" data-th="กรอบ">Frame</span>
-    <div class="frpick" id="frPick"></div>
-    <h3 class="teh" data-th="สไตล์">Style</h3>
-    <span class="custhint" data-th="รูปแบบไอคอน">Icon style</span>
-    <div class="tetabs two" id="teSolid" role="group"></div>
-    <div class="cust" id="teFrcRow"></div>
+    <div class="tesec">
+      <span class="custhint" id="teEditing" data-th="กำลังแก้ไข">Editing</span>
+      <div class="tetabs" id="teTabs" role="group"></div>
+    </div>
+    <div class="tepanel">
+      <div class="tept"><b id="teBlockH"></b><div class="cust" id="teRows"></div></div>
+      <div class="tegrp">
+        <div class="cust" id="teIcRow"></div>
+        <div class="tstrip" id="icoPick" role="group"><button type="button" class="icono" id="icoNone" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg><span data-th="ไม่มี">None</span></button></div>
+        <div class="tetabs two" id="teSolid" role="group"></div>
+      </div>
+      <div class="tegrp">
+        <div class="cust" id="teFrcRow"></div>
+        <div class="tstrip frstrip" id="frPick" role="group"></div>
+      </div>
+    </div>
+    <button type="button" class="btn tebgbtn" id="teBgToggle" aria-expanded="false" aria-controls="teBgBox"></button>
+    <div class="cust hidden" id="teBgBox"></div>
+    <div class="temore hidden" id="teMore">
+      <button type="button" class="btn" id="teReset">Reset to original</button>
+      <button type="button" class="btn dangerbtn" id="teDel">Delete</button>
+    </div>
     <div class="tebtns">
       <button type="button" class="btn go" id="teSave">Save theme</button>
       <button type="button" class="btn" id="teSaveNew">Save as new</button>
-      <button type="button" class="btn" id="teReset">Reset to original</button>
-      <button type="button" class="btn dangerbtn" id="teDel">Delete</button>
+      <button type="button" class="btn tedots" id="teMoreBtn" aria-expanded="false" aria-controls="teMore" aria-label="More">⋯</button>
     </div>
   </div>
 </div>

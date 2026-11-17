@@ -99,8 +99,8 @@
   --shR:inset 0 -5px 0 rgba(27,31,36,.22),inset 0 2px 0 rgba(255,255,255,.35),0 2px 3px rgba(27,31,36,.25);
   --shV:inset 0 -5px 0 rgba(27,31,36,.22),inset 0 2px 0 rgba(255,255,255,.35),0 2px 3px rgba(27,31,36,.25);
   --ricon:rgba(27,31,36,.8);--ringR:rgba(27,31,36,.4);--ringV:rgba(255,255,255,.85);--ringS:rgba(27,31,36,.6);
-  --led-r:#F26A1B;--led-b:#2F6FDB;--led-y:#B9C0CA;
-  --ledbg:#5b6574;--ledbd:#2f3640;--ledoff:#7a8493;
+  --led-r:#FF7A2E;--led-b:#5B97F5;--led-y:#E3E8EF;
+  --ledbg:#161C26;--ledbd:#0A0E14;--ledoff:#364152;
   color-scheme:light;
 }
 [data-skin=hearts]{
@@ -502,9 +502,6 @@ html[data-motion=reduce] .piece[data-hint]{filter:brightness(1.2)}
 .crow .cn{flex:1;font-size:13.5px;font-weight:600;line-height:1.2}
 .cswatch{display:flex;align-items:center;gap:8px;min-height:44px;width:112px;padding:6px 8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--muted);font-size:12px;font-weight:600}
 .csw{width:26px;height:26px;border-radius:6px;border:1px solid var(--muted);flex:none}
-.btn.icono{display:flex;align-items:center;justify-content:center;gap:8px;flex:none;width:100%;min-height:46px;padding:8px;font-size:13.5px;border-width:2px;color:var(--text)}
-.btn.icono svg{width:22px;height:22px}
-.btn.icono.on{border-color:var(--yellow)}
 /* colour picker dialog */
 .card.cpick{max-width:360px;max-height:92vh;overflow-y:auto;text-align:left}
 .cphead{display:flex;align-items:center;gap:12px;margin-bottom:12px}
@@ -546,10 +543,6 @@ input.cpr::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:
 .crow .cic{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);display:inline-flex;align-items:center;justify-content:center;padding:0}
 .crow .cic.on{border:3px solid var(--yellow)}
 .crow .cic svg{width:24px;height:24px}
-.icopick{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.icopick button{min-height:46px;background:var(--panel);border:2px solid var(--line);border-radius:10px;color:var(--text);display:flex;align-items:center;justify-content:center;padding:0}
-.icopick button.on{border-color:var(--yellow)}
-.icopick svg{width:26px;height:26px}
 .custwarn{margin:0;padding:8px 10px;border-radius:10px;border:1px solid var(--amber);font-size:12.5px;line-height:1.4;color:var(--text)}
 .custbtns{display:flex;gap:8px;align-items:center}
 .custbtns select{flex:1;min-height:44px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:0 10px;font:inherit;font-size:13.5px}
@@ -559,28 +552,9 @@ input.cpr::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:
 /* ---------- theme editor (full-screen page) ---------- */
 #colorDlg{z-index:30}
 .overlay.full{align-items:stretch;padding:0;background:var(--bg);overflow-y:auto;z-index:25}
-.overlay.full .card.tedcard{max-width:520px;margin:0 auto;border-radius:0;border:0;background:var(--bg);text-align:left;padding:12px 16px 28px;display:flex;flex-direction:column;gap:10px;animation:none;min-height:100%}
-.tehead{display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--bg);padding:6px 0;z-index:2}
-.tehead h2{margin:0 0 0 auto;font-size:19px}
-.tehead .btn.sm{margin:0}
-.tehead .btn.warn,.tebtns .btn.warn{border-color:var(--danger);color:var(--danger)}
-.teh{margin:8px 0 0;font-size:13px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
-.telab{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--muted)}
-.telab input{min-height:46px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px}
-.tepv{display:flex;justify-content:center;padding:12px;border-radius:14px;background:var(--device);border:1px solid var(--edge)}
 .teboard{position:relative;background:var(--board);border:2px solid var(--edge);border-radius:14px;flex:none}
-.tetabs{display:flex;gap:6px}
-.tetabs button{flex:1;min-height:44px;background:var(--panel);color:var(--text);border:2px solid var(--line);border-radius:10px;font-size:13px;font-weight:600;padding:0 6px}
-.tetabs button.on{border-color:var(--yellow);background:var(--panel2)}
-.frpick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.frpick button{min-height:44px;background:var(--panel);color:var(--text);border:2px solid var(--line);border-radius:10px;font-size:13px;font-weight:600;padding:0 6px}
-.frpick button.on{border-color:var(--yellow);background:var(--panel2)}
 .cauto{flex:none;min-width:84px}
 .cauto:disabled{opacity:.4}
-.tebtns{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px}
-.tebtns .btn.go{grid-column:1/-1}
-.tebtns .btn.dangerbtn{color:var(--danger);border-color:var(--line)}
-.tebtns .btn.hidden{display:none}
 .card.cpick>.row .btn.hidden{display:none}
 
 /* ---------- My stages page ---------- */
@@ -627,3 +601,48 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
 .btn.arrow{display:flex;align-items:center;justify-content:center;gap:2px;padding-left:8px;padding-right:8px;white-space:nowrap}
 .btn.arrow .ico{width:20px;height:20px}
 #win .row .btn{white-space:nowrap;padding-left:6px;padding-right:6px}
+/* theme editor: one screen, pinned preview + live "editing" cue */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.overlay.full .card.tedcard{max-width:520px;margin:0 auto;border-radius:0;border:0;background:var(--bg);text-align:left;padding:0 14px 0;display:flex;flex-direction:column;gap:8px;animation:none;min-height:100%}
+.tetop{position:sticky;top:0;z-index:3;background:var(--bg);padding:8px 0 2px;display:flex;flex-direction:column;gap:4px}
+.tehead{display:flex;align-items:center;gap:8px}
+.tehead .btn.sm{margin:0;flex:none}
+.tehead input{flex:1;min-width:0;min-height:44px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px}
+.tehead .btn.warn,.temore .btn.warn{border-color:var(--danger);color:var(--danger)}
+.tepv{display:flex;justify-content:center;padding:8px;border-radius:14px;background:var(--device);border:1px solid var(--edge)}
+.teboard{position:relative;background:var(--board);border:2px solid var(--edge);border-radius:12px;flex:none}
+.teboard .piece{cursor:pointer}
+.teboard .piece.pe{outline:3px solid #fff;outline-offset:1px;z-index:2;box-shadow:0 0 0 5px rgba(0,0,0,.45)}
+.tecap{text-align:center;font-size:11.5px}
+.tesec{display:flex;flex-direction:column;gap:4px}
+.tetabs{display:flex;gap:6px}
+.tetabs button{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--panel);color:var(--text);border:2px solid var(--line);border-radius:10px;font-size:13px;font-weight:600;padding:0 6px;line-height:1.15}
+.tetabs button.on{border-color:var(--yellow);background:var(--yellow);color:var(--onacc)}
+.tetabs.two button{min-height:36px}
+.tetabs.two button.on{background:var(--panel2);color:var(--text)}
+.tsh{flex:none;border-radius:3px;background:currentColor;opacity:.7}
+.tsh.R{width:14px;height:14px}.tsh.T{width:10px;height:18px}.tsh.S{width:11px;height:11px}
+.tepanel{border:2px solid var(--yellow);border-radius:12px;display:flex;flex-direction:column;overflow:hidden}
+.tept{display:flex;align-items:center;gap:8px;padding:2px 10px 2px 12px;background:var(--panel2);border-bottom:1px solid var(--line)}
+.tept>b{flex:1;font-size:14px}
+.tept .cn,.tept .crow{min-height:0}
+.tept .cn{display:none}
+.tegrp{display:flex;flex-direction:column;gap:6px;padding:6px 10px 8px}
+.tegrp+.tegrp{border-top:1px solid var(--line)}
+.tegrp .crow{min-height:40px}
+.tstrip{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:thin}
+.tstrip button{flex:none;min-width:46px;min-height:44px;background:var(--panel);border:2px solid var(--line);border-radius:10px;color:var(--text);display:flex;align-items:center;justify-content:center;padding:0 8px;font-size:12.5px;font-weight:600}
+.tstrip button.on{border-color:var(--yellow);background:var(--panel2)}
+.tstrip button svg{width:24px;height:24px}
+.tstrip .icono{flex-direction:column;gap:0;font-size:10px;min-width:54px}
+.tstrip .icono svg{width:18px;height:18px}
+.tebgbtn{width:100%;min-height:44px;padding:0 14px;justify-content:space-between;text-align:left;font-size:13.5px}
+.temore{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.temore.hidden{display:none}
+.tebtns{position:sticky;bottom:0;z-index:3;background:var(--bg);display:flex;gap:8px;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));margin-top:auto;border-top:1px solid var(--line)}
+.tebtns .btn{margin:0;min-height:46px}
+.tebtns .btn.go{flex:1}
+.tebtns .btn.hidden{display:none}
+.tebtns .tedots{flex:none;width:46px;padding:0;font-size:20px}
+.temore .btn.dangerbtn{color:var(--danger);border-color:var(--line)}
+@media(max-height:760px){.tecap{display:none}}

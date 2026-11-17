@@ -111,8 +111,8 @@
   --shR:inset 0 -5px 0 rgba(27,31,36,.22),inset 0 2px 0 rgba(255,255,255,.35),0 2px 3px rgba(27,31,36,.25);
   --shV:inset 0 -5px 0 rgba(27,31,36,.22),inset 0 2px 0 rgba(255,255,255,.35),0 2px 3px rgba(27,31,36,.25);
   --ricon:rgba(27,31,36,.8);--ringR:rgba(27,31,36,.4);--ringV:rgba(255,255,255,.85);--ringS:rgba(27,31,36,.6);
-  --led-r:#F26A1B;--led-b:#2F6FDB;--led-y:#B9C0CA;
-  --ledbg:#5b6574;--ledbd:#2f3640;--ledoff:#7a8493;
+  --led-r:#FF7A2E;--led-b:#5B97F5;--led-y:#E3E8EF;
+  --ledbg:#161C26;--ledbd:#0A0E14;--ledoff:#364152;
   color-scheme:light;
 }
 [data-skin=hearts]{
@@ -514,9 +514,6 @@ html[data-motion=reduce] .piece[data-hint]{filter:brightness(1.2)}
 .crow .cn{flex:1;font-size:13.5px;font-weight:600;line-height:1.2}
 .cswatch{display:flex;align-items:center;gap:8px;min-height:44px;width:112px;padding:6px 8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--muted);font-size:12px;font-weight:600}
 .csw{width:26px;height:26px;border-radius:6px;border:1px solid var(--muted);flex:none}
-.btn.icono{display:flex;align-items:center;justify-content:center;gap:8px;flex:none;width:100%;min-height:46px;padding:8px;font-size:13.5px;border-width:2px;color:var(--text)}
-.btn.icono svg{width:22px;height:22px}
-.btn.icono.on{border-color:var(--yellow)}
 /* colour picker dialog */
 .card.cpick{max-width:360px;max-height:92vh;overflow-y:auto;text-align:left}
 .cphead{display:flex;align-items:center;gap:12px;margin-bottom:12px}
@@ -558,10 +555,6 @@ input.cpr::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:
 .crow .cic{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);display:inline-flex;align-items:center;justify-content:center;padding:0}
 .crow .cic.on{border:3px solid var(--yellow)}
 .crow .cic svg{width:24px;height:24px}
-.icopick{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.icopick button{min-height:46px;background:var(--panel);border:2px solid var(--line);border-radius:10px;color:var(--text);display:flex;align-items:center;justify-content:center;padding:0}
-.icopick button.on{border-color:var(--yellow)}
-.icopick svg{width:26px;height:26px}
 .custwarn{margin:0;padding:8px 10px;border-radius:10px;border:1px solid var(--amber);font-size:12.5px;line-height:1.4;color:var(--text)}
 .custbtns{display:flex;gap:8px;align-items:center}
 .custbtns select{flex:1;min-height:44px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:0 10px;font:inherit;font-size:13.5px}
@@ -571,28 +564,9 @@ input.cpr::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:
 /* ---------- theme editor (full-screen page) ---------- */
 #colorDlg{z-index:30}
 .overlay.full{align-items:stretch;padding:0;background:var(--bg);overflow-y:auto;z-index:25}
-.overlay.full .card.tedcard{max-width:520px;margin:0 auto;border-radius:0;border:0;background:var(--bg);text-align:left;padding:12px 16px 28px;display:flex;flex-direction:column;gap:10px;animation:none;min-height:100%}
-.tehead{display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--bg);padding:6px 0;z-index:2}
-.tehead h2{margin:0 0 0 auto;font-size:19px}
-.tehead .btn.sm{margin:0}
-.tehead .btn.warn,.tebtns .btn.warn{border-color:var(--danger);color:var(--danger)}
-.teh{margin:8px 0 0;font-size:13px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
-.telab{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--muted)}
-.telab input{min-height:46px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px}
-.tepv{display:flex;justify-content:center;padding:12px;border-radius:14px;background:var(--device);border:1px solid var(--edge)}
 .teboard{position:relative;background:var(--board);border:2px solid var(--edge);border-radius:14px;flex:none}
-.tetabs{display:flex;gap:6px}
-.tetabs button{flex:1;min-height:44px;background:var(--panel);color:var(--text);border:2px solid var(--line);border-radius:10px;font-size:13px;font-weight:600;padding:0 6px}
-.tetabs button.on{border-color:var(--yellow);background:var(--panel2)}
-.frpick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.frpick button{min-height:44px;background:var(--panel);color:var(--text);border:2px solid var(--line);border-radius:10px;font-size:13px;font-weight:600;padding:0 6px}
-.frpick button.on{border-color:var(--yellow);background:var(--panel2)}
 .cauto{flex:none;min-width:84px}
 .cauto:disabled{opacity:.4}
-.tebtns{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px}
-.tebtns .btn.go{grid-column:1/-1}
-.tebtns .btn.dangerbtn{color:var(--danger);border-color:var(--line)}
-.tebtns .btn.hidden{display:none}
 .card.cpick>.row .btn.hidden{display:none}
 
 /* ---------- My stages page ---------- */
@@ -639,6 +613,51 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
 .btn.arrow{display:flex;align-items:center;justify-content:center;gap:2px;padding-left:8px;padding-right:8px;white-space:nowrap}
 .btn.arrow .ico{width:20px;height:20px}
 #win .row .btn{white-space:nowrap;padding-left:6px;padding-right:6px}
+/* theme editor: one screen, pinned preview + live "editing" cue */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.overlay.full .card.tedcard{max-width:520px;margin:0 auto;border-radius:0;border:0;background:var(--bg);text-align:left;padding:0 14px 0;display:flex;flex-direction:column;gap:8px;animation:none;min-height:100%}
+.tetop{position:sticky;top:0;z-index:3;background:var(--bg);padding:8px 0 2px;display:flex;flex-direction:column;gap:4px}
+.tehead{display:flex;align-items:center;gap:8px}
+.tehead .btn.sm{margin:0;flex:none}
+.tehead input{flex:1;min-width:0;min-height:44px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:0 12px;font:inherit;font-size:15px}
+.tehead .btn.warn,.temore .btn.warn{border-color:var(--danger);color:var(--danger)}
+.tepv{display:flex;justify-content:center;padding:8px;border-radius:14px;background:var(--device);border:1px solid var(--edge)}
+.teboard{position:relative;background:var(--board);border:2px solid var(--edge);border-radius:12px;flex:none}
+.teboard .piece{cursor:pointer}
+.teboard .piece.pe{outline:3px solid #fff;outline-offset:1px;z-index:2;box-shadow:0 0 0 5px rgba(0,0,0,.45)}
+.tecap{text-align:center;font-size:11.5px}
+.tesec{display:flex;flex-direction:column;gap:4px}
+.tetabs{display:flex;gap:6px}
+.tetabs button{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--panel);color:var(--text);border:2px solid var(--line);border-radius:10px;font-size:13px;font-weight:600;padding:0 6px;line-height:1.15}
+.tetabs button.on{border-color:var(--yellow);background:var(--yellow);color:var(--onacc)}
+.tetabs.two button{min-height:36px}
+.tetabs.two button.on{background:var(--panel2);color:var(--text)}
+.tsh{flex:none;border-radius:3px;background:currentColor;opacity:.7}
+.tsh.R{width:14px;height:14px}.tsh.T{width:10px;height:18px}.tsh.S{width:11px;height:11px}
+.tepanel{border:2px solid var(--yellow);border-radius:12px;display:flex;flex-direction:column;overflow:hidden}
+.tept{display:flex;align-items:center;gap:8px;padding:2px 10px 2px 12px;background:var(--panel2);border-bottom:1px solid var(--line)}
+.tept>b{flex:1;font-size:14px}
+.tept .cn,.tept .crow{min-height:0}
+.tept .cn{display:none}
+.tegrp{display:flex;flex-direction:column;gap:6px;padding:6px 10px 8px}
+.tegrp+.tegrp{border-top:1px solid var(--line)}
+.tegrp .crow{min-height:40px}
+.tstrip{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:thin}
+.tstrip button{flex:none;min-width:46px;min-height:44px;background:var(--panel);border:2px solid var(--line);border-radius:10px;color:var(--text);display:flex;align-items:center;justify-content:center;padding:0 8px;font-size:12.5px;font-weight:600}
+.tstrip button.on{border-color:var(--yellow);background:var(--panel2)}
+.tstrip button svg{width:24px;height:24px}
+.tstrip .icono{flex-direction:column;gap:0;font-size:10px;min-width:54px}
+.tstrip .icono svg{width:18px;height:18px}
+.tebgbtn{width:100%;min-height:44px;padding:0 14px;justify-content:space-between;text-align:left;font-size:13.5px}
+.temore{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.temore.hidden{display:none}
+.tebtns{position:sticky;bottom:0;z-index:3;background:var(--bg);display:flex;gap:8px;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));margin-top:auto;border-top:1px solid var(--line)}
+.tebtns .btn{margin:0;min-height:46px}
+.tebtns .btn.go{flex:1}
+.tebtns .btn.hidden{display:none}
+.tebtns .tedots{flex:none;width:46px;padding:0;font-size:20px}
+.temore .btn.dangerbtn{color:var(--danger);border-color:var(--line)}
+@media(max-height:760px){.tecap{display:none}}
 </style>
 </head>
 <body data-phase="setup">
@@ -923,30 +942,38 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
 
 <div class="overlay hidden full" id="themeEd">
   <div class="card tedcard" role="dialog" aria-modal="true" aria-labelledby="teTitle" tabindex="-1">
-    <div class="tehead"><button type="button" class="btn sm" id="teBack">‹ Back</button><h2 id="teTitle">Customize</h2></div>
-    <p class="custhint" id="teBase"></p>
-    <label class="telab"><span data-th="ชื่อธีม">Theme name</span><input id="teName" type="text" maxlength="24" autocomplete="off"></label>
-    <div class="cpwrap tepv" id="tePrev" aria-hidden="true"><div id="teBoard" class="teboard"></div></div>
+    <div class="tetop">
+      <div class="tehead"><button type="button" class="btn sm" id="teBack">‹ Back</button><h2 id="teTitle" class="sr">Customize</h2><input id="teName" type="text" maxlength="24" autocomplete="off" aria-label="Theme name"></div>
+      <div class="cpwrap tepv" id="tePrev"><div id="teBoard" class="teboard"></div></div>
+      <p class="custhint tecap" id="teBase"></p>
+    </div>
     <p class="custwarn hidden" id="teWarn" role="status"></p>
-    <h3 class="teh" data-th="สี">Colours</h3>
-    <div class="cust" id="teRows"></div>
-    <h3 class="teh" id="teBlockH"></h3>
-    <div class="tetabs" id="teTabs" role="group"></div>
-    <span class="custhint" data-th="ไอคอน">Icon</span>
-    <div class="icopick" id="icoPick"></div>
-    <button type="button" class="btn icono" id="icoNone" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg><span data-th="ไม่มีไอคอน">No icon</span></button>
-    <div class="cust" id="teIcRow"></div>
-    <span class="custhint" data-th="กรอบ">Frame</span>
-    <div class="frpick" id="frPick"></div>
-    <h3 class="teh" data-th="สไตล์">Style</h3>
-    <span class="custhint" data-th="รูปแบบไอคอน">Icon style</span>
-    <div class="tetabs two" id="teSolid" role="group"></div>
-    <div class="cust" id="teFrcRow"></div>
+    <div class="tesec">
+      <span class="custhint" id="teEditing" data-th="กำลังแก้ไข">Editing</span>
+      <div class="tetabs" id="teTabs" role="group"></div>
+    </div>
+    <div class="tepanel">
+      <div class="tept"><b id="teBlockH"></b><div class="cust" id="teRows"></div></div>
+      <div class="tegrp">
+        <div class="cust" id="teIcRow"></div>
+        <div class="tstrip" id="icoPick" role="group"><button type="button" class="icono" id="icoNone" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg><span data-th="ไม่มี">None</span></button></div>
+        <div class="tetabs two" id="teSolid" role="group"></div>
+      </div>
+      <div class="tegrp">
+        <div class="cust" id="teFrcRow"></div>
+        <div class="tstrip frstrip" id="frPick" role="group"></div>
+      </div>
+    </div>
+    <button type="button" class="btn tebgbtn" id="teBgToggle" aria-expanded="false" aria-controls="teBgBox"></button>
+    <div class="cust hidden" id="teBgBox"></div>
+    <div class="temore hidden" id="teMore">
+      <button type="button" class="btn" id="teReset">Reset to original</button>
+      <button type="button" class="btn dangerbtn" id="teDel">Delete</button>
+    </div>
     <div class="tebtns">
       <button type="button" class="btn go" id="teSave">Save theme</button>
       <button type="button" class="btn" id="teSaveNew">Save as new</button>
-      <button type="button" class="btn" id="teReset">Reset to original</button>
-      <button type="button" class="btn dangerbtn" id="teDel">Delete</button>
+      <button type="button" class="btn tedots" id="teMoreBtn" aria-expanded="false" aria-controls="teMore" aria-label="More">⋯</button>
     </div>
   </div>
 </div>
@@ -1296,7 +1323,7 @@ store.set('hr_bk', bk);
   function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
   applyMotion(); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = 'e654bd6'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = '62b1d09'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null, autoTimer = null;
   var els = new Map();
@@ -1349,7 +1376,7 @@ store.set('hr_bk', bk);
     { id: 'hearts', name: 'Hearts', full: 'Queen of Hearts', theme: '#1a0a10', icons: { R: 'queen', T: 'spade', S: 'heart' }, frames: { R: 'card', T: 'card', S: 'card' }, solid: true }
   ];
   var skin = store.get('hr_skin', 'classic'); // a built-in id, or 'my:<id>' for a saved theme
-  function blankArt() { return { icons: { R: 'none', T: 'none', S: 'none' }, frames: { R: 'none', T: 'none', S: 'none' }, icR: '', icT: '', icS: '', frc: '', solid: false }; }
+  function blankArt() { return { icons: { R: 'none', T: 'none', S: 'none' }, frames: { R: 'none', T: 'none', S: 'none' }, icR: '', icT: '', icS: '', frR: '', frT: '', frS: '', solid: { R: false, T: false, S: false } }; }
   function normArt(a, o) { // copy the valid art fields of a onto o; the old 'ring' icon became the Ring frame
     ['R', 'T', 'S'].forEach(function (k) {
       var ic = a.icons && a.icons[k], fr = a.frames && a.frames[k];
@@ -1357,13 +1384,17 @@ store.set('hr_bk', bk);
       if (ICON_PATHS[ic]) o.icons[k] = ic;
       if (FRAMES.indexOf(fr) >= 0) o.frames[k] = fr;
     });
-    ['icR', 'icT', 'icS', 'frc'].forEach(function (k) { if (typeof a[k] === 'string' && HEX.test(a[k])) o[k] = a[k]; });
-    if (a.solid === true) o.solid = true;
+    ['icR', 'icT', 'icS'].forEach(function (k) { if (typeof a[k] === 'string' && HEX.test(a[k])) o[k] = a[k]; });
+    // border colour and icon style are per block type; older data had one border colour (frc) and one solid flag for all three
+    if (typeof a.frc === 'string' && HEX.test(a.frc)) o.frR = o.frT = o.frS = a.frc;
+    ['frR', 'frT', 'frS'].forEach(function (k) { if (typeof a[k] === 'string' && HEX.test(a[k])) o[k] = a[k]; });
+    if (a.solid === true) o.solid = { R: true, T: true, S: true };
+    else if (a.solid && typeof a.solid === 'object') ['R', 'T', 'S'].forEach(function (k) { if (a.solid[k] === true) o.solid[k] = true; });
     return o;
   }
   function builtinArt(sk) { return normArt({ icons: sk.icons || { R: 'tri', T: 'ring', S: 'ring' }, frames: sk.frames, solid: sk.solid }, blankArt()); }
   var THEME_DEF = { id: '', name: '', base: 'paper', bg: '#E9DCC3', board: '#8B6B4A', R: '#B5382C', T: '#D9A441', S: '#8E9F6B',
-    icR: '', icT: '', icS: '', frc: '', icons: { R: 'crown', T: 'star', S: 'heart' }, frames: { R: 'none', T: 'none', S: 'none' }, solid: false };
+    icR: '', icT: '', icS: '', frR: '', frT: '', frS: '', icons: { R: 'crown', T: 'star', S: 'heart' }, frames: { R: 'none', T: 'none', S: 'none' }, solid: { R: false, T: false, S: false } };
   var MAX_THEMES = 6;
   function normTheme(c) {
     var o = JSON.parse(JSON.stringify(THEME_DEF));
@@ -1415,7 +1446,7 @@ store.set('hr_bk', bk);
       if (mark) h += '<b class="cm tl">' + mark + '</b><b class="cm br">' + mark + '</b>';
     }
     if (id === 'tri') h += RSVG;
-    else if (id !== 'none') h += '<svg viewBox="0 0 24 24" fill="' + (art.solid ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON_PATHS[id] + '</svg>';
+    else if (id !== 'none') h += '<svg viewBox="0 0 24 24" fill="' + (art.solid && art.solid[k] ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON_PATHS[id] + '</svg>';
     return h;
   }
   function paintPiece(el, t, art) { art = art || curArt(); el.dataset.fr = art.frames[t === 'R' ? 'R' : t === 'S' ? 'S' : 'T']; el.innerHTML = pieceInner(t, art); }
@@ -1451,7 +1482,7 @@ store.set('hr_bk', bk);
       '--bdR': hair, '--bdV': hair, '--bdS': hair, '--shR': 'initial', '--shV': 'initial',
       '--ricon': ringOf(c.R, .9), '--ringR': ringOf(c.R, .5), '--ringV': ringOf(c.T, .75), '--ringS': ringOf(c.S, .7),
       '--icR': c.icR || 'initial', '--icV': c.icT || 'initial', '--icS': c.icS || 'initial', '--qh': c.icS || 'initial',
-      '--frR': c.frc || 'initial', '--frV': c.frc || 'initial', '--frS': c.frc || 'initial',
+      '--frR': c.frR || 'initial', '--frV': c.frT || 'initial', '--frS': c.frS || 'initial',
       '--ledbg': ledbg, '--ledbd': mixHex(ledbg, '#ffffff', .28), '--ledoff': mixHex(ledbg, '#ffffff', .2),
       '--led-r': c.R, '--led-b': c.T, '--led-y': c.S, 'color-scheme': dark ? 'dark' : 'light'
     };
@@ -2835,9 +2866,9 @@ store.set('hr_bk', bk);
   /* ---------- theme editor: a full-screen page opened by Settings > Customize ---------- */
   var ed = null; // { d: the draft theme, id: its saved id or null, orig: JSON at open, tab: R|T|S, discard, del }
   var CNAME = { R: ['Red block', 'บล็อกแดง'], T: ['Tall & wide blocks', 'บล็อกตั้งและบล็อกนอน'], S: ['Small blocks', 'บล็อกเล็ก'], board: ['Board', 'กระดาน'], bg: ['Background', 'พื้นหลัง'],
-    icR: ['Red block icon', 'ไอคอนบล็อกแดง'], icT: ['Tall & wide icon', 'ไอคอนบล็อกตั้งและนอน'], icS: ['Small block icon', 'ไอคอนบล็อกเล็ก'], frc: ['Frame', 'เส้นกรอบ'] };
+    icR: ['Red block icon', 'ไอคอนบล็อกแดง'], icT: ['Tall & wide icon', 'ไอคอนบล็อกตั้งและนอน'], icS: ['Small block icon', 'ไอคอนบล็อกเล็ก'],
+    frR: ['Red block border', 'กรอบบล็อกแดง'], frT: ['Tall & wide border', 'กรอบบล็อกตั้งและนอน'], frS: ['Small block border', 'กรอบบล็อกเล็ก'] };
   var ED_TABS = [['R', 'Red', 'แดง'], ['T', 'Tall & wide', 'ตั้ง/นอน'], ['S', 'Small', 'เล็ก']];
-  var ED_COLORS = ['R', 'T', 'S', 'board', 'bg'];
   function edDirty() { return JSON.stringify(ed.d) !== ed.orig; }
   function edChanged() { ed.discard = false; ed.del = false; renderEd(); }
   function colorRow(box, key, auto) {
@@ -2860,11 +2891,14 @@ store.set('hr_bk', bk);
   var edBuilt = false;
   function buildEd() {
     if (edBuilt) return; edBuilt = true;
-    ED_COLORS.forEach(function (k) { colorRow($('teRows'), k, false); });
-    colorRow($('teIcRow'), 'ic', true); colorRow($('teFrcRow'), 'frc', true);
-    // the icon colour row works on the colour key of the selected block type (icR / icT / icS)
+    colorRow($('teRows'), 'chip', false); colorRow($('teBgBox'), 'board', false); colorRow($('teBgBox'), 'bg', false);
+    colorRow($('teIcRow'), 'ic', true); colorRow($('teFrcRow'), 'fr', true);
+    // the chip, icon and border colour rows work on the colour key of the selected block type (R / icR / frR ...)
+    $('cc_chip').onclick = function () { openColor(ed.tab); };
     $('cc_ic').onclick = function () { openColor('ic' + ed.tab); };
     $('ca_ic').onclick = function () { ed.d['ic' + ed.tab] = ''; edChanged(); };
+    $('cc_fr').onclick = function () { openColor('fr' + ed.tab); };
+    $('ca_fr').onclick = function () { ed.d['fr' + ed.tab] = ''; edChanged(); };
     ED_TABS.forEach(function (t) {
       var b = document.createElement('button'); b.type = 'button'; b.dataset.k = t[0];
       b.onclick = function () { ed.tab = t[0]; renderEd(); }; $('teTabs').appendChild(b);
@@ -2881,8 +2915,10 @@ store.set('hr_bk', bk);
     });
     [['0', 'Outline', 'เส้นขอบ'], ['1', 'Solid', 'ทึบ']].forEach(function (s) {
       var b = document.createElement('button'); b.type = 'button'; b.dataset.s = s[0];
-      b.onclick = function () { ed.d.solid = s[0] === '1'; edChanged(); }; $('teSolid').appendChild(b);
+      b.onclick = function () { ed.d.solid[ed.tab] = s[0] === '1'; edChanged(); }; $('teSolid').appendChild(b);
     });
+    $('teBgToggle').onclick = function () { var open = $('teBgBox').classList.toggle('hidden') === false; $('teBgToggle').setAttribute('aria-expanded', open); renderEdBtns(); if (open) try { $('teBgBox').scrollIntoView({ block: 'nearest' }); } catch (e) {} };
+    $('teMoreBtn').onclick = function () { var open = $('teMore').classList.toggle('hidden') === false; $('teMoreBtn').setAttribute('aria-expanded', open); if (!open && ed) ed.del = false; renderEdBtns(); };
     $('teName').oninput = function () { ed.d.name = this.value.slice(0, 24); ed.discard = false; ed.del = false; renderEdBtns(); };
     $('teBack').onclick = teBack;
     $('teSave').onclick = function () { saveTheme(false); };
@@ -2909,6 +2945,7 @@ store.set('hr_bk', bk);
     var t = activeTheme(), d = t ? normTheme(t) : themeFromSkin(skin);
     if (!t) d.name = defaultName(d.base);
     ed = { d: d, id: t ? t.id : null, orig: '', tab: 'R', discard: false, del: false };
+    $('teBgBox').classList.add('hidden'); $('teBgToggle').setAttribute('aria-expanded', 'false'); $('teMore').classList.add('hidden'); $('teMoreBtn').setAttribute('aria-expanded', 'false');
     ed.orig = JSON.stringify(ed.d);
     renderEd(); openDlg('themeEd', '#teName');
   }
@@ -2939,19 +2976,24 @@ store.set('hr_bk', bk);
     $('teDel').classList.toggle('hidden', !ed.id); $('teDel').textContent = ed.del ? L('Tap again to delete', 'แตะอีกครั้งเพื่อลบ') : L('Delete', 'ลบ');
     $('teDel').classList.toggle('warn', !!ed.del);
     $('teReset').textContent = L('Reset to original', 'กลับเป็นแบบเดิม');
+    var bgOpen = !$('teBgBox').classList.contains('hidden');
+    $('teBgToggle').textContent = L('Board and background colours', 'สีกระดานและพื้นหลัง') + (bgOpen ? '  ⌃' : '  ⌄');
+    $('teMoreBtn').setAttribute('aria-label', L('More: reset or delete', 'เพิ่มเติม: รีเซ็ตหรือลบ'));
   }
   function renderEd() {
     var d = ed.d, tab = ed.tab, base = SKINS.filter(function (x) { return x.id === d.base; })[0] || SKINS[0];
     $('teTitle').textContent = ed.id ? L('Edit theme', 'แก้ไขธีม') : L('Customize', 'ปรับแต่ง');
-    $('teBase').textContent = L('Based on ', 'ตั้งต้นจาก ') + (base.full || base.name);
+    $('teBase').textContent = L('Based on ', 'ตั้งต้นจาก ') + (base.full || base.name) + L(' · white outline = editing', ' · กรอบขาว = กำลังแก้ไข');
     if ($('teName') !== document.activeElement) $('teName').value = d.name;
     $('teName').placeholder = defaultName(d.base);
-    ED_COLORS.forEach(function (k) { var nm = L(CNAME[k][0], CNAME[k][1]); $('cn_' + k).textContent = nm; setSwatch(k, d[k], d[k].toUpperCase(), nm); });
+    ['board', 'bg'].forEach(function (k) { var nm = L(CNAME[k][0], CNAME[k][1]); $('cn_' + k).textContent = nm; setSwatch(k, d[k], d[k].toUpperCase(), nm); });
+    $('teEditing').textContent = L('Editing', 'กำลังแก้ไข'); $('teName').setAttribute('aria-label', L('Theme name', 'ชื่อธีม'));
     Array.prototype.forEach.call($('teTabs').children, function (b, i) {
-      b.textContent = L(ED_TABS[i][1], ED_TABS[i][2]); var on = b.dataset.k === tab; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+      b.innerHTML = '<span class="tsh ' + ED_TABS[i][0] + '"></span><span></span>'; b.lastChild.textContent = L(ED_TABS[i][1], ED_TABS[i][2]);
+      var on = b.dataset.k === tab; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
     });
-    var blockName = L(CNAME[tab][0], CNAME[tab][1]).toLowerCase();
-    $('teBlockH').textContent = L('Look of ', 'หน้าตาของ ') + (lang === 'th' ? CNAME[tab][1] : blockName);
+    var nmTab = L(CNAME[tab][0], CNAME[tab][1]);
+    $('teBlockH').textContent = nmTab; $('cn_chip').textContent = L('Block color', 'สีบล็อก'); setSwatch('chip', d[tab], d[tab].toUpperCase(), nmTab);
     Array.prototype.forEach.call($('icoPick').children, function (b) { var on = d.icons[tab] === b.dataset.i; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
     var noIc = d.icons[tab] === 'none'; $('icoNone').classList.toggle('on', noIc); $('icoNone').setAttribute('aria-pressed', noIc);
     var ick = 'ic' + tab, icv = d[ick];
@@ -2960,20 +3002,23 @@ store.set('hr_bk', bk);
     Array.prototype.forEach.call($('frPick').children, function (b) {
       var f = b.dataset.f, on = d.frames[tab] === f; b.textContent = L(FRAME_NAME[f][0], FRAME_NAME[f][1]); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
     });
-    $('cn_frc').textContent = L('Frame color', 'สีเส้นกรอบ'); setSwatch('frc', d.frc || autoOn(d.T), d.frc ? d.frc.toUpperCase() : L('Auto', 'อัตโนมัติ'), L('Frame color', 'สีเส้นกรอบ'));
-    $('ca_frc').textContent = L('Auto', 'อัตโนมัติ'); $('ca_frc').disabled = !d.frc;
+    var frv = d['fr' + tab];
+    $('cn_fr').textContent = L('Border color', 'สีกรอบ'); setSwatch('fr', frv || autoOn(d[tab]), frv ? frv.toUpperCase() : L('Auto', 'อัตโนมัติ'), L('Border color', 'สีกรอบ'));
+    $('ca_fr').textContent = L('Auto', 'อัตโนมัติ'); $('ca_fr').disabled = !frv;
     Array.prototype.forEach.call($('teSolid').children, function (b) {
-      var on = (b.dataset.s === '1') === !!d.solid; b.textContent = b.dataset.s === '1' ? L('Solid', 'ทึบ') : L('Outline', 'เส้นขอบ'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+      var on = (b.dataset.s === '1') === !!d.solid[tab]; b.textContent = b.dataset.s === '1' ? L('Solid', 'ทึบ') : L('Outline', 'เส้นขอบ'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
     });
     var w = customWarning(d); $('teWarn').textContent = w; $('teWarn').classList.toggle('hidden', !w);
     renderEdPrev(); renderEdBtns();
   }
   function renderEdPrev() {
-    var d = ed.d, wrap = $('tePrev'), U = 52, bd = $('teBoard');
+    var d = ed.d, wrap = $('tePrev'), U = 44, bd = $('teBoard');
     setVars(wrap, customVars(d));
     bd.style.width = (4 * U + 8) + 'px'; bd.style.height = (3 * U + 8) + 'px'; bd.innerHTML = '';
     [['R', 0, 0, 2, 2], ['V', 2, 0, 1, 2], ['V', 3, 0, 1, 2], ['H', 0, 2, 2, 1], ['S', 2, 2, 1, 1], ['S', 3, 2, 1, 1]].forEach(function (p) {
-      var el = document.createElement('div'); el.className = 'piece t' + p[0];
+      var ty = p[0] === 'R' ? 'R' : p[0] === 'S' ? 'S' : 'T';
+      var el = document.createElement('div'); el.className = 'piece t' + p[0] + (ty === ed.tab ? ' pe' : '');
+      el.onclick = function () { ed.tab = ty; renderEd(); };
       el.style.width = (p[3] * U - 6) + 'px'; el.style.height = (p[4] * U - 6) + 'px';
       el.style.transform = 'translate(' + (4 + p[1] * U + 3) + 'px,' + (4 + p[2] * U + 3) + 'px)';
       paintPiece(el, p[0], d); bd.appendChild(el);
@@ -3053,7 +3098,7 @@ store.set('hr_bk', bk);
     cpPaint();
   }
   function openColor(key) {
-    var auto = key === 'frc' ? autoOn(ed.d.T) : /^ic/.test(key) ? autoOn(ed.d[key.slice(2)]) : '';
+    var auto = /^(ic|fr)[RTS]$/.test(key) ? autoOn(ed.d[key.slice(2)]) : '';
     cp = { key: key, cur: ed.d[key] || auto, tab: 'S' };
     $('cpAuto').classList.toggle('hidden', !auto);
     renderColor(); openDlg('colorDlg', '#cpYes');

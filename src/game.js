@@ -81,7 +81,7 @@ store.set('hr_bk', bk);
     { id: 'hearts', name: 'Hearts', full: 'Queen of Hearts', theme: '#1a0a10', icons: { R: 'queen', T: 'spade', S: 'heart' }, frames: { R: 'card', T: 'card', S: 'card' }, solid: true }
   ];
   var skin = store.get('hr_skin', 'classic'); // a built-in id, or 'my:<id>' for a saved theme
-  function blankArt() { return { icons: { R: 'none', T: 'none', S: 'none' }, frames: { R: 'none', T: 'none', S: 'none' }, icR: '', icT: '', icS: '', frc: '', solid: false }; }
+  function blankArt() { return { icons: { R: 'none', T: 'none', S: 'none' }, frames: { R: 'none', T: 'none', S: 'none' }, icR: '', icT: '', icS: '', frR: '', frT: '', frS: '', solid: { R: false, T: false, S: false } }; }
   function normArt(a, o) { // copy the valid art fields of a onto o; the old 'ring' icon became the Ring frame
     ['R', 'T', 'S'].forEach(function (k) {
       var ic = a.icons && a.icons[k], fr = a.frames && a.frames[k];
@@ -89,13 +89,17 @@ store.set('hr_bk', bk);
       if (ICON_PATHS[ic]) o.icons[k] = ic;
       if (FRAMES.indexOf(fr) >= 0) o.frames[k] = fr;
     });
-    ['icR', 'icT', 'icS', 'frc'].forEach(function (k) { if (typeof a[k] === 'string' && HEX.test(a[k])) o[k] = a[k]; });
-    if (a.solid === true) o.solid = true;
+    ['icR', 'icT', 'icS'].forEach(function (k) { if (typeof a[k] === 'string' && HEX.test(a[k])) o[k] = a[k]; });
+    // border colour and icon style are per block type; older data had one border colour (frc) and one solid flag for all three
+    if (typeof a.frc === 'string' && HEX.test(a.frc)) o.frR = o.frT = o.frS = a.frc;
+    ['frR', 'frT', 'frS'].forEach(function (k) { if (typeof a[k] === 'string' && HEX.test(a[k])) o[k] = a[k]; });
+    if (a.solid === true) o.solid = { R: true, T: true, S: true };
+    else if (a.solid && typeof a.solid === 'object') ['R', 'T', 'S'].forEach(function (k) { if (a.solid[k] === true) o.solid[k] = true; });
     return o;
   }
   function builtinArt(sk) { return normArt({ icons: sk.icons || { R: 'tri', T: 'ring', S: 'ring' }, frames: sk.frames, solid: sk.solid }, blankArt()); }
   var THEME_DEF = { id: '', name: '', base: 'paper', bg: '#E9DCC3', board: '#8B6B4A', R: '#B5382C', T: '#D9A441', S: '#8E9F6B',
-    icR: '', icT: '', icS: '', frc: '', icons: { R: 'crown', T: 'star', S: 'heart' }, frames: { R: 'none', T: 'none', S: 'none' }, solid: false };
+    icR: '', icT: '', icS: '', frR: '', frT: '', frS: '', icons: { R: 'crown', T: 'star', S: 'heart' }, frames: { R: 'none', T: 'none', S: 'none' }, solid: { R: false, T: false, S: false } };
   var MAX_THEMES = 6;
   function normTheme(c) {
     var o = JSON.parse(JSON.stringify(THEME_DEF));
@@ -147,7 +151,7 @@ store.set('hr_bk', bk);
       if (mark) h += '<b class="cm tl">' + mark + '</b><b class="cm br">' + mark + '</b>';
     }
     if (id === 'tri') h += RSVG;
-    else if (id !== 'none') h += '<svg viewBox="0 0 24 24" fill="' + (art.solid ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON_PATHS[id] + '</svg>';
+    else if (id !== 'none') h += '<svg viewBox="0 0 24 24" fill="' + (art.solid && art.solid[k] ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON_PATHS[id] + '</svg>';
     return h;
   }
   function paintPiece(el, t, art) { art = art || curArt(); el.dataset.fr = art.frames[t === 'R' ? 'R' : t === 'S' ? 'S' : 'T']; el.innerHTML = pieceInner(t, art); }
@@ -183,7 +187,7 @@ store.set('hr_bk', bk);
       '--bdR': hair, '--bdV': hair, '--bdS': hair, '--shR': 'initial', '--shV': 'initial',
       '--ricon': ringOf(c.R, .9), '--ringR': ringOf(c.R, .5), '--ringV': ringOf(c.T, .75), '--ringS': ringOf(c.S, .7),
       '--icR': c.icR || 'initial', '--icV': c.icT || 'initial', '--icS': c.icS || 'initial', '--qh': c.icS || 'initial',
-      '--frR': c.frc || 'initial', '--frV': c.frc || 'initial', '--frS': c.frc || 'initial',
+      '--frR': c.frR || 'initial', '--frV': c.frT || 'initial', '--frS': c.frS || 'initial',
       '--ledbg': ledbg, '--ledbd': mixHex(ledbg, '#ffffff', .28), '--ledoff': mixHex(ledbg, '#ffffff', .2),
       '--led-r': c.R, '--led-b': c.T, '--led-y': c.S, 'color-scheme': dark ? 'dark' : 'light'
     };
@@ -1567,9 +1571,9 @@ store.set('hr_bk', bk);
   /* ---------- theme editor: a full-screen page opened by Settings > Customize ---------- */
   var ed = null; // { d: the draft theme, id: its saved id or null, orig: JSON at open, tab: R|T|S, discard, del }
   var CNAME = { R: ['Red block', 'บล็อกแดง'], T: ['Tall & wide blocks', 'บล็อกตั้งและบล็อกนอน'], S: ['Small blocks', 'บล็อกเล็ก'], board: ['Board', 'กระดาน'], bg: ['Background', 'พื้นหลัง'],
-    icR: ['Red block icon', 'ไอคอนบล็อกแดง'], icT: ['Tall & wide icon', 'ไอคอนบล็อกตั้งและนอน'], icS: ['Small block icon', 'ไอคอนบล็อกเล็ก'], frc: ['Frame', 'เส้นกรอบ'] };
+    icR: ['Red block icon', 'ไอคอนบล็อกแดง'], icT: ['Tall & wide icon', 'ไอคอนบล็อกตั้งและนอน'], icS: ['Small block icon', 'ไอคอนบล็อกเล็ก'],
+    frR: ['Red block border', 'กรอบบล็อกแดง'], frT: ['Tall & wide border', 'กรอบบล็อกตั้งและนอน'], frS: ['Small block border', 'กรอบบล็อกเล็ก'] };
   var ED_TABS = [['R', 'Red', 'แดง'], ['T', 'Tall & wide', 'ตั้ง/นอน'], ['S', 'Small', 'เล็ก']];
-  var ED_COLORS = ['R', 'T', 'S', 'board', 'bg'];
   function edDirty() { return JSON.stringify(ed.d) !== ed.orig; }
   function edChanged() { ed.discard = false; ed.del = false; renderEd(); }
   function colorRow(box, key, auto) {
@@ -1592,11 +1596,14 @@ store.set('hr_bk', bk);
   var edBuilt = false;
   function buildEd() {
     if (edBuilt) return; edBuilt = true;
-    ED_COLORS.forEach(function (k) { colorRow($('teRows'), k, false); });
-    colorRow($('teIcRow'), 'ic', true); colorRow($('teFrcRow'), 'frc', true);
-    // the icon colour row works on the colour key of the selected block type (icR / icT / icS)
+    colorRow($('teRows'), 'chip', false); colorRow($('teBgBox'), 'board', false); colorRow($('teBgBox'), 'bg', false);
+    colorRow($('teIcRow'), 'ic', true); colorRow($('teFrcRow'), 'fr', true);
+    // the chip, icon and border colour rows work on the colour key of the selected block type (R / icR / frR ...)
+    $('cc_chip').onclick = function () { openColor(ed.tab); };
     $('cc_ic').onclick = function () { openColor('ic' + ed.tab); };
     $('ca_ic').onclick = function () { ed.d['ic' + ed.tab] = ''; edChanged(); };
+    $('cc_fr').onclick = function () { openColor('fr' + ed.tab); };
+    $('ca_fr').onclick = function () { ed.d['fr' + ed.tab] = ''; edChanged(); };
     ED_TABS.forEach(function (t) {
       var b = document.createElement('button'); b.type = 'button'; b.dataset.k = t[0];
       b.onclick = function () { ed.tab = t[0]; renderEd(); }; $('teTabs').appendChild(b);
@@ -1613,8 +1620,10 @@ store.set('hr_bk', bk);
     });
     [['0', 'Outline', 'เส้นขอบ'], ['1', 'Solid', 'ทึบ']].forEach(function (s) {
       var b = document.createElement('button'); b.type = 'button'; b.dataset.s = s[0];
-      b.onclick = function () { ed.d.solid = s[0] === '1'; edChanged(); }; $('teSolid').appendChild(b);
+      b.onclick = function () { ed.d.solid[ed.tab] = s[0] === '1'; edChanged(); }; $('teSolid').appendChild(b);
     });
+    $('teBgToggle').onclick = function () { var open = $('teBgBox').classList.toggle('hidden') === false; $('teBgToggle').setAttribute('aria-expanded', open); renderEdBtns(); if (open) try { $('teBgBox').scrollIntoView({ block: 'nearest' }); } catch (e) {} };
+    $('teMoreBtn').onclick = function () { var open = $('teMore').classList.toggle('hidden') === false; $('teMoreBtn').setAttribute('aria-expanded', open); if (!open && ed) ed.del = false; renderEdBtns(); };
     $('teName').oninput = function () { ed.d.name = this.value.slice(0, 24); ed.discard = false; ed.del = false; renderEdBtns(); };
     $('teBack').onclick = teBack;
     $('teSave').onclick = function () { saveTheme(false); };
@@ -1641,6 +1650,7 @@ store.set('hr_bk', bk);
     var t = activeTheme(), d = t ? normTheme(t) : themeFromSkin(skin);
     if (!t) d.name = defaultName(d.base);
     ed = { d: d, id: t ? t.id : null, orig: '', tab: 'R', discard: false, del: false };
+    $('teBgBox').classList.add('hidden'); $('teBgToggle').setAttribute('aria-expanded', 'false'); $('teMore').classList.add('hidden'); $('teMoreBtn').setAttribute('aria-expanded', 'false');
     ed.orig = JSON.stringify(ed.d);
     renderEd(); openDlg('themeEd', '#teName');
   }
@@ -1671,19 +1681,24 @@ store.set('hr_bk', bk);
     $('teDel').classList.toggle('hidden', !ed.id); $('teDel').textContent = ed.del ? L('Tap again to delete', 'แตะอีกครั้งเพื่อลบ') : L('Delete', 'ลบ');
     $('teDel').classList.toggle('warn', !!ed.del);
     $('teReset').textContent = L('Reset to original', 'กลับเป็นแบบเดิม');
+    var bgOpen = !$('teBgBox').classList.contains('hidden');
+    $('teBgToggle').textContent = L('Board and background colours', 'สีกระดานและพื้นหลัง') + (bgOpen ? '  ⌃' : '  ⌄');
+    $('teMoreBtn').setAttribute('aria-label', L('More: reset or delete', 'เพิ่มเติม: รีเซ็ตหรือลบ'));
   }
   function renderEd() {
     var d = ed.d, tab = ed.tab, base = SKINS.filter(function (x) { return x.id === d.base; })[0] || SKINS[0];
     $('teTitle').textContent = ed.id ? L('Edit theme', 'แก้ไขธีม') : L('Customize', 'ปรับแต่ง');
-    $('teBase').textContent = L('Based on ', 'ตั้งต้นจาก ') + (base.full || base.name);
+    $('teBase').textContent = L('Based on ', 'ตั้งต้นจาก ') + (base.full || base.name) + L(' · white outline = editing', ' · กรอบขาว = กำลังแก้ไข');
     if ($('teName') !== document.activeElement) $('teName').value = d.name;
     $('teName').placeholder = defaultName(d.base);
-    ED_COLORS.forEach(function (k) { var nm = L(CNAME[k][0], CNAME[k][1]); $('cn_' + k).textContent = nm; setSwatch(k, d[k], d[k].toUpperCase(), nm); });
+    ['board', 'bg'].forEach(function (k) { var nm = L(CNAME[k][0], CNAME[k][1]); $('cn_' + k).textContent = nm; setSwatch(k, d[k], d[k].toUpperCase(), nm); });
+    $('teEditing').textContent = L('Editing', 'กำลังแก้ไข'); $('teName').setAttribute('aria-label', L('Theme name', 'ชื่อธีม'));
     Array.prototype.forEach.call($('teTabs').children, function (b, i) {
-      b.textContent = L(ED_TABS[i][1], ED_TABS[i][2]); var on = b.dataset.k === tab; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+      b.innerHTML = '<span class="tsh ' + ED_TABS[i][0] + '"></span><span></span>'; b.lastChild.textContent = L(ED_TABS[i][1], ED_TABS[i][2]);
+      var on = b.dataset.k === tab; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
     });
-    var blockName = L(CNAME[tab][0], CNAME[tab][1]).toLowerCase();
-    $('teBlockH').textContent = L('Look of ', 'หน้าตาของ ') + (lang === 'th' ? CNAME[tab][1] : blockName);
+    var nmTab = L(CNAME[tab][0], CNAME[tab][1]);
+    $('teBlockH').textContent = nmTab; $('cn_chip').textContent = L('Block color', 'สีบล็อก'); setSwatch('chip', d[tab], d[tab].toUpperCase(), nmTab);
     Array.prototype.forEach.call($('icoPick').children, function (b) { var on = d.icons[tab] === b.dataset.i; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
     var noIc = d.icons[tab] === 'none'; $('icoNone').classList.toggle('on', noIc); $('icoNone').setAttribute('aria-pressed', noIc);
     var ick = 'ic' + tab, icv = d[ick];
@@ -1692,20 +1707,23 @@ store.set('hr_bk', bk);
     Array.prototype.forEach.call($('frPick').children, function (b) {
       var f = b.dataset.f, on = d.frames[tab] === f; b.textContent = L(FRAME_NAME[f][0], FRAME_NAME[f][1]); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
     });
-    $('cn_frc').textContent = L('Frame color', 'สีเส้นกรอบ'); setSwatch('frc', d.frc || autoOn(d.T), d.frc ? d.frc.toUpperCase() : L('Auto', 'อัตโนมัติ'), L('Frame color', 'สีเส้นกรอบ'));
-    $('ca_frc').textContent = L('Auto', 'อัตโนมัติ'); $('ca_frc').disabled = !d.frc;
+    var frv = d['fr' + tab];
+    $('cn_fr').textContent = L('Border color', 'สีกรอบ'); setSwatch('fr', frv || autoOn(d[tab]), frv ? frv.toUpperCase() : L('Auto', 'อัตโนมัติ'), L('Border color', 'สีกรอบ'));
+    $('ca_fr').textContent = L('Auto', 'อัตโนมัติ'); $('ca_fr').disabled = !frv;
     Array.prototype.forEach.call($('teSolid').children, function (b) {
-      var on = (b.dataset.s === '1') === !!d.solid; b.textContent = b.dataset.s === '1' ? L('Solid', 'ทึบ') : L('Outline', 'เส้นขอบ'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+      var on = (b.dataset.s === '1') === !!d.solid[tab]; b.textContent = b.dataset.s === '1' ? L('Solid', 'ทึบ') : L('Outline', 'เส้นขอบ'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
     });
     var w = customWarning(d); $('teWarn').textContent = w; $('teWarn').classList.toggle('hidden', !w);
     renderEdPrev(); renderEdBtns();
   }
   function renderEdPrev() {
-    var d = ed.d, wrap = $('tePrev'), U = 52, bd = $('teBoard');
+    var d = ed.d, wrap = $('tePrev'), U = 44, bd = $('teBoard');
     setVars(wrap, customVars(d));
     bd.style.width = (4 * U + 8) + 'px'; bd.style.height = (3 * U + 8) + 'px'; bd.innerHTML = '';
     [['R', 0, 0, 2, 2], ['V', 2, 0, 1, 2], ['V', 3, 0, 1, 2], ['H', 0, 2, 2, 1], ['S', 2, 2, 1, 1], ['S', 3, 2, 1, 1]].forEach(function (p) {
-      var el = document.createElement('div'); el.className = 'piece t' + p[0];
+      var ty = p[0] === 'R' ? 'R' : p[0] === 'S' ? 'S' : 'T';
+      var el = document.createElement('div'); el.className = 'piece t' + p[0] + (ty === ed.tab ? ' pe' : '');
+      el.onclick = function () { ed.tab = ty; renderEd(); };
       el.style.width = (p[3] * U - 6) + 'px'; el.style.height = (p[4] * U - 6) + 'px';
       el.style.transform = 'translate(' + (4 + p[1] * U + 3) + 'px,' + (4 + p[2] * U + 3) + 'px)';
       paintPiece(el, p[0], d); bd.appendChild(el);
@@ -1785,7 +1803,7 @@ store.set('hr_bk', bk);
     cpPaint();
   }
   function openColor(key) {
-    var auto = key === 'frc' ? autoOn(ed.d.T) : /^ic/.test(key) ? autoOn(ed.d[key.slice(2)]) : '';
+    var auto = /^(ic|fr)[RTS]$/.test(key) ? autoOn(ed.d[key.slice(2)]) : '';
     cp = { key: key, cur: ed.d[key] || auto, tab: 'S' };
     $('cpAuto').classList.toggle('hidden', !auto);
     renderColor(); openDlg('colorDlg', '#cpYes');

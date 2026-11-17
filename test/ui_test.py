@@ -696,46 +696,65 @@ def new_skins(p):
     assert 'Customize' in page.inner_text('#custBtnT') and 'Modern Tech' in page.inner_text('#custBtnT')
     page.click('#custBtn'); page.wait_for_selector('#themeEd:not(.hidden)')
     assert 'Based on Modern Tech' in page.inner_text('#teBase') and page.input_value('#teName') == 'My Modern Tech'
-    def pick(key, hexv):  # colour dialog: tap a swatch, then Use color
-        page.click(f'#cc_{key}'); page.wait_for_selector('#colorDlg:not(.hidden)')
+    def tab(k): page.click(f'#teTabs button[data-k={k}]')
+    def pick(key, hexv):  # colour dialog: tap a swatch, then Use color (block colours use the selected tab's row)
+        if key in ('R', 'T', 'S'): tab(key); sel = '#cc_chip'
+        else:
+            if page.locator('#teBgBox').is_hidden(): page.click('#teBgToggle')
+            sel = f'#cc_{key}'
+        page.click(sel); page.wait_for_selector('#colorDlg:not(.hidden)')
         page.click(f'#cpSw .cps[data-c="{hexv}"]'); page.click('#cpYes'); page.wait_for_selector('#colorDlg.hidden', state='attached')
     pick('bg', '#1A1F2B'); pick('board', '#0A1016'); pick('R', '#F4B6C2'); pick('T', '#2F80ED'); pick('S', '#F7E3A1')
-    assert page.locator('#cc_R .chx').inner_text() == '#F4B6C2', 'row shows the chosen colour'
+    tab('R'); assert page.locator('#cc_chip .chx').inner_text() == '#F4B6C2', 'row shows the chosen colour'
     assert css('--bg') != '#1a1f2b', 'editing does not repaint the app until saved'
     # Cancel keeps the old colour; fine-tune stays soft; More colors reaches the phone picker value
-    page.click('#cc_R'); page.click('#cpSw .cps[data-c="#E63946"]'); page.click('#cpNo')
-    assert page.locator('#cc_R .chx').inner_text() == '#F4B6C2', 'cancel keeps the colour'
-    page.click('#cc_R'); page.click('#cpTabF')
+    page.click('#cc_chip'); page.click('#cpSw .cps[data-c="#E63946"]'); page.click('#cpNo')
+    assert page.locator('#cc_chip .chx').inner_text() == '#F4B6C2', 'cancel keeps the colour'
+    page.click('#cc_chip'); page.click('#cpTabF')
     page.evaluate("() => { const s = document.getElementById('cpS'); s.value = 100; s.dispatchEvent(new Event('input')); const l = document.getElementById('cpL'); l.value = 0; l.dispatchEvent(new Event('input')); }")
     import re as _re
     hexv = page.inner_text('#cpHex'); assert _re.fullmatch(r'#[0-9A-F]{6}', hexv) and hexv != '#F4B6C2', 'fine-tune changes the colour'
     page.click('#cpSoft'); assert page.inner_text('#cpHex') != hexv, 'make softer'
     page.click('#cpYes')
-    page.click('#cc_R'); page.evaluate("() => { const n = document.getElementById('cpNative'); n.value = '#336699'; n.dispatchEvent(new Event('input')); }")
+    page.click('#cc_chip'); page.evaluate("() => { const n = document.getElementById('cpNative'); n.value = '#336699'; n.dispatchEvent(new Event('input')); }")
     assert page.inner_text('#cpHex') == '#336699'; page.click('#cpYes')
     pick('R', '#F4B6C2')
     # icons, frames, icon colour, solid style per block type
-    page.click('#icoPick button[data-i=spade]')
+    tab('R'); page.click('#icoPick button[data-i=spade]')
     page.click('#teTabs button[data-k=T]'); page.click('#icoPick button[data-i=diamond]'); page.click('#frPick button[data-f=ring]')
     page.click('#teTabs button[data-k=S]'); page.click('#icoNone'); page.click('#frPick button[data-f=double]')
-    assert page.locator('#icoNone').get_attribute('aria-pressed') == 'true' and page.locator('#icoNone').inner_text().strip() == 'No icon'
+    assert page.locator('#icoNone').get_attribute('aria-pressed') == 'true' and page.locator('#icoNone').inner_text().strip() == 'None'
     assert page.locator('#teBoard .piece.tS .fl').count() == 4 and page.locator('#teBoard .piece.tV i').count() == 2, 'preview shows frames'
     page.click('#teTabs button[data-k=R]'); page.click('#frPick button[data-f=stripes]'); page.click('#teSolid button[data-s="1"]')
     assert page.locator('#teBoard .piece.tR svg').get_attribute('fill') == 'currentColor', 'solid style'
     page.click('#cc_ic'); page.click('#cpSw .cps[data-c="#B5382C"]'); page.click('#cpYes')
     assert page.inner_text('#cc_ic .chx') == '#B5382C' and page.locator('#ca_ic').is_enabled()
     page.click('#ca_ic'); assert page.inner_text('#cc_ic .chx') == 'Auto', 'Auto resets the icon colour'
-    page.click('#cc_frc'); page.click('#cpSw .cps[data-c="#F7E3A1"]'); page.click('#cpYes')
+    page.click('#cc_fr'); page.click('#cpSw .cps[data-c="#F7E3A1"]'); page.click('#cpYes')
+    # border colour and icon style belong to ONE block type: the others keep theirs
+    assert page.inner_text('#cc_fr .chx') == '#F7E3A1'
+    tab('T'); assert page.inner_text('#cc_fr .chx') == 'Auto' and page.locator('#teSolid button[data-s="0"]').get_attribute('aria-pressed') == 'true', 'tall & wide keep Auto border and Outline style'
+    assert page.locator('#teBoard .piece.tV svg').first.get_attribute('fill') == 'none'
+    page.click('#cc_fr'); page.click('#cpSw .cps[data-c="#2F80ED"]'); page.click('#cpYes'); page.click('#teSolid button[data-s="1"]')
+    tab('R'); assert page.inner_text('#cc_fr .chx') == '#F7E3A1', 'red border colour untouched by the tall & wide change'
+    assert page.locator('#teBoard .piece.tR svg').get_attribute('fill') == 'currentColor'
+    tab('S'); assert page.inner_text('#cc_fr .chx') == 'Auto' and page.locator('#teSolid button[data-s="0"]').get_attribute('aria-pressed') == 'true'
+    # the editing cue: only the selected type's chips carry the white outline, tapping a chip in the preview selects its tab
+    assert page.locator('#teBoard .piece.pe').count() == 2 and page.locator('#teBoard .piece.pe.tS').count() == 2
+    page.click('#teBoard .piece.tR'); assert page.locator('#teTabs button[data-k=R]').get_attribute('aria-pressed') == 'true' and 'Red' in page.inner_text('#teBlockH')
+    assert page.locator('#teBoard .piece.pe').count() == 1
+    tab('T'); page.click('#teSolid button[data-s="0"]'); page.click('#ca_fr')
     # two block colours that look alike (same icon + frame) warn
     page.click('#teTabs button[data-k=S]'); page.click('#icoPick button[data-i=diamond]'); page.click('#frPick button[data-f=ring]')
     pick('S', '#2F80ED'); assert page.locator('#teWarn').is_visible(), 'contrast warning'
     pick('S', '#F7E3A1'); assert page.locator('#teWarn').is_hidden()
     # unsaved changes: Back asks twice; Reset restores the starting look
     page.click('#teBack'); assert 'Discard' in page.inner_text('#teBack'); assert page.locator('#themeEd').is_visible()
-    page.click('#teReset'); assert page.locator('#cc_R .chx').inner_text() == '#F26A1B'
+    page.click('#teMoreBtn'); page.click('#teReset'); tab('R'); assert page.locator('#cc_chip .chx').inner_text() == '#F26A1B'
     pick('R', '#F4B6C2'); page.fill('#teName', 'Night card')
     page.click('#teSave'); page.wait_for_selector('#themeEd.hidden', state='attached')
     th = page.evaluate("() => JSON.parse(localStorage.getItem('hr_themes'))")
+    assert th[0]['solid'] == {'R': False, 'T': False, 'S': False} and 'frc' not in th[0] and th[0]['frR'] == '' and th[0]['frT'] == '', 'per-type fields saved'
     assert len(th) == 1 and th[0]['name'] == 'Night card' and th[0]['R'] == '#F4B6C2' and th[0]['base'] == 'tech'
     assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_skin'))") == 'my:' + th[0]['id']
     assert page.evaluate("() => document.documentElement.dataset.skin") == 'custom' and css('--pR') != ''
@@ -747,7 +766,7 @@ def new_skins(p):
     assert page.evaluate("() => document.documentElement.dataset.skin") == 'custom', 'saved theme survives reload'
     # edit it, save as new (2/6), switch between them, delete (two taps) falls back to a built-in skin
     settings(page); page.click('#custBtn'); page.wait_for_selector('#themeEd:not(.hidden)')
-    assert page.input_value('#teName') == 'Night card' and page.locator('#teSaveNew').is_visible() and page.locator('#teDel').is_visible()
+    assert page.input_value('#teName') == 'Night card' and page.locator('#teSaveNew').is_visible() and page.locator('#teMoreBtn').is_visible()
     page.fill('#teName', 'Night card 2'); page.click('#teSaveNew'); page.wait_for_selector('#themeEd.hidden', state='attached')
     th = page.evaluate("() => JSON.parse(localStorage.getItem('hr_themes'))"); assert [t['name'] for t in th] == ['Night card', 'Night card 2']
     assert page.locator('#mythemes .skopt').count() == 2
@@ -764,7 +783,7 @@ def new_skins(p):
     assert code.startswith('HR1.'); import base64, json as _json
     assert len(_json.loads(base64.b64decode(code[4:]))['themes']) == 6, 'backup carries themes'
     page.click('#bkClose')
-    settings(page); page.click('#custBtn'); page.click('#teDel'); assert 'again' in page.inner_text('#teDel'); page.click('#teDel')
+    settings(page); page.click('#custBtn'); page.click('#teMoreBtn'); page.click('#teDel'); assert 'again' in page.inner_text('#teDel'); page.click('#teDel')
     page.wait_for_selector('#themeEd.hidden', state='attached')
     assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_themes')).length") == 5
     assert page.evaluate("() => document.documentElement.dataset.skin") in ('tech', 'classic'), 'deleting the active theme falls back'
@@ -772,10 +791,28 @@ def new_skins(p):
     # Thai labels in the editor and the colour dialog
     page.locator('#settings .lang-btn').click(); page.click('#custBtn')
     assert 'กรอบ' in page.locator('#frPick').inner_text() or 'วงแหวน' in page.locator('#frPick').inner_text()
-    assert page.locator('#icoNone').inner_text().strip() == 'ไม่มีไอคอน' and 'บล็อกแดง' in page.locator('#teRows').inner_text(), 'editor in Thai'
-    page.click('#cc_R'); assert 'ชุดสี' in page.locator('#cpTabS').inner_text() and 'สีบล็อกแดง' in page.inner_text('#cpTitle'), 'colour dialog in Thai'; page.click('#cpNo')
-    assert not errs, errs
+    assert page.locator('#icoNone').inner_text().strip() == 'ไม่มี' and 'บล็อกแดง' in page.locator('#teBlockH').inner_text() and 'กำลังแก้ไข' in page.inner_text('#teEditing'), 'editor in Thai'
+    page.click('#cc_chip'); assert 'ชุดสี' in page.locator('#cpTabS').inner_text() and 'สีบล็อกแดง' in page.inner_text('#cpTitle'), 'colour dialog in Thai'; page.click('#cpNo')
+    # older saved themes (one border colour + one solid flag for all types) load into the per-type fields
+    page.evaluate("() => { localStorage.setItem('hr_themes', JSON.stringify([{id:'old', name:'Old one', base:'tech', bg:'#1A1F2B', board:'#0A1016', R:'#B5382C', T:'#2F80ED', S:'#F7E3A1', frc:'#112233', solid:true, icons:{R:'crown',T:'star',S:'heart'}, frames:{R:'card',T:'ring',S:'none'}}])); localStorage.setItem('hr_skin', JSON.stringify('my:old')); }")
+    page.reload(); settings(page); page.click('#custBtn'); page.wait_for_selector('#themeEd:not(.hidden)')
+    for k in ('R', 'T', 'S'):
+        page.click(f'#teTabs button[data-k={k}]')
+        assert page.inner_text('#cc_fr .chx') == '#112233' and page.locator('#teSolid button[data-s="1"]').get_attribute('aria-pressed') == 'true', ('legacy theme', k)
+    page.click('#teBack'); page.click('#teBack') if page.locator('#themeEd:not(.hidden)').count() else None
     ctx.close()
+    # the whole editor fits one phone screen (390 x 844) without scrolling, in English and Thai
+    for lg in ('en', 'th'):
+        c2 = launch(p).new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=1, has_touch=True, is_mobile=True)
+        pg = c2.new_page(); pg.add_init_script("localStorage.setItem('hr_howto','false');localStorage.setItem('hr_lang',JSON.stringify('%s'))" % lg)
+        pg.goto(URL); settings(pg); pg.click('#custBtn'); pg.wait_for_selector('#themeEd:not(.hidden)')
+        for k in ('R', 'T', 'S'):
+            pg.click(f'#teTabs button[data-k={k}]')
+            h = pg.evaluate("() => [document.querySelector('.tedcard').scrollHeight, document.getElementById('themeEd').clientHeight]")
+            assert h[0] <= h[1], ('editor needs scrolling', lg, k, h)
+            assert pg.locator('#teSave').is_visible() and pg.locator('#teBoard').is_visible()
+        c2.close()
+    assert not errs, errs
 
 def skins_timer(p):
     """All skins visible at once (live previews), each selectable in one tap; timer switch hides the clock."""
