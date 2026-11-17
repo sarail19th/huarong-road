@@ -1325,7 +1325,8 @@ def lessons(p):
     assert page.locator('#lsBar').is_visible() and page.locator('#lsNote').is_visible()
     assert page.locator('#solBtn').is_hidden(), 'no Show solution in a lesson'
     assert page.locator('.stats').first.is_hidden(), 'no Moves/Par/Best/clock'
-    page.wait_for_timeout(300); assert page.locator('#ghost').count() in (0, 1)
+    page.wait_for_timeout(300); assert page.locator('#ghost').count() == 0, 'no red target outline any more'
+    assert 'to go' in page.locator('#lsGoal').inner_text(), page.locator('#lsGoal').inner_text()
     assert 'Lesson 1 of 6' in page.locator('#lvTitle').inner_text(), page.locator('#lvTitle').inner_text()
     # hint works as in levels
     page.click('#hintBtn'); assert page.locator('#tip').is_visible(); page.click('#hintBtn')
@@ -1368,24 +1369,40 @@ def lessons(p):
     sol = page.evaluate("() => Solver.solve(LESSONS[2].g.split('').map(Number))")
     for m in sol[:len(sol) // 2]: lesson_drag(m)
     on = page.locator('#lsSegs span.on').count(); assert on >= 1, 'a checkpoint was reached halfway'
-    assert 'Checkpoint' in page.locator('#lsNoteHead').inner_text(), page.locator('#lsNoteHead').inner_text()
+    assert 'The idea' not in page.locator('#lsNoteHead').inner_text() and 'to go' in page.locator('#lsGoal').inner_text()
     page.click('#undoBtn'); page.click('#redoBtn')
     assert page.locator('#lsSegs span.on').count() >= on, 'progress bar never goes backwards'
     # restart resets the bar
     page.click('#restartBtn'); page.click('#rsYes'); page.wait_for_timeout(100)
     assert page.locator('#lsSegs span.on').count() == 0 and 'The idea' in page.locator('#lsNoteHead').inner_text()
-    # Expert lesson: its 2nd checkpoint is the red block's own start square; moving other blocks first must not advance the bar
+    # progress = optimal moves left, not red's square: wiggling red or any detour must never fill the bar beyond what was really gained
     page.click('#backBtn'); page.wait_for_selector('#lessons:not(.hidden)')
-    page.locator('.lsrow').nth(4).click(); page.wait_for_selector('#game:not(.hidden)')
-    sol = page.evaluate("() => Solver.solve(LESSONS[4].g.split('').map(Number))")
-    red_moved = False
-    for m in sol:
-        red_moved = red_moved or m['t'] == 'R'
-        lesson_drag(m)
-        if not red_moved:
-            assert page.locator('#lsSegs span.on').count() == 0, 'moving other blocks must not fill the bar'
-            assert 'Goal 1 of' in page.locator('#lsGoal').inner_text(), page.locator('#lsGoal').inner_text()
-    page.wait_for_selector('#win:not(.hidden)', timeout=8000); page.click('#menuBtn'); page.wait_for_selector('#lessons:not(.hidden)')
+    def bar_ok(idx, state, best, tag):
+        left = page.evaluate("(g) => Solver.solve(g).length", state); best[0] = min(best[0], left)
+        par = page.evaluate("(i) => LESSONS[i].par", idx); n = page.evaluate("(i) => LESSONS[i].cps.length", idx)
+        want = min(n - 1, int((par - best[0]) / par * n))
+        got = page.locator('#lsSegs span.on').count()
+        assert got == want, (tag, 'bar', got, want, left)
+        assert (str(left) + ' move') in page.locator('#lsGoal').inner_text(), (tag, left, page.locator('#lsGoal').inner_text())
+        assert page.locator('#ghost').count() == 0
+    def ap(g, m): return page.evaluate("([g, m]) => Solver.slide(g, { t: m.t, r: m.r, c: m.c }, m.dr, m.dc, m.k)", [g, m])
+    for idx in (2, 3, 4, 5):
+        page.locator('.lsrow').nth(idx).click(); page.wait_for_selector('#game:not(.hidden)'); page.wait_for_timeout(200)
+        state = page.evaluate("(i) => LESSONS[i].g.split('').map(Number)", idx); best = [10 ** 6]; best[0] = page.evaluate("(g) => Solver.solve(g).length", state)
+        # 1) red-only wiggle: move red wherever it can go, then back, five times
+        for step in range(5):
+            nb = page.evaluate("(g) => Solver.neighbors(g).map(function (n) { return n.m; }).filter(function (m) { return m.t === 'R'; })", state)
+            if not nb: break
+            m = nb[step % len(nb)]; lesson_drag(m); state = ap(state, m); page.wait_for_timeout(120); bar_ok(idx, state, best, ('red', idx, step))
+            back = {'t': 'R', 'r': m['r'] + m['dr'] * m['k'], 'c': m['c'] + m['dc'] * m['k'], 'dr': -m['dr'], 'dc': -m['dc'], 'k': m['k']}
+            lesson_drag(back); state = ap(state, back); page.wait_for_timeout(120); bar_ok(idx, state, best, ('red-back', idx, step))
+        assert page.locator('#lsSegs span.on').count() == 0, ('red wiggling earned progress', idx)
+        # 2) follow the optimal line: the bar fills, the lesson completes
+        sol = page.evaluate("(g) => Solver.solve(g)", state)
+        for k2, m in enumerate(sol):
+            lesson_drag(m); state = ap(state, m); page.wait_for_timeout(120)
+            if k2 < len(sol) - 1: bar_ok(idx, state, best, ('line', idx, k2))
+        page.wait_for_selector('#win:not(.hidden)', timeout=8000); page.click('#menuBtn'); page.wait_for_selector('#lessons:not(.hidden)')
     page.click('#lsBack')
     # switching language mid-lesson re-renders the guide (idea card, goal line, title) and the complete card
     page.click('#lsOpen'); page.locator('.lsrow').nth(2).click(); page.wait_for_selector('#game:not(.hidden)')
@@ -1405,30 +1422,19 @@ def lessons(p):
     page.wait_for_timeout(150)
     assert 'Lesson complete' in page.locator('#winTitle').inner_text() and page.locator('#lsTry').inner_text() == 'Play a real level'
     page.click('#menuBtn'); page.wait_for_selector('#lessons:not(.hidden)'); page.click('#lsBack')
-    # the dashed outline always follows the optimal line from the CURRENT position (what Hint explains), also after a detour
+    # the guide always explains the optimal line from the CURRENT position (what Hint's first tap says), also after a detour;
+    # the board never jumps (fixed-height goal line + note card)
     page.click('#lsOpen'); page.locator('.lsrow').nth(3).click(); page.wait_for_selector('#game:not(.hidden)')
     state = page.evaluate("() => LESSONS[3].g.split('').map(Number)")
-    top0 = page.evaluate("() => Math.round(document.getElementById('board').getBoundingClientRect().top)")
     board_top = lambda: page.evaluate("() => Math.round(document.getElementById('board').getBoundingClientRect().top)")
-    def expected_ghost(g):
-        return page.evaluate("""(g) => { var line = Solver.solve(g); for (var i = 0; i < line.length; i++) if (line[i].t === 'R') return [[line[i].r + line[i].dr * line[i].k, line[i].c + line[i].dc * line[i].k], i]; return [null, 0]; }""", g)
-    def check_guide(g, tag):
-        dest, prep = expected_ghost(g)
-        txt = page.locator('#lsGoal').inner_text().lower()
-        if prep > 0:  # room must be made first: no target to chase, the line says how many moves come first
-            assert page.locator('#ghost').count() == 0, (tag, 'outline must be hidden while room has to be made', txt)
-            assert 'make room first' in txt and (str(prep) + ' move') in txt, (tag, prep, txt)
-        else:         # red's step is the right move now: outline on exactly that square
-            assert page.locator('#ghost').count() == 1 and ghost_cell() == dest, (tag, dest)
-            assert ' now' in txt, (tag, txt)
-    def ghost_cell():
-        bx = page.locator('#board').bounding_box(); cs = (bx['width'] - 20) / 4
-        tr = page.evaluate("() => document.getElementById('ghost').style.transform")
-        x, y = [float(v.replace('px', '')) for v in tr[tr.index('(') + 1:tr.index(')')].split(',')]
-        return [round((y - 8 - 3) / cs), round((x - 8 - 3) / cs)]
+    top0 = board_top()
     def apply_move(g, m):
         return page.evaluate("([g, m]) => Solver.slide(g, { t: m.t, r: m.r, c: m.c }, m.dr, m.dc, m.k)", [g, m])
-    # detour: five legal moves that are NOT on the optimal line (take the last neighbour each time), then follow the line a bit
+    def check_guide(g, tag):
+        left = page.evaluate("(g) => Solver.solve(g).length", g)
+        assert (str(left) + ' move') in page.locator('#lsGoal').inner_text(), (tag, left, page.locator('#lsGoal').inner_text())
+        assert page.locator('#ghost').count() == 0 and page.locator('.piece[data-focus]').count() >= 1, (tag, 'one block outlined')
+        assert 'The idea' not in page.locator('#lsNoteHead').inner_text(), tag
     for step in range(5):
         nb = page.evaluate("(g) => Solver.neighbors(g).map(function (n) { return n.m; })", state)
         sol0 = page.evaluate("(g) => Solver.solve(g)[0]", state)
@@ -1442,10 +1448,6 @@ def lessons(p):
         if page.locator('#win:not(.hidden)').count(): break
         check_guide(state, ('on-line', step))
         assert board_top() == top0, ('board jumped (goal bar changed height)', step, board_top(), top0)
-    page.click('#backBtn'); page.wait_for_selector('#lessons:not(.hidden)'); page.click('#lsBack')
-    # chasing the box with red alone (lesson 3: red up, down, up...) is told to make room first instead of ping-ponging silently
-    page.click('#lsOpen'); page.locator('.lsrow').nth(2).click(); page.wait_for_selector('#game:not(.hidden)'); page.wait_for_timeout(400)
-    assert 'make room first' in page.locator('#lsGoal').inner_text().lower() and page.locator('#ghost').count() == 0, page.locator('#lsGoal').inner_text()
     page.click('#backBtn'); page.wait_for_selector('#lessons:not(.hidden)'); page.click('#lsBack')
     # backup carries lesson progress
     ctx.close(); assert not errors, errors
