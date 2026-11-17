@@ -333,6 +333,9 @@ store.set('hr_bk', bk);
       b.onclick = function () { openLevel(i); };
       row.appendChild(b);
     });
+    var nextI = -1; LV.forEach(function (lv, i) { if (nextI < 0 && !progress[lv.id] && !silver[lv.id]) nextI = i; });
+    $('contBtn').classList.toggle('hidden', nextI < 0);
+    if (nextI >= 0) { $('contTitle').textContent = L('Level ', 'ด่าน ') + (nextI + 1) + ' · ' + gradeOf(LV[nextI].par).name; $('contBtn').dataset.i = nextI; }
     $('totalStars').innerHTML = total + ' / ' + LV.length * 3 + (nSilver ? ' <span class="silvercount">· ★ ' + nSilver + ' ' + L('silver', 'เงิน') + '</span>' : '');
     renderDsCard();
     var chips = $('pgchips'); chips.innerHTML = '';
@@ -392,6 +395,7 @@ store.set('hr_bk', bk);
     renderWeek($('dWeek'));
     var led = $('dLed');
     if (!lv) {
+      $('daily').classList.remove('solved');
       $('dTitle').textContent = L('Daily #', 'รายวัน #') + Daily.numberOf(key); $('dGrade').textContent = L('Preparing today’s puzzle…', 'กำลังเตรียมปริศนาวันนี้…'); $('dNote').textContent = '';
       led.innerHTML = new Array(21).join('<i></i>'); $('dPlay').disabled = true; $('dPlay').textContent = L('Play today’s puzzle', 'เล่นปริศนาวันนี้');
       return;
@@ -399,8 +403,9 @@ store.set('hr_bk', bk);
     var g = lv.g.split('').map(Number), pr = progress[lv.id];
     led.innerHTML = g.map(function (v) { return '<i class="' + (v === 0 ? '' : v <= 4 ? 'R' : v <= 8 ? 'B' : 'Y') + '"></i>'; }).join('');
     $('dTitle').textContent = L('Puzzle #', 'ปริศนา #') + lv.number;
-    $('dGrade').textContent = gradeOf(lv.par).name + ' · par ' + lv.par;
-    $('dNote').textContent = pr ? L('Solved ', 'ผ่านแล้ว ') + stars(pr.stars) + ' · ' + pr.moves + ' moves' : L('Same puzzle for everyone today', 'ทุกคนได้ปริศนาเดียวกันในวันนี้');
+    $('daily').classList.toggle('solved', !!pr);
+    $('dGrade').textContent = gradeOf(lv.par).name + (freeMode ? '' : ' · par ' + lv.par);
+    $('dNote').textContent = pr ? (freeMode ? L('Solved ✓', 'ผ่านแล้ว ✓') : L('Solved ', 'ผ่านแล้ว ') + stars(pr.stars) + ' · ' + pr.moves + ' moves') : L('Same puzzle for everyone today', 'ทุกคนได้ปริศนาเดียวกันในวันนี้');
     $('dPlay').disabled = false;
     $('dPlay').textContent = pr ? L('Play again', 'เล่นอีกครั้ง') : L('Play today’s puzzle', 'เล่นปริศนาวันนี้');
   }
@@ -613,9 +618,10 @@ store.set('hr_bk', bk);
   });
   function renderDsCard() {
     renderLessonCard();
-    $('dsCount').textContent = designs.length ? L(designs.length + ' saved · build your own puzzle', 'บันทึกไว้ ' + designs.length + ' ด่าน · สร้างปริศนาของคุณเอง')
-      : L('Build your own puzzle', 'สร้างปริศนาของคุณเอง');
+    $('dsCount').textContent = designs.length ? L(designs.length + ' saved', 'บันทึกไว้ ' + designs.length + ' ด่าน')
+      : L('Build your own', 'สร้างปริศนาเอง');
   }
+  $('contBtn').onclick = function () { openLevel(+this.dataset.i); };
   $('dsOpen').onclick = showStages;
   $('stNew').onclick = function () { openDesign(null); };
   $('stBack').onclick = showMenu;
@@ -1251,7 +1257,7 @@ store.set('hr_bk', bk);
   function lessonCount() { return LESSONS.filter(function (d, i) { return lessonsDone[i + 1]; }).length; }
   function renderLessonCard() {
     var n = lessonCount();
-    $('lsCount').textContent = L(n + '/' + LESSONS.length + ' done · Starter to Master', 'ผ่านแล้ว ' + n + '/' + LESSONS.length + ' บท · จากเริ่มต้นถึงปรมาจารย์');
+    $('lsCount').textContent = L(n + '/' + LESSONS.length + ' done', 'ผ่านแล้ว ' + n + '/' + LESSONS.length + ' บท');
     $('lsProg').style.width = (n / LESSONS.length * 100) + '%';
   }
   function showLessons() {
@@ -1469,7 +1475,7 @@ store.set('hr_bk', bk);
   function renderTimer() { setSwitch($('timerBtn'), timerOn); document.body.classList.toggle('notimer', !timerOn); }
   $('timerBtn').onclick = function () { timerOn = !timerOn; store.set('hr_timer', timerOn); renderTimer(); };
   renderTimer();
-  function renderFree() { setSwitch($('freeBtn'), freeMode); document.body.classList.toggle('free', freeMode); if (G && G.phase === 'play') renderBest(); }
+  function renderFree() { setSwitch($('freeBtn'), !freeMode); if (typeof renderDaily === 'function') renderDaily(); document.body.classList.toggle('free', freeMode); if (G && G.phase === 'play') renderBest(); }
   $('freeBtn').onclick = function () { freeMode = !freeMode; store.set('hr_free', freeMode); renderFree(); if (G && G.phase === 'play') renderStatus(); renderMenu(); };
   renderFree();
   renderAuto();

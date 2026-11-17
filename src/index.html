@@ -59,19 +59,22 @@
     </div>
     <p class="tagline" data-th="ปริศนาบล็อกเลื่อน · 100 ด่าน">Sliding-block puzzle · 100 levels</p>
   </div>
+  <button class="btn go contbtn hidden" id="contBtn"><span class="ctxt"><small data-th="เล่นต่อ">Continue</small><b id="contTitle"></b></span><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg></button>
   <div class="daily" id="daily">
     <div class="dhead"><span class="dtag" data-th="รายวัน">DAILY</span><span class="ddate" id="dDate"></span><span class="streak" id="dStreak"></span></div>
     <div class="dbody"><div class="led dled" id="dLed" aria-hidden="true"></div><div class="dinfo"><b id="dTitle"></b><span id="dGrade"></span><span class="dnote" id="dNote"></span></div></div>
     <div class="week" id="dWeek"></div>
     <button class="btn go" id="dPlay" disabled></button>
   </div>
+  <div class="sidetiles">
   <div class="dscard lscard" id="lsCard">
-    <div class="dsinfo"><b><svg class="ico" aria-hidden="true"><use href="#i-bulb"/></svg><span data-th="บทเรียนวิธีคิด">Logic lessons</span></b><span id="lsCount"></span><div class="lsprog" aria-hidden="true"><i id="lsProg"></i></div></div>
-    <button class="btn" id="lsOpen" data-th="เปิด">Open</button>
+    <div class="dsinfo"><b><svg class="ico" aria-hidden="true"><use href="#i-bulb"/></svg><span id="lsTitle" data-th="บทเรียนวิธีคิด">Logic lessons</span></b><span id="lsCount"></span><div class="lsprog" aria-hidden="true"><i id="lsProg"></i></div></div>
+    <button class="btn" id="lsOpen" aria-labelledby="lsTitle lsCount"><span data-th="เปิด">Open</span></button>
   </div>
   <div class="dscard" id="dsCard">
-    <div class="dsinfo"><b><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg><span data-th="ออกแบบด่าน">Design stage</span></b><span id="dsCount"></span></div>
-    <button class="btn" id="dsOpen" data-th="เปิด">Open</button>
+    <div class="dsinfo"><b><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg><span id="dsTitle" data-th="ออกแบบด่าน">Design stage</span></b><span id="dsCount"></span></div>
+    <button class="btn" id="dsOpen" aria-labelledby="dsTitle dsCount"><span data-th="เปิด">Open</span></button>
+  </div>
   </div>
   <div class="howto" id="howto">
     <button class="howhead" id="howToggle" aria-expanded="true" aria-controls="howBody"><b data-th="วิธีเล่น">How to play</b><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
@@ -261,7 +264,7 @@
         <button class="setrow" id="autoPlaceBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg><span class="lbl" data-th="วางอัตโนมัติ">Auto-place</span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
         <button class="setrow" id="autoStartBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span class="lbl two"><span data-th="เริ่มเกมอัตโนมัติ">Auto-start</span><small class="sub" data-th="ข้ามการตั้งค่า เริ่มเล่นทันที">Skip setup, start at once</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
         <button class="setrow" id="timerBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-timer"/></svg><span class="lbl two"><span data-th="จับเวลา">Timer</span><small class="sub" data-th="ปิดเพื่อเล่นแบบไม่กดดัน">Turn off for no-stress play</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
-        <button class="setrow" id="freeBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-star"/></svg><span class="lbl two"><span data-th="โหมดไม่กดดัน">Stress-free mode</span><small class="sub" data-th="ซ่อนจำนวนครั้งและพาร์ ผ่านด่านได้ดาวเงิน">Hides Moves and Par · silver stars</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+        <button class="setrow" id="freeBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-steps"/></svg><span class="lbl two"><span data-th="นับจำนวนครั้ง">Move count</span><small class="sub" data-th="ปิดเพื่อเล่นแบบไม่นับ ได้ดาวเงิน">Off for no counting · silver stars</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
       </div>
     </section>
     <section class="setgrp data">

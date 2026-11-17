@@ -655,6 +655,25 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
 @media(max-height:760px){.tecap{display:none}}
 .tesech{margin:6px 0 0;font-size:13px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
 .tebg{padding-bottom:6px}
+/* menu: Continue button, compact solved Daily, side tiles in one row */
+.contbtn{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:10px;padding:10px 16px;text-align:left}
+.contbtn.hidden{display:none}
+.contbtn .ctxt{display:flex;flex-direction:column;gap:1px;min-width:0}
+.contbtn small{font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;opacity:.85}
+.contbtn b{font-size:16px}
+.contbtn .ico{width:22px;height:22px;flex:none}
+.daily.solved{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 12px}
+.daily.solved .dhead{grid-column:1/-1;margin-bottom:0}
+.daily.solved .dbody{margin-bottom:0;min-width:0}
+.daily.solved .dbody .led,.daily.solved .week{display:none}
+.daily.solved .btn.go{width:auto;padding:10px 16px;font-size:14px}
+.sidetiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.sidetiles .dscard{position:relative;margin-bottom:0;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;padding:10px 12px;min-width:0}
+.sidetiles .dscard .btn{position:absolute;inset:0;width:100%;height:100%;opacity:0;padding:0;border-radius:14px}
+.sidetiles .dscard:focus-within{outline:2px solid var(--yellow);outline-offset:2px}
+.sidetiles .dscard::after{content:"›";position:absolute;right:12px;top:8px;font-size:20px;line-height:1;color:var(--muted)}
+.sidetiles .dsinfo{width:100%}
+.sidetiles .dsinfo span#lsCount,.sidetiles .dsinfo span#dsCount{font-size:12px;line-height:1.3}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -703,19 +722,22 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
     </div>
     <p class="tagline" data-th="ปริศนาบล็อกเลื่อน · 100 ด่าน">Sliding-block puzzle · 100 levels</p>
   </div>
+  <button class="btn go contbtn hidden" id="contBtn"><span class="ctxt"><small data-th="เล่นต่อ">Continue</small><b id="contTitle"></b></span><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg></button>
   <div class="daily" id="daily">
     <div class="dhead"><span class="dtag" data-th="รายวัน">DAILY</span><span class="ddate" id="dDate"></span><span class="streak" id="dStreak"></span></div>
     <div class="dbody"><div class="led dled" id="dLed" aria-hidden="true"></div><div class="dinfo"><b id="dTitle"></b><span id="dGrade"></span><span class="dnote" id="dNote"></span></div></div>
     <div class="week" id="dWeek"></div>
     <button class="btn go" id="dPlay" disabled></button>
   </div>
+  <div class="sidetiles">
   <div class="dscard lscard" id="lsCard">
-    <div class="dsinfo"><b><svg class="ico" aria-hidden="true"><use href="#i-bulb"/></svg><span data-th="บทเรียนวิธีคิด">Logic lessons</span></b><span id="lsCount"></span><div class="lsprog" aria-hidden="true"><i id="lsProg"></i></div></div>
-    <button class="btn" id="lsOpen" data-th="เปิด">Open</button>
+    <div class="dsinfo"><b><svg class="ico" aria-hidden="true"><use href="#i-bulb"/></svg><span id="lsTitle" data-th="บทเรียนวิธีคิด">Logic lessons</span></b><span id="lsCount"></span><div class="lsprog" aria-hidden="true"><i id="lsProg"></i></div></div>
+    <button class="btn" id="lsOpen" aria-labelledby="lsTitle lsCount"><span data-th="เปิด">Open</span></button>
   </div>
   <div class="dscard" id="dsCard">
-    <div class="dsinfo"><b><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg><span data-th="ออกแบบด่าน">Design stage</span></b><span id="dsCount"></span></div>
-    <button class="btn" id="dsOpen" data-th="เปิด">Open</button>
+    <div class="dsinfo"><b><svg class="ico" aria-hidden="true"><use href="#i-edit"/></svg><span id="dsTitle" data-th="ออกแบบด่าน">Design stage</span></b><span id="dsCount"></span></div>
+    <button class="btn" id="dsOpen" aria-labelledby="dsTitle dsCount"><span data-th="เปิด">Open</span></button>
+  </div>
   </div>
   <div class="howto" id="howto">
     <button class="howhead" id="howToggle" aria-expanded="true" aria-controls="howBody"><b data-th="วิธีเล่น">How to play</b><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
@@ -905,7 +927,7 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
         <button class="setrow" id="autoPlaceBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg><span class="lbl" data-th="วางอัตโนมัติ">Auto-place</span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
         <button class="setrow" id="autoStartBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span class="lbl two"><span data-th="เริ่มเกมอัตโนมัติ">Auto-start</span><small class="sub" data-th="ข้ามการตั้งค่า เริ่มเล่นทันที">Skip setup, start at once</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
         <button class="setrow" id="timerBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-timer"/></svg><span class="lbl two"><span data-th="จับเวลา">Timer</span><small class="sub" data-th="ปิดเพื่อเล่นแบบไม่กดดัน">Turn off for no-stress play</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
-        <button class="setrow" id="freeBtn" role="switch" aria-checked="false" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-star"/></svg><span class="lbl two"><span data-th="โหมดไม่กดดัน">Stress-free mode</span><small class="sub" data-th="ซ่อนจำนวนครั้งและพาร์ ผ่านด่านได้ดาวเงิน">Hides Moves and Par · silver stars</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
+        <button class="setrow" id="freeBtn" role="switch" aria-checked="true" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-steps"/></svg><span class="lbl two"><span data-th="นับจำนวนครั้ง">Move count</span><small class="sub" data-th="ปิดเพื่อเล่นแบบไม่นับ ได้ดาวเงิน">Off for no counting · silver stars</small></span><span class="st" aria-hidden="true"></span><i class="pill"></i></button>
       </div>
     </section>
     <section class="setgrp data">
@@ -1323,7 +1345,7 @@ store.set('hr_bk', bk);
   function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
   applyMotion(); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = 'd9b805f'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = '7fc7903'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null, autoTimer = null;
   var els = new Map();
@@ -1626,6 +1648,9 @@ store.set('hr_bk', bk);
       b.onclick = function () { openLevel(i); };
       row.appendChild(b);
     });
+    var nextI = -1; LV.forEach(function (lv, i) { if (nextI < 0 && !progress[lv.id] && !silver[lv.id]) nextI = i; });
+    $('contBtn').classList.toggle('hidden', nextI < 0);
+    if (nextI >= 0) { $('contTitle').textContent = L('Level ', 'ด่าน ') + (nextI + 1) + ' · ' + gradeOf(LV[nextI].par).name; $('contBtn').dataset.i = nextI; }
     $('totalStars').innerHTML = total + ' / ' + LV.length * 3 + (nSilver ? ' <span class="silvercount">· ★ ' + nSilver + ' ' + L('silver', 'เงิน') + '</span>' : '');
     renderDsCard();
     var chips = $('pgchips'); chips.innerHTML = '';
@@ -1685,6 +1710,7 @@ store.set('hr_bk', bk);
     renderWeek($('dWeek'));
     var led = $('dLed');
     if (!lv) {
+      $('daily').classList.remove('solved');
       $('dTitle').textContent = L('Daily #', 'รายวัน #') + Daily.numberOf(key); $('dGrade').textContent = L('Preparing today’s puzzle…', 'กำลังเตรียมปริศนาวันนี้…'); $('dNote').textContent = '';
       led.innerHTML = new Array(21).join('<i></i>'); $('dPlay').disabled = true; $('dPlay').textContent = L('Play today’s puzzle', 'เล่นปริศนาวันนี้');
       return;
@@ -1692,8 +1718,9 @@ store.set('hr_bk', bk);
     var g = lv.g.split('').map(Number), pr = progress[lv.id];
     led.innerHTML = g.map(function (v) { return '<i class="' + (v === 0 ? '' : v <= 4 ? 'R' : v <= 8 ? 'B' : 'Y') + '"></i>'; }).join('');
     $('dTitle').textContent = L('Puzzle #', 'ปริศนา #') + lv.number;
-    $('dGrade').textContent = gradeOf(lv.par).name + ' · par ' + lv.par;
-    $('dNote').textContent = pr ? L('Solved ', 'ผ่านแล้ว ') + stars(pr.stars) + ' · ' + pr.moves + ' moves' : L('Same puzzle for everyone today', 'ทุกคนได้ปริศนาเดียวกันในวันนี้');
+    $('daily').classList.toggle('solved', !!pr);
+    $('dGrade').textContent = gradeOf(lv.par).name + (freeMode ? '' : ' · par ' + lv.par);
+    $('dNote').textContent = pr ? (freeMode ? L('Solved ✓', 'ผ่านแล้ว ✓') : L('Solved ', 'ผ่านแล้ว ') + stars(pr.stars) + ' · ' + pr.moves + ' moves') : L('Same puzzle for everyone today', 'ทุกคนได้ปริศนาเดียวกันในวันนี้');
     $('dPlay').disabled = false;
     $('dPlay').textContent = pr ? L('Play again', 'เล่นอีกครั้ง') : L('Play today’s puzzle', 'เล่นปริศนาวันนี้');
   }
@@ -1906,9 +1933,10 @@ store.set('hr_bk', bk);
   });
   function renderDsCard() {
     renderLessonCard();
-    $('dsCount').textContent = designs.length ? L(designs.length + ' saved · build your own puzzle', 'บันทึกไว้ ' + designs.length + ' ด่าน · สร้างปริศนาของคุณเอง')
-      : L('Build your own puzzle', 'สร้างปริศนาของคุณเอง');
+    $('dsCount').textContent = designs.length ? L(designs.length + ' saved', 'บันทึกไว้ ' + designs.length + ' ด่าน')
+      : L('Build your own', 'สร้างปริศนาเอง');
   }
+  $('contBtn').onclick = function () { openLevel(+this.dataset.i); };
   $('dsOpen').onclick = showStages;
   $('stNew').onclick = function () { openDesign(null); };
   $('stBack').onclick = showMenu;
@@ -2544,7 +2572,7 @@ store.set('hr_bk', bk);
   function lessonCount() { return LESSONS.filter(function (d, i) { return lessonsDone[i + 1]; }).length; }
   function renderLessonCard() {
     var n = lessonCount();
-    $('lsCount').textContent = L(n + '/' + LESSONS.length + ' done · Starter to Master', 'ผ่านแล้ว ' + n + '/' + LESSONS.length + ' บท · จากเริ่มต้นถึงปรมาจารย์');
+    $('lsCount').textContent = L(n + '/' + LESSONS.length + ' done', 'ผ่านแล้ว ' + n + '/' + LESSONS.length + ' บท');
     $('lsProg').style.width = (n / LESSONS.length * 100) + '%';
   }
   function showLessons() {
@@ -2762,7 +2790,7 @@ store.set('hr_bk', bk);
   function renderTimer() { setSwitch($('timerBtn'), timerOn); document.body.classList.toggle('notimer', !timerOn); }
   $('timerBtn').onclick = function () { timerOn = !timerOn; store.set('hr_timer', timerOn); renderTimer(); };
   renderTimer();
-  function renderFree() { setSwitch($('freeBtn'), freeMode); document.body.classList.toggle('free', freeMode); if (G && G.phase === 'play') renderBest(); }
+  function renderFree() { setSwitch($('freeBtn'), !freeMode); if (typeof renderDaily === 'function') renderDaily(); document.body.classList.toggle('free', freeMode); if (G && G.phase === 'play') renderBest(); }
   $('freeBtn').onclick = function () { freeMode = !freeMode; store.set('hr_free', freeMode); renderFree(); if (G && G.phase === 'play') renderStatus(); renderMenu(); };
   renderFree();
   renderAuto();

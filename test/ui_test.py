@@ -831,8 +831,8 @@ def stressfree(p):
     page.add_init_script("localStorage.setItem('hr_howto','false')")
     page.goto(URL)
     settings(page)
-    assert page.locator('#freeBtn').get_attribute('aria-pressed') == 'false' and 'Stress-free mode' in page.inner_text('#freeBtn'), 'switch exists, default off'
-    page.click('#freeBtn'); assert page.locator('#freeBtn').get_attribute('aria-pressed') == 'true'
+    assert page.locator('#freeBtn').get_attribute('aria-pressed') == 'true' and 'Move count' in page.inner_text('#freeBtn'), 'Move count switch exists, On by default (like Timer)'
+    page.click('#freeBtn'); assert page.locator('#freeBtn').get_attribute('aria-pressed') == 'false', 'Off = stress-free'
     assert page.evaluate("() => localStorage.getItem('hr_free')") == 'true'
     settings(page, False)
     lv(page, 0).click(); page.click('#startBtn')
@@ -853,7 +853,7 @@ def stressfree(p):
     assert _j.loads(base64.b64decode(code[4:]))['silver'] == sv, 'backup carries silver'
     page.click('#bkClose')
     # gold: turn the mode off and clear the same level with par moves -> 3 gold stars, silver no longer counted for it
-    settings(page); page.click('#freeBtn'); settings(page, False)
+    settings(page); page.click('#freeBtn'); assert page.locator('#freeBtn').get_attribute('aria-pressed') == 'true'; settings(page, False)
     lv(page, 0).click(); page.click('#startBtn')
     assert page.locator('#movesStat').is_visible() and page.locator('#freeChip').is_hidden()
     solve_on_board(page, 0)
@@ -866,8 +866,11 @@ def stressfree(p):
     assert 'gold record is unchanged' in page.inner_text('#winInfo')
     assert page.evaluate("() => Object.values(JSON.parse(localStorage.getItem('hr_progress')))[0].stars") == 3
     page.click('#menuBtn'); page.wait_for_selector('#menu:not(.hidden)')
+    # menu: Continue button goes to the first level that is neither gold nor silver; a solved daily collapses
+    assert page.locator('#contBtn').is_visible() and 'Level 2' in page.inner_text('#contBtn'), page.inner_text('#contBtn')
+    page.click('#contBtn'); page.wait_for_selector('#game:not(.hidden)'); assert 'Level 2' in page.inner_text('#lvTitle'); page.click('#backBtn'); page.wait_for_selector('#menu:not(.hidden)')
     # Thai
-    toggle_lang(page); settings(page); assert 'โหมดไม่กดดัน' in page.inner_text('#freeBtn'); settings(page, False); toggle_lang(page)
+    toggle_lang(page); settings(page); assert 'นับจำนวนครั้ง' in page.inner_text('#freeBtn'); settings(page, False); toggle_lang(page)
     # reset all clears silver too
     page.evaluate("() => { localStorage.setItem('hr_silver', JSON.stringify({'2': 1})); }"); page.reload()
     assert page.locator('.lv.silver').count() == 0 or True
@@ -1157,6 +1160,8 @@ def daily(p):
     page.click('#menuBtn')
     assert 'Solved ★★★' in page.inner_text('#daily') and page.inner_text('#dPlay') == 'Play again' and '1-day streak' in page.inner_text('#dStreak')
     assert page.inner_text('#totalStars').startswith('0 /'), 'daily stars are separate from the 300 level stars'
+    assert page.locator('#daily.solved').count()==1 and page.locator('#daily .dbody .led').is_hidden(), 'solved daily collapses (no LED/week row)'
+    r=page.evaluate("()=>{const a=document.getElementById('lsCard').getBoundingClientRect(),b=document.getElementById('dsCard').getBoundingClientRect();return [a.top,b.top,a.right<=b.left+1]}"); assert abs(r[0]-r[1])<2 and r[2], 'lesson + design tiles sit side by side'
     at(2026, 11, 5)                                                    # next day: new puzzle, streak still alive
     assert page.evaluate("() => JSON.parse(localStorage.getItem('hr_daily_lv')).key") == '2026-11-05'
     assert '1-day streak' in page.inner_text('#dStreak') and page.inner_text('#dPlay') == 'Play today’s puzzle'
@@ -1179,7 +1184,7 @@ def design(p):
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
     page.goto(URL)
-    assert 'Build your own puzzle' in page.inner_text('#dsCard')
+    assert 'Build your own' in page.inner_text('#dsCard')
     page.click('#dsOpen'); assert page.locator('#stages').is_visible() and page.locator('#stEmpty').is_visible(), 'My stages page, empty state'
     assert page.inner_text('#stCount') == '0 / 50' and page.inner_text('#stHard') == '–'
     page.screenshot(path=f'{SHOTS}/stages_empty.png')
@@ -1259,7 +1264,7 @@ def design(p):
     # backup carries designs
     page.click('#stBack'); settings(page); page.click('#backupBtn'); code = page.locator('#bkOut').input_value(); page.click('#bkClose')
     page.evaluate("() => { localStorage.removeItem('hr_designs'); localStorage.removeItem('hr_progress'); }"); page.reload()
-    assert 'Build your own puzzle' == page.inner_text('#dsCount')
+    assert 'Build your own' == page.inner_text('#dsCount')
     settings(page); page.click('#backupBtn'); page.fill('#bkIn', code); page.click('#bkRestore'); page.click('#bkClose')
     assert page.inner_text('#dsCount').startswith('49 saved')
     ctx.close(); assert not errors, errors
