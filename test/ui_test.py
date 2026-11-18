@@ -364,6 +364,24 @@ def all_hints(p):
     print('hints on 100 levels x EN/TH:', stats)
     assert stats['generic_setup'] <= 40, 'too many fallback explanations: ' + str(stats)
 
+def record_size(p):
+    """A played level shows "Your record" above the board; it must not shrink the board (same size as a fresh level),
+    in normal and stress-free mode, and on a tall phone the page still needs no scrolling."""
+    for vw, vh in [(393, 800), (360, 740), (412, 915)]:
+        for free in (False, True):
+            ctx = launch(p).new_context(viewport={'width': vw, 'height': vh}, device_scale_factor=1, has_touch=True, is_mobile=True)
+            page = ctx.new_page(); page.goto(URL)
+            page.evaluate("(f) => { localStorage.setItem('hr_progress', JSON.stringify({15: {stars: 2, moves: 20, time: 5}})); localStorage.setItem('hr_autostart', 'true'); if (f) localStorage.setItem('hr_free', 'true'); }", free)
+            sizes = {}
+            for idx in (14, 16):
+                page.goto(URL); lv(page, idx).click(); page.wait_for_timeout(400)
+                sizes[idx] = (page.evaluate("() => document.getElementById('board').style.width"), page.locator('#recLine').is_visible(),
+                              page.evaluate("() => document.documentElement.scrollHeight"))
+            assert sizes[14][1] and not sizes[16][1], sizes
+            assert sizes[14][0] == sizes[16][0], f'{vw}x{vh} free={free}: played board {sizes[14][0]} != fresh {sizes[16][0]}'
+            if vh >= 800: assert sizes[14][2] <= vh, f'{vw}x{vh}: the record line makes the page scroll ({sizes[14][2]})'
+            ctx.close()
+
 def trend(p):
     """After a hint was used each move says closer / no progress / further; no such line without a hint."""
     ctx = launch(p).new_context(viewport={'width': 412, 'height': 860}, device_scale_factor=1, has_touch=True, is_mobile=True)
@@ -1632,6 +1650,8 @@ with sync_playwright() as p:
     print('language switch: EN | TH highlights the active side, flips both ways, fits at 360px')
     all_hints(p)
     trend(p)
+    record_size(p)
+    print('record line: a played level keeps the same board size as a fresh one')
     print('on-track feedback: closer / further / undo, hidden until a hint is used')
     # service-worker timing makes the banner wait flaky (also on older builds): allow one retry of this group only
     try: updates(p)

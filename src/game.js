@@ -678,6 +678,13 @@ store.set('hr_bk', bk);
     var id = G && G.lv && G.lv.id, can = !!id && id !== 'draft' && !G.lv.daily && G.phase !== 'design' && (progress[id] || seen[id] || silver[id]);
     $('recLine').classList.toggle('hidden', !can);
     if (can) $('recText').textContent = L('Your record: ', 'สถิติของคุณ: ') + recordText(id);
+    // the slot gives up the record line's height (see calcCell), so showing it does not shrink the board
+    $('game').classList.toggle('hasrec', !!can);
+    $('game').style.setProperty('--rech', can ? recH() + 'px' : '0px');
+  }
+  function recH() {
+    var rl = $('recLine'); if (!rl.offsetHeight) return 0;
+    var rs = getComputedStyle(rl); return rl.offsetHeight + parseFloat(rs.marginTop) + parseFloat(rs.marginBottom);
   }
   $('recReset').onclick = function () {
     if (!G) return;
@@ -714,6 +721,14 @@ store.set('hr_bk', bk);
     var availW = Math.min(frameW, 440);
     var b = $('board'), sec = $('game'), availH = window.innerHeight - 340;
     if (sec && sec.offsetHeight && b.offsetHeight) availH = window.innerHeight - (sec.offsetHeight - b.offsetHeight) - 4;
+    // The "Your record" line only shows on levels already played. It borrows its height from the help slot's
+    // spare room (.hasrec), so size the board as if neither had happened: a played level gets exactly the
+    // same board as a fresh one.
+    var sl = document.querySelector('#game .slot');
+    if (sec && sec.classList.contains('hasrec') && sl) {
+      var rh = recH(), smin = parseFloat(getComputedStyle(sl).getPropertyValue('--slotmin')) || 0;
+      availH += rh + sl.offsetHeight - Math.max(sl.offsetHeight, smin);
+    }
     return Math.max(Math.floor(Math.min((availW - 2 * PAD - BORDER) / W, (availH - 2 * PAD - BORDER) / H)), 52);
   }
   function layout() {
