@@ -88,7 +88,8 @@ def run(level_idx, p, shots=False, haptics_off=False):
     assert page.locator('#startBtn').is_enabled(), 'start should enable after all chips verified'
     if shots: page.screenshot(path=f'{SHOTS}/3_setup_ready.png')
     page.click('#startBtn')
-    page.wait_for_timeout(150)
+    page.wait_for_timeout(300)
+    box = page.locator('#board').bounding_box(); cs = (box['width'] - 4 - 2 * pad) / 4   # the board re-fits to the free height after Start
     if shots: page.screenshot(path=f'{SHOTS}/4_play.png')
 
     # --- play phase: follow the solver with real drags
