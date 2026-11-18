@@ -1020,6 +1020,7 @@ def autostart(p):
 
 def solve_on_board(page, idx, extra=0):
     """Play level idx to the win using the optimal line; extra > 0 first wastes that many moves (one block out and back)."""
+    page.wait_for_timeout(250)   # the board re-fits to the free height right after Start; let it settle
     sol = page.evaluate("(i) => Solver.solve(LEVELS[i].g.split('').map(Number))", idx)
     def drag(m):
         bx = page.locator('#board').bounding_box(); cs = (bx['width'] - 20) / 4; d = {'R': (2, 2), 'V': (1, 2), 'H': (2, 1), 'S': (1, 1)}[m['t']]
