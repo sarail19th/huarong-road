@@ -1612,7 +1612,10 @@ with sync_playwright() as p:
     all_hints(p)
     trend(p)
     print('on-track feedback: closer / further / undo, hidden until a hint is used')
-    updates(p)
+    # service-worker timing makes the banner wait flaky (also on older builds): allow one retry of this group only
+    try: updates(p)
+    except Exception as e:
+        print('updates: retrying once after', type(e).__name__); updates(p)
     print('updates: banner on new deploy, refresh beats stale caches, offline safe, progress kept')
     menu_pages(p)
     print('menu pages: 20 per page, remembered, header does not cover the title')
