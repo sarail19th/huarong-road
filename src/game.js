@@ -726,7 +726,12 @@ store.set('hr_bk', bk);
     z.style.width = (2 * cell) + 'px'; z.style.height = (2 * cell) + 'px';
     var g = $('gate'); g.style.left = (PAD + cell + 8) + 'px'; g.style.width = (2 * cell - 16) + 'px';
     g.style.top = (H * cell + 2 * PAD - 2) + 'px';
-    if (G) { renderPieces(); lessonRender(); }
+    if (G) {
+      renderPieces(); lessonRender();
+      // re-drawing the pieces drops the hint / next-move marks: put them back
+      if (G.phase === 'solution' && G.sol) renderSol();
+      else if (G.phase === 'play' && G.hint && !$('tip').classList.contains('hidden')) showHint(G.hint);
+    }
   }
 
   var refitT = 0;

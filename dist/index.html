@@ -1417,7 +1417,7 @@ store.set('hr_bk', bk);
   function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
   applyMotion(); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = 'e38e991'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = '9bbffab'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null, autoTimer = null;
   var els = new Map();
@@ -2113,7 +2113,12 @@ store.set('hr_bk', bk);
     z.style.width = (2 * cell) + 'px'; z.style.height = (2 * cell) + 'px';
     var g = $('gate'); g.style.left = (PAD + cell + 8) + 'px'; g.style.width = (2 * cell - 16) + 'px';
     g.style.top = (H * cell + 2 * PAD - 2) + 'px';
-    if (G) { renderPieces(); lessonRender(); }
+    if (G) {
+      renderPieces(); lessonRender();
+      // re-drawing the pieces drops the hint / next-move marks: put them back
+      if (G.phase === 'solution' && G.sol) renderSol();
+      else if (G.phase === 'play' && G.hint && !$('tip').classList.contains('hidden')) showHint(G.hint);
+    }
   }
 
   var refitT = 0;
