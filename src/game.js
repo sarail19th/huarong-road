@@ -805,7 +805,7 @@ store.set('hr_bk', bk);
       else if (G.pieces.some(function (p) { return !verified(p); })) { s.textContent = L('Chip mismatch (amber) — tap that block to lift it. Verified ' + ok + '/' + total, 'ชิปไม่ตรง (สีเหลืองอำพัน) — แตะบล็อกนั้นเพื่อยกออก ตรงแล้ว ' + ok + '/' + total); s.classList.add('warn'); }
       else { s.textContent = L('Copy the LED layout: pick a block below, then tap the board. Verified ' + ok + '/' + total, 'วางให้เหมือนรูปบนจอ LED: เลือกบล็อกด้านล่าง แล้วแตะบนกระดาน ตรงแล้ว ' + ok + '/' + total); }
     } else if (G.phase === 'play') {
-      var tr = G.trend ? trendText(G.trend) : null;
+      var tr = G.trend && !G.fbOff ? trendText(G.trend) : null;
       s.textContent = G.msg || (tr && tr.text) || L('Drag blocks to free the red square — slide it to the exit.', 'ลากบล็อกเพื่อเปิดทางให้สี่เหลี่ยมแดง — เลื่อนไปที่ทางออก');
       if (G.msg) s.classList.add('warn'); else if (tr && tr.cls) s.classList.add(tr.cls);
     } else if (G.phase === 'solution') {
@@ -813,6 +813,7 @@ store.set('hr_bk', bk);
     } else if (G.phase === 'design') {
       s.classList.toggle('hidden', !G.msg); s.textContent = G.msg || ''; if (G.msg) s.classList.add('warn');
     }
+    $('fbHide').classList.toggle('hidden', !(G.phase === 'play' && G.trend && !G.fbOff && !G.msg));
   }
 
   /* ---------- setup phase ---------- */
@@ -878,7 +879,7 @@ store.set('hr_bk', bk);
 
   function startPlay() {
     G.phase = 'play'; document.body.dataset.phase = 'play';
-    G.initial = snap(); G.moves = 0; G.hints = 0; G.hist = []; G.redo = []; G.msg = ''; G.trend = null; G.cp = 0; G.lbest = undefined; G.lgLast = undefined; G.lgHtml = undefined; G.lgNote = null; hideTip();
+    G.initial = snap(); G.moves = 0; G.hints = 0; G.hist = []; G.redo = []; G.msg = ''; G.trend = null; G.fbOff = false; G.cp = 0; G.lbest = undefined; G.lgLast = undefined; G.lgHtml = undefined; G.lgNote = null; hideTip();
     G.t0 = Date.now(); $('moves').textContent = '0'; $('time').textContent = '0:00';
     clearTimer(); timerId = setInterval(tick, 250);
     renderAll(); beep(740, 0.1);
@@ -938,7 +939,7 @@ store.set('hr_bk', bk);
   // Runs just after the move so the slide animation is not held up by the search.
   function updateTrend(before, undone) {
     var g0 = G, mv = G.moves;
-    if (!G.hints) return;
+    if (!G.hints || G.fbOff || (G.lv && G.lv.lesson && guideOff)) return;
     setTimeout(function () {
       if (G !== g0 || G.phase !== 'play' || G.moves !== mv) return;
       var now = distOf(gridOf()); if (now === null) return;
@@ -977,7 +978,7 @@ store.set('hr_bk', bk);
   function doRestart() {
     if (!G || !G.initial) return;
     G.pieces = G.initial.map(function (p) { return { id: p.id, t: p.t, r: p.r, c: p.c }; });
-    hideTip(); G.trend = null; G.hints = 0; G.moves = 0; G.hist = []; G.redo = []; G.phase = 'play'; document.body.dataset.phase = 'play'; // a restart is a fresh attempt: hint use and its closer/further feedback start over too
+    hideTip(); G.trend = null; G.fbOff = false; G.hints = 0; G.moves = 0; G.hist = []; G.redo = []; G.phase = 'play'; document.body.dataset.phase = 'play'; // a restart is a fresh attempt: hint use and its closer/further feedback start over too
     G.t0 = Date.now(); $('moves').textContent = '0'; $('time').textContent = '0:00';
     clearTimer(); timerId = setInterval(tick, 250);
     G.cp = 0; G.lbest = undefined; G.lgLast = undefined; G.lgNote = null; clearBoard(); renderAll();
@@ -1142,7 +1143,7 @@ store.set('hr_bk', bk);
       if (!sol || !sol.length) { G.msg = L('No solution from here — try Undo', 'จากตำแหน่งนี้ไม่มีทางไข — ลองกด Undo'); renderStatus(); return; }
       seedDist(g, sol); G.hint = { key: k, info: analyze(g, sol), tier: 0 };
     }
-    G.hint.tier = Math.min(2, G.hint.tier + 1); G.hints++;
+    G.hint.tier = Math.min(2, G.hint.tier + 1); G.hints++; G.fbOff = false;
     showHint(G.hint);
   };
 
@@ -1354,9 +1355,10 @@ store.set('hr_bk', bk);
     else if (head === undefined && G.lgNote) { head = G.lgNote.head; body = G.lgNote.body; why = G.lgNote.why; }
     if (head !== undefined) { $('lsNoteHead').textContent = head; $('lsNoteBody').textContent = body; $('lsNoteWhy').textContent = why; }
   }
+  $('fbHide').onclick = function () { if (G) { G.fbOff = true; G.trend = null; renderStatus(); } };   // hidden until the next Hint tap
   $('lsGuideBtn').onclick = function () {
     guideOff = !guideOff; store.set('hr_guideoff', guideOff);
-    if (G) { G.lgHtml = undefined; if (guideOff) els.forEach(function (el) { el.removeAttribute('data-focus'); }); lessonRender(); }
+    if (G) { if (guideOff) { G.trend = null; renderStatus(); } G.lgHtml = undefined; if (guideOff) els.forEach(function (el) { el.removeAttribute('data-focus'); }); lessonRender(); }
   };
   function toggleNote() { var n = $('lsNote'), o = !n.classList.contains('open'); n.classList.toggle('open', o); n.setAttribute('aria-expanded', o); }
   $('lsNote').onclick = toggleNote;

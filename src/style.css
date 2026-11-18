@@ -708,3 +708,7 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
 .lsgoalrow .lsgoal{flex:1}
 .lsguide{flex:none;font-size:12.5px;padding:2px 4px;white-space:nowrap}
 .lsgoal.off{color:var(--muted)}
+
+.statusrow{position:relative}
+.fbhide{position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:12.5px;padding:4px 6px}
+.statusrow:has(.fbhide:not(.hidden)) .status{padding:0 46px}

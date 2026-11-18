@@ -393,6 +393,10 @@ def trend(p):
     g2 = do(best[0], g1)
     st = page.locator('#status').inner_text(); assert st.startswith('✓ Closer') and 'to go' in st, st
     assert 'good' in page.locator('#status').get_attribute('class')
+    # the feedback line can be hidden with its own Hide link; the next Hint tap brings it back
+    assert page.locator('#fbHide').is_visible(); page.click('#fbHide')
+    assert 'Drag blocks' in page.locator('#status').inner_text() and page.locator('#fbHide').is_hidden(), 'Hide removes the closer line'
+    page.click('#hintBtn'); page.wait_for_timeout(150); page.click('#tip'); page.wait_for_timeout(150)
     worse = page.evaluate("""(g) => { var d = Solver.solve(g).length; var ns = Solver.neighbors(g);
         for (var i = 0; i < ns.length; i++) if (Solver.solve(ns[i].g).length > d) return ns[i].m; return null; }""", g2)
     assert worse, 'a worse move exists'
