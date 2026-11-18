@@ -692,3 +692,5 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
 /* short phones: keep the hint compact so the board still fits without scrolling */
 @media (max-height:760px){.tip em{display:none}.tip{padding:8px 10px;font-size:13px;line-height:1.4}}
 @media (max-height:700px){.screen{padding-top:max(8px,env(safe-area-inset-top))}.hud{margin-bottom:6px}.stats{margin-bottom:6px}.lsbar{margin-bottom:6px;padding:6px 10px}.device{padding:10px 10px 12px}.topbar{margin-bottom:8px}.status{margin:6px 4px 4px}.grp.help{margin-top:6px}}
+.keys .grp .tool{min-width:46px;padding:6px 4px}
+@media (max-width:380px){.screen{padding-left:12px;padding-right:12px}.device{padding-left:8px;padding-right:8px}}
