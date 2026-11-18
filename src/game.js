@@ -730,7 +730,7 @@ store.set('hr_bk', bk);
   }
 
   var refitT = 0;
-  function refit() { cancelAnimationFrame(refitT); refitT = requestAnimationFrame(function () { if (!G) return; layout(); if (G.phase === 'play' && G.hint && !$('tip').classList.contains('hidden')) showHint(G.hint, true); }); }
+  function refit() { cancelAnimationFrame(refitT); refitT = requestAnimationFrame(function () { if (!G) return; layout() }); }
 
   function renderAll() { renderLED(); renderPieces(); renderTray(); renderStatus(); renderCtl(); lessonRender(); }
   // Undo / Redo are greyed out when there is nothing to step to
@@ -1111,7 +1111,7 @@ store.set('hr_bk', bk);
     return { head: L('Try this', 'ลองทำแบบนี้'), body: L('Move ' + nameOf(m) + step + '. ' + reason, 'เลื่อน' + nameOf(m) + step + ' ' + reason), why: plan };
   }
 
-  function showHint(h, noFit) {
+  function showHint(h) {
     var t = hintText(h), i = h.info;
     els.forEach(function (el) { el.removeAttribute('data-focus'); el.removeAttribute('data-hint'); });
     var focus = i.j === 0 ? [i.mover] : i.X ? [i.X] : i.blockers.length ? i.blockers : [i.mover];
@@ -1123,9 +1123,9 @@ store.set('hr_bk', bk);
     $('tipHead').innerHTML = '<span class="step">' + (freeMode ? L('hint ' + h.tier + '/2', 'คำใบ้ ' + h.tier + '/2') : L(i.left + ' move' + (i.left > 1 ? 's' : '') + ' to go · hint ' + h.tier + '/2', 'เหลืออีก ' + i.left + ' ครั้ง · คำใบ้ ' + h.tier + '/2')) + '</span>' + t.head;
     $('tipBody').textContent = t.body; $('tipWhy').textContent = t.why;
     $('tip').classList.remove('hidden');
-    if (!noFit) refit();
   }
-  function hideTip() { if (G) G.hint = null; var was = !$('tip').classList.contains('hidden'); $('tip').classList.add('hidden'); if (was) refit(); }
+  function hideTip() { if (G) G.hint = null; $('tip').classList.add('hidden'); }
+  $('tip').onclick = function () { this.classList.add('hidden'); };   // tap the sheet to close it (hint progress is kept)
 
   // Tap 1 explains the situation and outlines the block(s) to focus on; tap 2 shows the exact move.
   $('hintBtn').onclick = function () {
@@ -1342,7 +1342,7 @@ store.set('hr_bk', bk);
     else if (head === undefined && G.lgNote) { head = G.lgNote.head; body = G.lgNote.body; why = G.lgNote.why; }
     if (head !== undefined) { $('lsNoteHead').textContent = head; $('lsNoteBody').textContent = body; $('lsNoteWhy').textContent = why; }
   }
-  function toggleNote() { var n = $('lsNote'), o = !n.classList.contains('open'); n.classList.toggle('open', o); n.setAttribute('aria-expanded', o); refit(); }
+  function toggleNote() { var n = $('lsNote'), o = !n.classList.contains('open'); n.classList.toggle('open', o); n.setAttribute('aria-expanded', o); }
   $('lsNote').onclick = toggleNote;
   $('lsNote').onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleNote(); } };
   // after every move / undo / redo

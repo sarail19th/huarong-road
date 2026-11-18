@@ -695,6 +695,15 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
 @media (max-height:700px){.screen{padding-top:max(8px,env(safe-area-inset-top))}.hud{margin-bottom:6px}.stats{margin-bottom:6px}.lsbar{margin-bottom:6px;padding:6px 10px}.device{padding:10px 10px 12px}.topbar{margin-bottom:8px}.status{margin:6px 4px 4px}.grp.help{margin-top:6px}}
 .keys .grp .tool{min-width:46px;padding:6px 4px}
 @media (max-width:380px){.device{padding-left:6px;padding-right:6px}}
+
+/* the area under the board has a fixed height; hint text and the lesson idea open as a sheet inside it,
+   so the board never changes size or position when help opens or closes */
+.slot{position:relative;min-height:112px}
+@media (min-height:761px){.slot{min-height:130px}}
+.slot .tip{position:absolute;left:0;right:0;bottom:0;margin:0;z-index:6;padding-right:30px;cursor:pointer;box-shadow:0 8px 26px rgba(0,0,0,.5)}
+.slot .tip::after{content:"\00D7";position:absolute;top:4px;right:10px;font-size:20px;line-height:1;color:var(--muted)}
+.slot .lsnote.open{position:absolute;left:0;right:0;bottom:0;margin:0;z-index:6;box-shadow:0 8px 26px rgba(0,0,0,.5)}
+@media (max-height:700px){.slot{min-height:92px}}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -827,7 +836,6 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
   <div class="lsbar hidden" id="lsBar"><div class="lssegs" id="lsSegs"></div><div class="lsgoal" id="lsGoal"></div></div>
   <div class="recline hidden" id="recLine"><span id="recText"></span><button class="linkbtn" id="recReset" data-th="รีเซ็ตสถิติด่านนี้">Reset record</button></div>
 
-  <div class="tip hidden" id="tip"><b id="tipHead"></b><span id="tipBody"></span><em id="tipWhy"></em></div>
   <div class="device">
     <div class="topbar">
       <div class="ledside"><div class="led" id="led" aria-label="Target layout"></div>
@@ -846,12 +854,15 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
     <div class="board" id="board"></div>
   </div>
 
+  <div class="slot">
   <div class="grp help only-play" role="group" aria-label="Help">
     <button class="tool wide sol" id="solBtn"><svg class="ico" aria-hidden="true"><use href="#i-steps"/></svg><span data-th="ดูเฉลย">Show solution</span></button>
   </div>
 
   <div class="status" id="status"></div>
   <div class="lsnote hidden" id="lsNote" role="button" tabindex="0" aria-expanded="false"><b id="lsNoteHead"></b><span id="lsNoteBody"></span><em id="lsNoteWhy"></em></div>
+    <div class="tip hidden" id="tip"><b id="tipHead"></b><span id="tipBody"></span><em id="tipWhy"></em></div>
+  </div>
   <div class="solbar only-sol">
     <div class="solinfo"><b id="solHead"></b><span id="solBody"></span></div>
     <div class="row">
@@ -1394,7 +1405,7 @@ store.set('hr_bk', bk);
   function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
   applyMotion(); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = 'f16fa81'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = '7252c69'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null, autoTimer = null;
   var els = new Map();
@@ -2094,7 +2105,7 @@ store.set('hr_bk', bk);
   }
 
   var refitT = 0;
-  function refit() { cancelAnimationFrame(refitT); refitT = requestAnimationFrame(function () { if (!G) return; layout(); if (G.phase === 'play' && G.hint && !$('tip').classList.contains('hidden')) showHint(G.hint, true); }); }
+  function refit() { cancelAnimationFrame(refitT); refitT = requestAnimationFrame(function () { if (!G) return; layout() }); }
 
   function renderAll() { renderLED(); renderPieces(); renderTray(); renderStatus(); renderCtl(); lessonRender(); }
   // Undo / Redo are greyed out when there is nothing to step to
@@ -2475,7 +2486,7 @@ store.set('hr_bk', bk);
     return { head: L('Try this', 'ลองทำแบบนี้'), body: L('Move ' + nameOf(m) + step + '. ' + reason, 'เลื่อน' + nameOf(m) + step + ' ' + reason), why: plan };
   }
 
-  function showHint(h, noFit) {
+  function showHint(h) {
     var t = hintText(h), i = h.info;
     els.forEach(function (el) { el.removeAttribute('data-focus'); el.removeAttribute('data-hint'); });
     var focus = i.j === 0 ? [i.mover] : i.X ? [i.X] : i.blockers.length ? i.blockers : [i.mover];
@@ -2487,9 +2498,9 @@ store.set('hr_bk', bk);
     $('tipHead').innerHTML = '<span class="step">' + (freeMode ? L('hint ' + h.tier + '/2', 'คำใบ้ ' + h.tier + '/2') : L(i.left + ' move' + (i.left > 1 ? 's' : '') + ' to go · hint ' + h.tier + '/2', 'เหลืออีก ' + i.left + ' ครั้ง · คำใบ้ ' + h.tier + '/2')) + '</span>' + t.head;
     $('tipBody').textContent = t.body; $('tipWhy').textContent = t.why;
     $('tip').classList.remove('hidden');
-    if (!noFit) refit();
   }
-  function hideTip() { if (G) G.hint = null; var was = !$('tip').classList.contains('hidden'); $('tip').classList.add('hidden'); if (was) refit(); }
+  function hideTip() { if (G) G.hint = null; $('tip').classList.add('hidden'); }
+  $('tip').onclick = function () { this.classList.add('hidden'); };   // tap the sheet to close it (hint progress is kept)
 
   // Tap 1 explains the situation and outlines the block(s) to focus on; tap 2 shows the exact move.
   $('hintBtn').onclick = function () {
@@ -2706,7 +2717,7 @@ store.set('hr_bk', bk);
     else if (head === undefined && G.lgNote) { head = G.lgNote.head; body = G.lgNote.body; why = G.lgNote.why; }
     if (head !== undefined) { $('lsNoteHead').textContent = head; $('lsNoteBody').textContent = body; $('lsNoteWhy').textContent = why; }
   }
-  function toggleNote() { var n = $('lsNote'), o = !n.classList.contains('open'); n.classList.toggle('open', o); n.setAttribute('aria-expanded', o); refit(); }
+  function toggleNote() { var n = $('lsNote'), o = !n.classList.contains('open'); n.classList.toggle('open', o); n.setAttribute('aria-expanded', o); }
   $('lsNote').onclick = toggleNote;
   $('lsNote').onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleNote(); } };
   // after every move / undo / redo

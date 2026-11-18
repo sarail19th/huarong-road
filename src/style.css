@@ -694,3 +694,12 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
 @media (max-height:700px){.screen{padding-top:max(8px,env(safe-area-inset-top))}.hud{margin-bottom:6px}.stats{margin-bottom:6px}.lsbar{margin-bottom:6px;padding:6px 10px}.device{padding:10px 10px 12px}.topbar{margin-bottom:8px}.status{margin:6px 4px 4px}.grp.help{margin-top:6px}}
 .keys .grp .tool{min-width:46px;padding:6px 4px}
 @media (max-width:380px){.device{padding-left:6px;padding-right:6px}}
+
+/* the area under the board has a fixed height; hint text and the lesson idea open as a sheet inside it,
+   so the board never changes size or position when help opens or closes */
+.slot{position:relative;min-height:112px}
+@media (min-height:761px){.slot{min-height:130px}}
+.slot .tip{position:absolute;left:0;right:0;bottom:0;margin:0;z-index:6;padding-right:30px;cursor:pointer;box-shadow:0 8px 26px rgba(0,0,0,.5)}
+.slot .tip::after{content:"\00D7";position:absolute;top:4px;right:10px;font-size:20px;line-height:1;color:var(--muted)}
+.slot .lsnote.open{position:absolute;left:0;right:0;bottom:0;margin:0;z-index:6;box-shadow:0 8px 26px rgba(0,0,0,.5)}
+@media (max-height:700px){.slot{min-height:92px}}
