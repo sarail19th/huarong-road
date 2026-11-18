@@ -1450,6 +1450,22 @@ def lessons(p):
     assert page.evaluate("() => document.body.dataset.phase") == 'play', 'lessons start playing at once'
     assert page.locator('#lsBar').is_visible() and page.locator('#lsNote').is_visible()
     assert page.locator('#solBtn').is_hidden(), 'no Show solution in a lesson'
+    # the guide line can be hidden (and shown again) without the board moving; the choice is remembered
+    bt0 = page.locator('#board').bounding_box(); assert page.locator('#board [data-focus]').count() >= 1
+    page.click('#lsGuideBtn'); page.wait_for_timeout(200)
+    assert page.locator('#lsGoal').inner_text().startswith('Guide hidden') and page.locator('#board [data-focus]').count() == 0
+    assert page.locator('#board').bounding_box() == bt0, 'hiding the guide must not move or resize the board'
+    assert page.evaluate("() => localStorage.getItem('hr_guideoff')") == 'true'
+    page.click('#lsGuideBtn'); page.wait_for_timeout(200)
+    assert 'Next goal' in page.locator('#lsGoal').inner_text() and page.locator('#board [data-focus]').count() >= 1
+    # cancelling a hint sheet removes its outline too, and the next Hint starts again at step 1
+    page.click('#hintBtn'); page.click('#hintBtn'); page.wait_for_timeout(200)
+    assert 'hint 2/2' in page.locator('#tipHead').inner_text()
+    page.click('#tip'); page.wait_for_timeout(200)
+    assert page.locator('#tip').is_hidden() and page.locator('.piece[data-hint]').count() == 0
+    page.click('#hintBtn'); page.wait_for_timeout(200)
+    assert 'hint 1/2' in page.locator('#tipHead').inner_text(), 'a cancelled hint starts again at step 1'
+    page.click('#tip'); page.wait_for_timeout(200)
     assert page.locator('.stats').first.is_hidden(), 'no Moves/Par/Best/clock'
     page.wait_for_timeout(300); assert page.locator('#ghost').count() == 0, 'no red target outline any more'
     assert 'to go' in page.locator('#lsGoal').inner_text(), page.locator('#lsGoal').inner_text()

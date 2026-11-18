@@ -703,3 +703,8 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
 .slot .tip::after{content:"\00D7";position:absolute;top:4px;right:10px;font-size:20px;line-height:1;color:var(--muted)}
 .slot .lsnote.open{position:absolute;left:0;right:0;bottom:0;margin:0;z-index:6;box-shadow:0 8px 26px rgba(0,0,0,.5)}
 @media (max-height:700px){.slot{min-height:92px}}
+
+.lsgoalrow{display:flex;align-items:flex-start;gap:8px}
+.lsgoalrow .lsgoal{flex:1}
+.lsguide{flex:none;font-size:12.5px;padding:2px 4px;white-space:nowrap}
+.lsgoal.off{color:var(--muted)}

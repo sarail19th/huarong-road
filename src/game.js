@@ -1130,7 +1130,8 @@ store.set('hr_bk', bk);
     $('tip').classList.remove('hidden');
   }
   function hideTip() { if (G) G.hint = null; $('tip').classList.add('hidden'); }
-  $('tip').onclick = function () { this.classList.add('hidden'); };   // tap the sheet to close it (hint progress is kept)
+  // tap the sheet (or its x) to cancel the hint: text, outline and arrow all go, and the next Hint starts again at step 1
+  $('tip').onclick = function () { if (G && G.phase === 'play') { els.forEach(function (el) { el.removeAttribute('data-focus'); el.removeAttribute('data-hint'); }); G.hint = null; } this.classList.add('hidden'); if (G && G.lv && G.lv.lesson) lessonRender(); };
 
   // Tap 1 explains the situation and outlines the block(s) to focus on; tap 2 shows the exact move.
   $('hintBtn').onclick = function () {
@@ -1233,6 +1234,7 @@ store.set('hr_bk', bk);
   // never counts as a viewed solution, and Hint works exactly as in a level. Checkpoints are positions of the red block
   // that every optimal line passes through (data in LESSONS[].cps); they now only set the number of bar segments (see
   // lessonRender: progress = optimal distance left, not red's square).
+  var guideOff = store.get('hr_guideoff', false);   // lessons: the guide line + outline are hidden (player wants to think alone)
   var lessonsDone = store.get('hr_lessons', {}); // { '1': 1, ... } lesson number -> finished
   var LS_TXT = {
     starter: { name: ['Gaps are the moves', 'ทุกก้าวเริ่มจากช่องว่าง'],
@@ -1335,18 +1337,27 @@ store.set('hr_bk', bk);
       if (G.moves > 0) { head = t.head; body = t.body; why = ''; G.lgNote = { head: head, body: body, why: why }; }
       if (!G.hint) {
         els.forEach(function (el) { el.removeAttribute('data-focus'); });
+        if (guideOff) { /* no outline while the guide is hidden */ } else {
         var i0 = h.info, f = i0.j === 0 ? [i0.mover] : i0.X ? [i0.X] : i0.blockers.length ? i0.blockers : [i0.mover];
         f.forEach(function (p) { if (p && els.get(p.id)) els.get(p.id).setAttribute('data-focus', ''); });
+        }
       }
     }
     // While the next position is still being solved (~20 ms) keep what is shown: nothing flashes
     if (goal !== undefined) G.lgLast = goal;
-    if (G.lgLast !== undefined && G.lgHtml !== G.lgLast) { $('lsGoal').innerHTML = G.lgLast; G.lgHtml = G.lgLast; }
+    var shownGoal = guideOff && !over ? L('Guide hidden. Show it if you need a nudge.', 'ซ่อนคำแนะนำอยู่ กด “แสดง” ถ้าต้องการตัวช่วย') : G.lgLast;
+    $('lsGoal').classList.toggle('off', guideOff && !over);
+    var gb = $('lsGuideBtn'); gb.hidden = over; gb.textContent = guideOff ? L('Show guide', 'แสดง') : L('Hide guide', 'ซ่อน'); gb.setAttribute('aria-pressed', guideOff);
+    if (shownGoal !== undefined && G.lgHtml !== shownGoal) { $('lsGoal').innerHTML = shownGoal; G.lgHtml = shownGoal; }
     if (G.moves === 0 && !over) { head = L('The idea · ', 'แนวคิด · ') + lsT(d, 'name'); body = lsT(d, 'idea'); why = L('Hint shows the same plan in more detail.', 'กดคำใบ้เพื่อดูแผนแบบละเอียดขึ้นได้'); }
     else if (over) { head = L('The idea · ', 'แนวคิด · ') + lsT(d, 'name'); body = lsT(d, 'idea'); why = ''; }
     else if (head === undefined && G.lgNote) { head = G.lgNote.head; body = G.lgNote.body; why = G.lgNote.why; }
     if (head !== undefined) { $('lsNoteHead').textContent = head; $('lsNoteBody').textContent = body; $('lsNoteWhy').textContent = why; }
   }
+  $('lsGuideBtn').onclick = function () {
+    guideOff = !guideOff; store.set('hr_guideoff', guideOff);
+    if (G) { G.lgHtml = undefined; if (guideOff) els.forEach(function (el) { el.removeAttribute('data-focus'); }); lessonRender(); }
+  };
   function toggleNote() { var n = $('lsNote'), o = !n.classList.contains('open'); n.classList.toggle('open', o); n.setAttribute('aria-expanded', o); }
   $('lsNote').onclick = toggleNote;
   $('lsNote').onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleNote(); } };
