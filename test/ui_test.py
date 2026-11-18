@@ -374,6 +374,7 @@ def trend(p):
     lv(page, IDX).click(); page.click('#startBtn')
     grid = page.evaluate("() => LEVELS[%d].g.split('').map(Number)" % IDX)
     def do(move, g):
+        page.wait_for_timeout(150)   # the hint text above the board refits the board; let it settle
         pc = next(q for q in page.evaluate("(g) => Solver.piecesOf(g)", g) if q['t'] == move['t'] and q['r'] == move['r'] and q['c'] == move['c'])
         d = {'R': (2, 2), 'V': (1, 2), 'H': (2, 1), 'S': (1, 1)}[pc['t']]
         box = page.locator('#board').bounding_box(); cs = (box['width'] - 4 - 16) / 4
