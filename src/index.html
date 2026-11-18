@@ -143,6 +143,7 @@
   <div class="lsbar hidden" id="lsBar"><div class="lssegs" id="lsSegs"></div><div class="lsgoal" id="lsGoal"></div></div>
   <div class="recline hidden" id="recLine"><span id="recText"></span><button class="linkbtn" id="recReset" data-th="รีเซ็ตสถิติด่านนี้">Reset record</button></div>
 
+  <div class="tip hidden" id="tip"><b id="tipHead"></b><span id="tipBody"></span><em id="tipWhy"></em></div>
   <div class="device">
     <div class="topbar">
       <div class="ledside"><div class="led" id="led" aria-label="Target layout"></div>
@@ -151,9 +152,10 @@
       <div class="keys">
         <button class="key toggle only-setup" id="autoBtn" aria-pressed="true" data-th="วางอัตโนมัติ">Auto-place</button>
         <button class="key only-setup only-design" id="clearBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg><span data-th="ล้าง">Clear</span></button>
-        <div class="grp only-play" role="group" aria-label="Undo and redo">
+        <div class="grp only-play" role="group" aria-label="Undo, redo and hint">
           <button class="tool" id="undoBtn" aria-label="Undo" disabled><svg class="ico" aria-hidden="true"><use href="#i-undo"/></svg><span>Undo</span></button>
           <button class="tool" id="redoBtn" aria-label="Redo" disabled><svg class="ico flip" aria-hidden="true"><use href="#i-undo"/></svg><span>Redo</span></button>
+          <button class="tool hint" id="hintBtn" aria-label="Hint"><svg class="ico" aria-hidden="true"><use href="#i-bulb"/></svg><span data-th="คำใบ้">Hint</span></button>
         </div>
       </div>
     </div>
@@ -161,13 +163,11 @@
   </div>
 
   <div class="grp help only-play" role="group" aria-label="Help">
-    <button class="tool wide hint" id="hintBtn"><svg class="ico" aria-hidden="true"><use href="#i-bulb"/></svg><span data-th="คำใบ้">Hint</span></button>
     <button class="tool wide sol" id="solBtn"><svg class="ico" aria-hidden="true"><use href="#i-steps"/></svg><span data-th="ดูเฉลย">Show solution</span></button>
   </div>
 
   <div class="status" id="status"></div>
-  <div class="lsnote hidden" id="lsNote"><b id="lsNoteHead"></b><span id="lsNoteBody"></span><em id="lsNoteWhy"></em></div>
-  <div class="tip hidden" id="tip"><b id="tipHead"></b><span id="tipBody"></span><em id="tipWhy"></em></div>
+  <div class="lsnote hidden" id="lsNote" role="button" tabindex="0" aria-expanded="false"><b id="lsNoteHead"></b><span id="lsNoteBody"></span><em id="lsNoteWhy"></em></div>
   <div class="solbar only-sol">
     <div class="solinfo"><b id="solHead"></b><span id="solBody"></span></div>
     <div class="row">

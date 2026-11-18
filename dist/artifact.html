@@ -198,7 +198,7 @@ html:not([lang=th]) .lang-btn .en,html[lang=th] .lang-btn .th{background:var(--y
 .tool:disabled{opacity:.35;cursor:default}
 .tool:disabled:active{transform:none}
 .tool .ico{width:22px;height:22px}
-.grp.help{margin:12px auto 0;max-width:340px}
+.grp.help{margin:10px auto 0;max-width:340px}
 .tool.wide{flex:1;flex-direction:row;gap:8px;min-height:46px;font-size:13.5px}
 .tool.hint .ico{color:var(--amber)}
 .tool.sol .ico{color:var(--green)}
@@ -262,7 +262,7 @@ html:not([lang=th]) .lang-btn .en,html[lang=th] .lang-btn .th{background:var(--y
 .piece[data-focus]{z-index:3;outline:3px dashed #fff;outline-offset:-5px;animation:hint 1.1s infinite}
 .piece[data-focus][data-hint]{animation:hint .9s infinite}
 
-.tip{margin:0 2px 10px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--yellow);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.45;color:var(--text2)}
+.tip{margin:0 0 8px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--yellow);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.45;color:var(--text2)}
 .tip b{display:block;color:var(--text);margin-bottom:2px}
 .tip em{display:block;margin-top:6px;font-style:normal;color:var(--muted);font-size:12.5px}
 .tip .step{display:block;margin:0 0 3px;color:var(--muted);font-size:11.5px;font-weight:400}
@@ -593,13 +593,17 @@ input.cpr::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:
 .lssegs span.on{background:var(--yellow);border-color:var(--yellow)}
 .lsgoal{font-size:13.5px;line-height:1.4;min-height:2.8em}
 .lsgoal b{font-weight:700}
-.lsnote{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--yellow);border-radius:12px;padding:9px 12px;margin-top:8px;font-size:13.5px;line-height:1.5;min-height:190px}
-.lsnote b{display:block;margin-bottom:2px}
+.lsnote{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--yellow);border-radius:12px;padding:8px 12px;margin-top:8px;font-size:13.5px;line-height:1.5;cursor:pointer}
+.lsnote b{display:block}
+.lsnote b::after{content:"\25BE";float:right;color:var(--muted);transition:transform .15s}
+.lsnote.open b{margin-bottom:2px}
+.lsnote.open b::after{transform:rotate(180deg)}
+.lsnote:not(.open) span,.lsnote:not(.open) em{display:none}
 .lsnote span{display:block}
 .lsnote em{display:block;margin-top:4px;color:var(--text2);font-style:normal;font-size:13px}
 .ghost{position:absolute;left:0;top:0;border:3px dashed var(--yellow);border-radius:12px;pointer-events:none;box-sizing:border-box;z-index:1}
 body[data-mode=lesson] .stats,body[data-mode=lesson] #solBtn,body[data-mode=lesson] #recLine{display:none!important}
-body[data-mode=lesson] .grp.help{justify-content:center}
+body[data-mode=lesson] .grp.help{display:none!important}
 body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display:none!important}
 .btn.lstry{width:100%;margin:2px 0 8px}
 .lswhy{margin:8px 0 2px;padding:0;list-style:none;text-align:left;font-size:13.5px;line-height:1.5}
@@ -685,6 +689,10 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
 .howhead .hidetxt{font-size:13px;color:var(--muted);text-decoration:underline}
 .about .apage ol{font-size:13.5px;line-height:1.55;padding-left:20px;margin:6px 0 10px;color:var(--text2)}
 .about .apage ol b{color:var(--text)}
+
+/* short phones: keep the hint compact so the board still fits without scrolling */
+@media (max-height:760px){.tip em{display:none}.tip{padding:8px 10px;font-size:13px;line-height:1.4}}
+@media (max-height:700px){.screen{padding-top:max(8px,env(safe-area-inset-top))}.hud{margin-bottom:6px}.stats{margin-bottom:6px}.lsbar{margin-bottom:6px;padding:6px 10px}.device{padding:10px 10px 12px}.topbar{margin-bottom:8px}.status{margin:6px 4px 4px}.grp.help{margin-top:6px}}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -817,6 +825,7 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
   <div class="lsbar hidden" id="lsBar"><div class="lssegs" id="lsSegs"></div><div class="lsgoal" id="lsGoal"></div></div>
   <div class="recline hidden" id="recLine"><span id="recText"></span><button class="linkbtn" id="recReset" data-th="รีเซ็ตสถิติด่านนี้">Reset record</button></div>
 
+  <div class="tip hidden" id="tip"><b id="tipHead"></b><span id="tipBody"></span><em id="tipWhy"></em></div>
   <div class="device">
     <div class="topbar">
       <div class="ledside"><div class="led" id="led" aria-label="Target layout"></div>
@@ -825,9 +834,10 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
       <div class="keys">
         <button class="key toggle only-setup" id="autoBtn" aria-pressed="true" data-th="วางอัตโนมัติ">Auto-place</button>
         <button class="key only-setup only-design" id="clearBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg><span data-th="ล้าง">Clear</span></button>
-        <div class="grp only-play" role="group" aria-label="Undo and redo">
+        <div class="grp only-play" role="group" aria-label="Undo, redo and hint">
           <button class="tool" id="undoBtn" aria-label="Undo" disabled><svg class="ico" aria-hidden="true"><use href="#i-undo"/></svg><span>Undo</span></button>
           <button class="tool" id="redoBtn" aria-label="Redo" disabled><svg class="ico flip" aria-hidden="true"><use href="#i-undo"/></svg><span>Redo</span></button>
+          <button class="tool hint" id="hintBtn" aria-label="Hint"><svg class="ico" aria-hidden="true"><use href="#i-bulb"/></svg><span data-th="คำใบ้">Hint</span></button>
         </div>
       </div>
     </div>
@@ -835,13 +845,11 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
   </div>
 
   <div class="grp help only-play" role="group" aria-label="Help">
-    <button class="tool wide hint" id="hintBtn"><svg class="ico" aria-hidden="true"><use href="#i-bulb"/></svg><span data-th="คำใบ้">Hint</span></button>
     <button class="tool wide sol" id="solBtn"><svg class="ico" aria-hidden="true"><use href="#i-steps"/></svg><span data-th="ดูเฉลย">Show solution</span></button>
   </div>
 
   <div class="status" id="status"></div>
-  <div class="lsnote hidden" id="lsNote"><b id="lsNoteHead"></b><span id="lsNoteBody"></span><em id="lsNoteWhy"></em></div>
-  <div class="tip hidden" id="tip"><b id="tipHead"></b><span id="tipBody"></span><em id="tipWhy"></em></div>
+  <div class="lsnote hidden" id="lsNote" role="button" tabindex="0" aria-expanded="false"><b id="lsNoteHead"></b><span id="lsNoteBody"></span><em id="lsNoteWhy"></em></div>
   <div class="solbar only-sol">
     <div class="solinfo"><b id="solHead"></b><span id="solBody"></span></div>
     <div class="row">
@@ -1384,7 +1392,7 @@ store.set('hr_bk', bk);
   function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
   applyMotion(); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = 'd6bbc52'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = '319da77'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null, autoTimer = null;
   var els = new Map();
@@ -2066,10 +2074,14 @@ store.set('hr_bk', bk);
     var BORDER = 4, dev = document.querySelector('.device'), cs = dev && getComputedStyle(dev);
     var frameW = dev && dev.clientWidth ? dev.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) : window.innerWidth - 62;
     var availW = Math.min(frameW, 440);
-    var availH = window.innerHeight - 340;
+    // Height: everything in the game screen that is not the board (header, stats, coach line, buttons, status)
+    // is measured, so the whole screen fits in one phone viewport and nothing needs scrolling.
+    var b = $('board'), sec = $('game'), availH = window.innerHeight - 340;
+    if (sec && sec.offsetHeight && b.offsetHeight) {
+      availH = window.innerHeight - (sec.offsetHeight - b.offsetHeight) - 4;
+    }
     cell = Math.floor(Math.min((availW - 2 * PAD - BORDER) / W, (availH - 2 * PAD - BORDER) / H));
-    cell = Math.max(cell, 58);
-    var b = $('board');
+    cell = Math.max(cell, 52);
     b.style.width = (W * cell + 2 * PAD + BORDER) + 'px';
     b.style.height = (H * cell + 2 * PAD + BORDER) + 'px';
     var z = $('exitzone'); z.style.left = (PAD + cell) + 'px'; z.style.top = (PAD + 3 * cell) + 'px';
@@ -2078,6 +2090,9 @@ store.set('hr_bk', bk);
     g.style.top = (H * cell + 2 * PAD - 2) + 'px';
     if (G) { renderPieces(); lessonRender(); }
   }
+
+  var refitT = 0;
+  function refit() { cancelAnimationFrame(refitT); refitT = requestAnimationFrame(function () { if (!G) return; layout(); if (G.phase === 'play' && G.hint && !$('tip').classList.contains('hidden')) showHint(G.hint, true); }); }
 
   function renderAll() { renderLED(); renderPieces(); renderTray(); renderStatus(); renderCtl(); lessonRender(); }
   // Undo / Redo are greyed out when there is nothing to step to
@@ -2458,7 +2473,7 @@ store.set('hr_bk', bk);
     return { head: L('Try this', 'ลองทำแบบนี้'), body: L('Move ' + nameOf(m) + step + '. ' + reason, 'เลื่อน' + nameOf(m) + step + ' ' + reason), why: plan };
   }
 
-  function showHint(h) {
+  function showHint(h, noFit) {
     var t = hintText(h), i = h.info;
     els.forEach(function (el) { el.removeAttribute('data-focus'); el.removeAttribute('data-hint'); });
     var focus = i.j === 0 ? [i.mover] : i.X ? [i.X] : i.blockers.length ? i.blockers : [i.mover];
@@ -2470,9 +2485,9 @@ store.set('hr_bk', bk);
     $('tipHead').innerHTML = '<span class="step">' + (freeMode ? L('hint ' + h.tier + '/2', 'คำใบ้ ' + h.tier + '/2') : L(i.left + ' move' + (i.left > 1 ? 's' : '') + ' to go · hint ' + h.tier + '/2', 'เหลืออีก ' + i.left + ' ครั้ง · คำใบ้ ' + h.tier + '/2')) + '</span>' + t.head;
     $('tipBody').textContent = t.body; $('tipWhy').textContent = t.why;
     $('tip').classList.remove('hidden');
-    try { $('tip').scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' }); } catch (e) {}
+    if (!noFit) refit();
   }
-  function hideTip() { if (G) G.hint = null; $('tip').classList.add('hidden'); }
+  function hideTip() { if (G) G.hint = null; var was = !$('tip').classList.contains('hidden'); $('tip').classList.add('hidden'); if (was) refit(); }
 
   // Tap 1 explains the situation and outlines the block(s) to focus on; tap 2 shows the exact move.
   $('hintBtn').onclick = function () {
@@ -2655,7 +2670,9 @@ store.set('hr_bk', bk);
   }
   function lessonRender() {
     var on = !!(G && G.lv && G.lv.lesson && G.phase !== 'design');
+    var was = !$('lsBar').classList.contains('hidden');
     $('lsBar').classList.toggle('hidden', !on); $('lsNote').classList.toggle('hidden', !on);
+    if (was !== on) refit();
     var old = $('ghost'); if (old) old.remove();
     if (!on) return;
     var d = LESSONS[G.lv.lesson - 1], N = d.cps.length, over = G.phase === 'won', g = gridOf(), sol = over ? null : lessonSolve(g), i;
@@ -2687,6 +2704,9 @@ store.set('hr_bk', bk);
     else if (head === undefined && G.lgNote) { head = G.lgNote.head; body = G.lgNote.body; why = G.lgNote.why; }
     if (head !== undefined) { $('lsNoteHead').textContent = head; $('lsNoteBody').textContent = body; $('lsNoteWhy').textContent = why; }
   }
+  function toggleNote() { var n = $('lsNote'), o = !n.classList.contains('open'); n.classList.toggle('open', o); n.setAttribute('aria-expanded', o); refit(); }
+  $('lsNote').onclick = toggleNote;
+  $('lsNote').onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleNote(); } };
   // after every move / undo / redo
   function lessonCheck() { if (G && G.lv && G.lv.lesson && G.phase === 'play') lessonRender(); }
   function winLesson() {

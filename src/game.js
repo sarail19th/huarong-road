@@ -712,10 +712,14 @@ store.set('hr_bk', bk);
     var BORDER = 4, dev = document.querySelector('.device'), cs = dev && getComputedStyle(dev);
     var frameW = dev && dev.clientWidth ? dev.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) : window.innerWidth - 62;
     var availW = Math.min(frameW, 440);
-    var availH = window.innerHeight - 340;
+    // Height: everything in the game screen that is not the board (header, stats, coach line, buttons, status)
+    // is measured, so the whole screen fits in one phone viewport and nothing needs scrolling.
+    var b = $('board'), sec = $('game'), availH = window.innerHeight - 340;
+    if (sec && sec.offsetHeight && b.offsetHeight) {
+      availH = window.innerHeight - (sec.offsetHeight - b.offsetHeight) - 4;
+    }
     cell = Math.floor(Math.min((availW - 2 * PAD - BORDER) / W, (availH - 2 * PAD - BORDER) / H));
-    cell = Math.max(cell, 58);
-    var b = $('board');
+    cell = Math.max(cell, 52);
     b.style.width = (W * cell + 2 * PAD + BORDER) + 'px';
     b.style.height = (H * cell + 2 * PAD + BORDER) + 'px';
     var z = $('exitzone'); z.style.left = (PAD + cell) + 'px'; z.style.top = (PAD + 3 * cell) + 'px';
@@ -724,6 +728,9 @@ store.set('hr_bk', bk);
     g.style.top = (H * cell + 2 * PAD - 2) + 'px';
     if (G) { renderPieces(); lessonRender(); }
   }
+
+  var refitT = 0;
+  function refit() { cancelAnimationFrame(refitT); refitT = requestAnimationFrame(function () { if (!G) return; layout(); if (G.phase === 'play' && G.hint && !$('tip').classList.contains('hidden')) showHint(G.hint, true); }); }
 
   function renderAll() { renderLED(); renderPieces(); renderTray(); renderStatus(); renderCtl(); lessonRender(); }
   // Undo / Redo are greyed out when there is nothing to step to
@@ -1104,7 +1111,7 @@ store.set('hr_bk', bk);
     return { head: L('Try this', 'ลองทำแบบนี้'), body: L('Move ' + nameOf(m) + step + '. ' + reason, 'เลื่อน' + nameOf(m) + step + ' ' + reason), why: plan };
   }
 
-  function showHint(h) {
+  function showHint(h, noFit) {
     var t = hintText(h), i = h.info;
     els.forEach(function (el) { el.removeAttribute('data-focus'); el.removeAttribute('data-hint'); });
     var focus = i.j === 0 ? [i.mover] : i.X ? [i.X] : i.blockers.length ? i.blockers : [i.mover];
@@ -1116,9 +1123,9 @@ store.set('hr_bk', bk);
     $('tipHead').innerHTML = '<span class="step">' + (freeMode ? L('hint ' + h.tier + '/2', 'คำใบ้ ' + h.tier + '/2') : L(i.left + ' move' + (i.left > 1 ? 's' : '') + ' to go · hint ' + h.tier + '/2', 'เหลืออีก ' + i.left + ' ครั้ง · คำใบ้ ' + h.tier + '/2')) + '</span>' + t.head;
     $('tipBody').textContent = t.body; $('tipWhy').textContent = t.why;
     $('tip').classList.remove('hidden');
-    try { $('tip').scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' }); } catch (e) {}
+    if (!noFit) refit();
   }
-  function hideTip() { if (G) G.hint = null; $('tip').classList.add('hidden'); }
+  function hideTip() { if (G) G.hint = null; var was = !$('tip').classList.contains('hidden'); $('tip').classList.add('hidden'); if (was) refit(); }
 
   // Tap 1 explains the situation and outlines the block(s) to focus on; tap 2 shows the exact move.
   $('hintBtn').onclick = function () {
@@ -1301,7 +1308,9 @@ store.set('hr_bk', bk);
   }
   function lessonRender() {
     var on = !!(G && G.lv && G.lv.lesson && G.phase !== 'design');
+    var was = !$('lsBar').classList.contains('hidden');
     $('lsBar').classList.toggle('hidden', !on); $('lsNote').classList.toggle('hidden', !on);
+    if (was !== on) refit();
     var old = $('ghost'); if (old) old.remove();
     if (!on) return;
     var d = LESSONS[G.lv.lesson - 1], N = d.cps.length, over = G.phase === 'won', g = gridOf(), sol = over ? null : lessonSolve(g), i;
@@ -1333,6 +1342,9 @@ store.set('hr_bk', bk);
     else if (head === undefined && G.lgNote) { head = G.lgNote.head; body = G.lgNote.body; why = G.lgNote.why; }
     if (head !== undefined) { $('lsNoteHead').textContent = head; $('lsNoteBody').textContent = body; $('lsNoteWhy').textContent = why; }
   }
+  function toggleNote() { var n = $('lsNote'), o = !n.classList.contains('open'); n.classList.toggle('open', o); n.setAttribute('aria-expanded', o); refit(); }
+  $('lsNote').onclick = toggleNote;
+  $('lsNote').onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleNote(); } };
   // after every move / undo / redo
   function lessonCheck() { if (G && G.lv && G.lv.lesson && G.phase === 'play') lessonRender(); }
   function winLesson() {

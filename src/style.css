@@ -197,7 +197,7 @@ html:not([lang=th]) .lang-btn .en,html[lang=th] .lang-btn .th{background:var(--y
 .tool:disabled{opacity:.35;cursor:default}
 .tool:disabled:active{transform:none}
 .tool .ico{width:22px;height:22px}
-.grp.help{margin:12px auto 0;max-width:340px}
+.grp.help{margin:10px auto 0;max-width:340px}
 .tool.wide{flex:1;flex-direction:row;gap:8px;min-height:46px;font-size:13.5px}
 .tool.hint .ico{color:var(--amber)}
 .tool.sol .ico{color:var(--green)}
@@ -261,7 +261,7 @@ html:not([lang=th]) .lang-btn .en,html[lang=th] .lang-btn .th{background:var(--y
 .piece[data-focus]{z-index:3;outline:3px dashed #fff;outline-offset:-5px;animation:hint 1.1s infinite}
 .piece[data-focus][data-hint]{animation:hint .9s infinite}
 
-.tip{margin:0 2px 10px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--yellow);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.45;color:var(--text2)}
+.tip{margin:0 0 8px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--yellow);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.45;color:var(--text2)}
 .tip b{display:block;color:var(--text);margin-bottom:2px}
 .tip em{display:block;margin-top:6px;font-style:normal;color:var(--muted);font-size:12.5px}
 .tip .step{display:block;margin:0 0 3px;color:var(--muted);font-size:11.5px;font-weight:400}
@@ -592,13 +592,17 @@ input.cpr::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:
 .lssegs span.on{background:var(--yellow);border-color:var(--yellow)}
 .lsgoal{font-size:13.5px;line-height:1.4;min-height:2.8em}
 .lsgoal b{font-weight:700}
-.lsnote{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--yellow);border-radius:12px;padding:9px 12px;margin-top:8px;font-size:13.5px;line-height:1.5;min-height:190px}
-.lsnote b{display:block;margin-bottom:2px}
+.lsnote{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--yellow);border-radius:12px;padding:8px 12px;margin-top:8px;font-size:13.5px;line-height:1.5;cursor:pointer}
+.lsnote b{display:block}
+.lsnote b::after{content:"\25BE";float:right;color:var(--muted);transition:transform .15s}
+.lsnote.open b{margin-bottom:2px}
+.lsnote.open b::after{transform:rotate(180deg)}
+.lsnote:not(.open) span,.lsnote:not(.open) em{display:none}
 .lsnote span{display:block}
 .lsnote em{display:block;margin-top:4px;color:var(--text2);font-style:normal;font-size:13px}
 .ghost{position:absolute;left:0;top:0;border:3px dashed var(--yellow);border-radius:12px;pointer-events:none;box-sizing:border-box;z-index:1}
 body[data-mode=lesson] .stats,body[data-mode=lesson] #solBtn,body[data-mode=lesson] #recLine{display:none!important}
-body[data-mode=lesson] .grp.help{justify-content:center}
+body[data-mode=lesson] .grp.help{display:none!important}
 body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display:none!important}
 .btn.lstry{width:100%;margin:2px 0 8px}
 .lswhy{margin:8px 0 2px;padding:0;list-style:none;text-align:left;font-size:13.5px;line-height:1.5}
@@ -684,3 +688,7 @@ body:not([data-mode=lesson]) .lsbar,body:not([data-mode=lesson]) .lsnote{display
 .howhead .hidetxt{font-size:13px;color:var(--muted);text-decoration:underline}
 .about .apage ol{font-size:13.5px;line-height:1.55;padding-left:20px;margin:6px 0 10px;color:var(--text2)}
 .about .apage ol b{color:var(--text)}
+
+/* short phones: keep the hint compact so the board still fits without scrolling */
+@media (max-height:760px){.tip em{display:none}.tip{padding:8px 10px;font-size:13px;line-height:1.4}}
+@media (max-height:700px){.screen{padding-top:max(8px,env(safe-area-inset-top))}.hud{margin-bottom:6px}.stats{margin-bottom:6px}.lsbar{margin-bottom:6px;padding:6px 10px}.device{padding:10px 10px 12px}.topbar{margin-bottom:8px}.status{margin:6px 4px 4px}.grp.help{margin-top:6px}}
