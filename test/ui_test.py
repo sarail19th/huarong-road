@@ -604,8 +604,8 @@ def controls(p):
     for sel in ('#game .skin-btn', '#game .lang-btn', '#game #muteBtn', '#game #hapBtn'): assert page.locator(sel).count() == 0 or page.locator(sel).is_hidden(), sel
     page.click('#startBtn')
     box = lambda sel: page.locator(sel).bounding_box()
-    # grouping: undo+redo share a pill, hint+solution share a pill, restart is far from undo
-    assert page.locator('.grp:has(#undoBtn):has(#redoBtn)').count() == 1 and page.locator('.grp:has(#hintBtn):has(#solBtn)').count() == 1
+    # grouping: undo+redo+hint share one pill (hint is up where the eye is), solution sits alone under the board, restart is far from undo
+    assert page.locator('.grp:has(#undoBtn):has(#redoBtn):has(#hintBtn)').count() == 1 and page.locator('.grp:has(#solBtn)').count() == 1 and page.locator('.grp:has(#hintBtn):has(#solBtn)').count() == 0
     u, r = box('#undoBtn'), box('#restartBtn')
     lb = box('#led')
     assert r['x'] >= lb['x'] + lb['width'] and r['x'] - (lb['x'] + lb['width']) <= 20, 'restart sits right next to the LED'
