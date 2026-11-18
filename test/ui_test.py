@@ -274,7 +274,7 @@ def thai(p):
     toggle_lang(page)      # and Thai again
     assert 'ลองทำแบบนี้' in page.locator('#tipHead').inner_text()
     # solution flow in Thai
-    page.click('#solBtn')
+    page.click('#tip'); page.click('#solBtn')   # the hint sheet covers Show solution until closed
     assert 'ดูเฉลยไหม' in page.locator('#solAsk h2').inner_text() and 'ไม่ได้ดาว' in page.locator('#solAsk p').inner_text()
     assert page.locator('#solNo').inner_text() == 'ลองต่อ' and page.locator('#solYes').inner_text() == 'ดูเลย'
     page.screenshot(path=f'{SHOTS}/thai_confirm.png')
