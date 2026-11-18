@@ -1417,7 +1417,7 @@ store.set('hr_bk', bk);
   function reduced() { if (motionPref !== null) return motionPref; try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function applyMotion() { document.documentElement.dataset.motion = reduced() ? 'reduce' : ''; }
   applyMotion(); // on = opening a level skips the setup phase and starts playing at once
-  var BUILD = '7252c69'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
+  var BUILD = 'e38e991'; // stamped by build.js (hash of the app); shown in the menu and used to tell if a refresh changed anything
   var lang = store.get('hr_lang', 'en') === 'th' ? 'th' : 'en'; // guidance text (instructions, hints, solution) in English or Thai
   var cell = 64, G = null, drag = null, uid = 0, timerId = null, msgTimer = null, autoTimer = null;
   var els = new Map();
@@ -2093,20 +2093,20 @@ store.set('hr_bk', bk);
   }
 
   /* ---------- rendering ---------- */
-  function layout() {
-    // Fit the board inside the device frame: its content width, not the window width (the frame has its own
-    // margins/padding). BORDER is the board's 2px border each side; pieces are positioned inside it.
+  // The board size that fits: bounded by the frame width, and by the screen height minus everything that is
+  // not the board (header, stats, controls, the fixed help slot). Re-checked whenever the layout settles.
+  function calcCell() {
     var BORDER = 4, dev = document.querySelector('.device'), cs = dev && getComputedStyle(dev);
     var frameW = dev && dev.clientWidth ? dev.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) : window.innerWidth - 62;
     var availW = Math.min(frameW, 440);
-    // Height: everything in the game screen that is not the board (header, stats, coach line, buttons, status)
-    // is measured, so the whole screen fits in one phone viewport and nothing needs scrolling.
     var b = $('board'), sec = $('game'), availH = window.innerHeight - 340;
-    if (sec && sec.offsetHeight && b.offsetHeight) {
-      availH = window.innerHeight - (sec.offsetHeight - b.offsetHeight) - 4;
-    }
-    cell = Math.floor(Math.min((availW - 2 * PAD - BORDER) / W, (availH - 2 * PAD - BORDER) / H));
-    cell = Math.max(cell, 52);
+    if (sec && sec.offsetHeight && b.offsetHeight) availH = window.innerHeight - (sec.offsetHeight - b.offsetHeight) - 4;
+    return Math.max(Math.floor(Math.min((availW - 2 * PAD - BORDER) / W, (availH - 2 * PAD - BORDER) / H)), 52);
+  }
+  function layout() {
+    var BORDER = 4;
+    cell = calcCell();
+    var b = $('board');
     b.style.width = (W * cell + 2 * PAD + BORDER) + 'px';
     b.style.height = (H * cell + 2 * PAD + BORDER) + 'px';
     var z = $('exitzone'); z.style.left = (PAD + cell) + 'px'; z.style.top = (PAD + 3 * cell) + 'px';
@@ -2117,9 +2117,9 @@ store.set('hr_bk', bk);
   }
 
   var refitT = 0;
-  function refit() { cancelAnimationFrame(refitT); refitT = requestAnimationFrame(function () { if (!G) return; layout() }); }
+  function refit() { cancelAnimationFrame(refitT); refitT = requestAnimationFrame(function () { if (G && calcCell() !== cell) layout(); }); }
 
-  function renderAll() { renderLED(); renderPieces(); renderTray(); renderStatus(); renderCtl(); lessonRender(); }
+  function renderAll() { renderLED(); renderPieces(); renderTray(); renderStatus(); renderCtl(); lessonRender(); refit(); }
   // Undo / Redo are greyed out when there is nothing to step to
   function renderCtl() {
     var on = !!G && G.phase === 'play';
